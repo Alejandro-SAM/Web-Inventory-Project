@@ -10,13 +10,26 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
+                <!-- LINKS DE NAVEGACIÓN PARA DASHBOARD -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+
+                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                {{ __('Dashboard') }}
+                </x-nav-link>
+
+                <x-nav-link :href="route('inventory')" :active="request()->routeIs('inventory')">
+                {{ __('Inventory') }}
+                </x-nav-link>
+
+                <x-nav-link :href="route('users')" :active="request()->routeIs('users')">
+                {{ __('Users') }}
+                </x-nav-link>
+
+                <x-nav-link :href="route('logs')" :active="request()->routeIs('logs')">
+                {{ __('Logs') }}
+                </x-nav-link>
+
                 </div>
-            </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">

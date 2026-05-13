@@ -11,10 +11,22 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware('auth')->group(function () { //RUTAS HACIA VISTAS DE PAGINA
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit'); //RUTA EDITAR PERFIL
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); //RUTA ACTUALIZAR PERFIL
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy'); //RUTA DESTRUIR PERFIL
+
+        Route::view('/dashboard', 'dashboard') //RUTA AL DASHBOARD
+        ->name('dashboard');
+
+    Route::view('/inventory', 'inventory') //RUTA AL INVENTARIO
+        ->name('inventory');
+
+    Route::view('/users', 'users') //RUTA A TABLA DE USUARIOS
+        ->name('users');
+
+    Route::view('/logs', 'logs') //RUTA A TABLA DE REGISTROS
+        ->name('logs');
 });
 
 Route::middleware(['auth'])->group(function () { //RUTA DE AUTENTICACIÓN MIDDLEWARE PARA LOGIN
