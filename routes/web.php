@@ -2,21 +2,19 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController; /* FOR USERS TABLE */
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROUTES */
 
     Route::view('/dashboard', 'dashboard')
         ->name('dashboard');
 
     Route::view('/inventory', 'inventory')
         ->name('inventory');
-
-    Route::view('/users', 'users')
-        ->name('users');
 
     Route::view('/logs', 'logs')
         ->name('logs');
@@ -29,6 +27,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
+
+    Route::get('/users', [UserController::class, 'index']) /* FOR USERS TABLE */
+        ->name('users.index');
+
+    Route::post('/users', [UserController::class, 'store'])
+        ->name('users.store');
+
+    Route::put('/users/{user}', [UserController::class, 'update'])
+        ->name('users.update');
 });
 
 require __DIR__.'/auth.php';
