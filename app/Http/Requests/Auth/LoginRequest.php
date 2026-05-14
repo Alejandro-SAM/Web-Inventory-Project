@@ -25,10 +25,10 @@ class LoginRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+    public function rules(): array /* REGLAS PARA VALIDAR INICIO DE SESIÓN */
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'employee_number' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -38,15 +38,19 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): void /* AUTENTICACIÓN DE CREDENCIALES Y BOOLEANO DE CUENTA ACTIVA */
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::attempt([
+            'employee_number' => $this->employee_number,
+            'password' => $this->password,
+            'is_active' => true,
+        ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'employee_number' => trans('auth.failed'),
             ]);
         }
 
@@ -68,10 +72,10 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
-        throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
+        throw ValidationException::withMessages([ /* AFTER TOO MANY ATTEMPTS */
+            'employee_number' => trans('auth.throttle', [
+            'seconds' => $seconds,
+            'minutes' => ceil($seconds / 60),
             ]),
         ]);
     }
@@ -81,6 +85,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('employee_number')).'|'.$this->ip()); /* TAKES EMPLOYEE NUMBER AND IP TO VERIFY IF THEY´RE ON TIMEOUT*/
     }
 }

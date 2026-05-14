@@ -5,26 +5,51 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
+        <!-- EMPLOYEE NUMBER -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <x-input-label for="employee_number" :value="__('Employee Number')" />
+
+        <x-text-input 
+        id="employee_number" 
+        class="block mt-1 w-full" 
+        type="text" 
+        name="employee_number" 
+        :value="old('employee_number')" 
+        required 
+        autofocus 
+        autocomplete="username" 
+        />
+
+            <x-input-error :messages="$errors->get('employee_number')" class="mt-2" />
         </div>
 
-        <!-- Password -->
+        <!-- PASSWORD AND SHOW/HIDE TOGGLE -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+          <div class="relative mt-1">
+             <x-text-input 
+                  id="password" 
+                  class="block w-full pr-20"
+                  type="password"
+                  name="password"
+                  required 
+                  autocomplete="current-password" 
+              />
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+              <button 
+                  type="button"
+                 id="togglePassword"
+                 class="absolute inset-y-0 right-0 px-3 text-sm text-gray-600 hover:text-gray-900"
+                >
+                    Show
+                </button>
         </div>
 
-        <!-- Remember Me -->
+         <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        </div>
+
+        <!-- REMEMBER ME -->
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
                 <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
@@ -32,16 +57,25 @@
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        <!-- LOGIN BUTTON -->
+    <div class="flex items-center justify-end mt-4">
+        <x-primary-button class="ms-3">
+            {{ __('Log in') }}
+     </x-primary-button>
+    </div>
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
     </form>
 </x-guest-layout>
+
+    <!-- SCRIPT FOR TOGGLE PASSWORD VISIBILITY -->
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            const isPassword = passwordInput.type === 'password';
+
+            passwordInput.type = isPassword ? 'text' : 'password';
+            togglePassword.textContent = isPassword ? 'Hide' : 'Show';
+        });
+    </script>
