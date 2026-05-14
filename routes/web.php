@@ -4,39 +4,31 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/login'); //Redirección a pagina Login en lugar de pagina default de breezeph
+    return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth'])->group(function () {
 
-Route::middleware('auth')->group(function () { //RUTAS HACIA VISTAS DE PAGINA
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit'); //RUTA EDITAR PERFIL
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); //RUTA ACTUALIZAR PERFIL
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy'); //RUTA DESTRUIR PERFIL
-
-        Route::view('/dashboard', 'dashboard') //RUTA AL DASHBOARD
+    Route::view('/dashboard', 'dashboard')
         ->name('dashboard');
 
-    Route::view('/inventory', 'inventory') //RUTA AL INVENTARIO
+    Route::view('/inventory', 'inventory')
         ->name('inventory');
 
-    Route::view('/users', 'users') //RUTA A TABLA DE USUARIOS
+    Route::view('/users', 'users')
         ->name('users');
 
-    Route::view('/logs', 'logs') //RUTA A TABLA DE REGISTROS
+    Route::view('/logs', 'logs')
         ->name('logs');
-});
 
-Route::middleware(['auth'])->group(function () { //RUTA DE AUTENTICACIÓN MIDDLEWARE PARA LOGIN
-                                                 //SI NO EXISTE UNA AUTENTICACIÓN REBOTA A LOGIN.
-    Route::get('/dashboard', function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-        return view('dashboard');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-    })->name('dashboard');
-
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
