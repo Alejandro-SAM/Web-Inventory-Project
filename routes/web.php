@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController; /* FOR USERS TABLE */
+use App\Http\Controllers\LogsController; /* FOR LOGS TABLE */
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -30,6 +31,9 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
 
     Route::get('/users', [UserController::class, 'index']) /* FOR USERS TABLE */
         ->name('users.index');
+
+    Route::get('/logs', [LogsController::class, 'index']) /* FOR LOGS TABLE */
+    ->name('logs');
 
     Route::post('/users', [UserController::class, 'store'])
         ->name('users.store');

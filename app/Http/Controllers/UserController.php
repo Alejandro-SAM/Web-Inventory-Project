@@ -9,11 +9,22 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+
+        private function authorizeAdmin(): void /* ONLY ADMINS CAN ACCESS THE USERS PAGE */
+    {
+        if (auth()->user()->user_level !== 'Admin') {
+            abort(403, 'You do not have permission to perform this action.');
+        }
+    }
+
     /**
      * Display the users table.
      */
     public function index()
     {
+
+        $this->authorizeAdmin(); /* CALLS FUNCTION TO CHECK IF USER IS ADMIN */
+
         $users = User::orderBy('created_at', 'desc')->paginate(10);
 
         return view('users', compact('users'));
@@ -24,6 +35,9 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+
+        $this->authorizeAdmin(); /* CALLS FUNCTION TO CHECK IF USER IS ADMIN */
+
         $validated = $request->validate([
             'employee_number' => [
                 'required',
@@ -75,6 +89,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $this->authorizeAdmin(); /* CALLS FUNCTION TO CHECK IF USER IS ADMIN */
+        
         $validated = $request->validate([
             'department' => [
                 'nullable',

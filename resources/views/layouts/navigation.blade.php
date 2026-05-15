@@ -21,13 +21,17 @@
                 {{ __('Inventory') }}
                 </x-nav-link>
 
+            @if (Auth::user()->user_level === 'Admin') <!-- ONLY SHOW BUTTON IF THE USER IS ADMIN LEVEL -->
                 <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
                 {{ __('Users') }}
                 </x-nav-link>
+            @endif
 
+            @if (Auth::user()->user_level !== 'Read') <!-- ONLY SHOW BUTTON IF THE USER IS NOT READ LEVEL -->
                 <x-nav-link :href="route('logs')" :active="request()->routeIs('logs')">
                 {{ __('Logs') }}
                 </x-nav-link>
+            @endif
 
                 </div>
 
@@ -77,37 +81,58 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+<!-- Responsive Navigation Menu -->
+<div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+    <div class="pt-2 pb-3 space-y-1">
+
+        <!-- Todos los niveles pueden ver Dashboard -->
+        <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            {{ __('Dashboard') }}
+        </x-responsive-nav-link>
+
+        <!-- Todos los niveles pueden ver Inventory -->
+        <x-responsive-nav-link :href="route('inventory')" :active="request()->routeIs('inventory')">
+            {{ __('Inventory') }}
+        </x-responsive-nav-link>
+
+        <!-- Solo Admin puede ver Users -->
+        @if (Auth::user()->user_level === 'Admin')
+            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                {{ __('Users') }}
             </x-responsive-nav-link>
+        @endif
+
+        <!-- Admin y User pueden ver Logs. Read no. -->
+        @if (Auth::user()->user_level !== 'Read')
+            <x-responsive-nav-link :href="route('logs')" :active="request()->routeIs('logs')">
+                {{ __('Logs') }}
+            </x-responsive-nav-link>
+        @endif
+
+    </div>
+
+    <!-- Responsive Settings Options -->
+    <div class="pt-4 pb-1 border-t border-gray-200">
+        <div class="px-4">
+            <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+            <div class="font-medium text-sm text-gray-500">{{ Auth::user()->employee_number }}</div>
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->employee_number }}</div>
-            </div>
+        <div class="mt-3 space-y-1">
+            <x-responsive-nav-link :href="route('profile.edit')">
+                {{ __('Profile') }}
+            </x-responsive-nav-link>
 
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+
+                <x-responsive-nav-link :href="route('logout')"
+                        onclick="event.preventDefault();
+                                    this.closest('form').submit();">
+                    {{ __('Log Out') }}
                 </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
+</div>
 </nav>
