@@ -38,11 +38,14 @@ class LogsController extends Controller
             ->orderBy('login_at', 'desc');
 
         /*
-            USER LEVEL ONLY VIEWS THEIR OWN LOGS
+            USER LEVEL ONLY VIEWS THEIR OWN LOGS, EXCEPT FOR USER MODULE LOGS WHICH ARE HIDDEN FROM THEM
             ADMIN VIEWS ALL LOGS
         */
         if ($user->user_level === 'User') {
-            $activityLogsQuery->where('user_id', $user->id);
+            $activityLogsQuery
+                ->where('user_id', $user->id)
+                ->where('module', '!=', 'users');
+
             $loginLogsQuery->where('user_id', $user->id);
         }
 

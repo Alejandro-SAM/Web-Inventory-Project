@@ -43,7 +43,6 @@
                                 <th>Date</th>
                                 <th>Employee Number</th>
                                 <th>User</th>
-                                <th>User Level</th>
                                 <th>Module</th>
                                 <th>Action</th>
                                 <th>Description</th>
@@ -58,18 +57,30 @@
                                     </td>
                                     <td>{{ $log->employee_number ?? 'N/A' }}</td>
                                     <td>{{ $log->username ?? 'N/A' }}</td>
-                                    <td>{{ $log->role ?? 'N/A' }}</td>
                                     <td>{{ $log->module ?? 'N/A' }}</td>
+
                                     <td>
-                                        <span class="badge bg-secondary">
-                                            {{ $log->action ?? 'N/A' }}
-                                        </span>
+                                    @php
+                                        $action = strtolower($log->action ?? '');
+
+                                        $badgeClass = match (true) {
+                                        in_array($action, ['inserted', 'uploaded', 'created']) => 'bg-success',
+                                        in_array($action, ['edited', 'altered', 'changed', 'updated']) => 'bg-warning text-dark',
+                                        in_array($action, ['disabled', 'deleted', 'deactivated']) => 'bg-danger',
+                                        default => 'bg-secondary',
+                                        };
+                                    @endphp 
+
+                                    <span class="badge {{ $badgeClass }}">
+                                    {{ ucfirst($log->action ?? 'N/A') }}
+                                    </span>
                                     </td>
+
                                     <td>{{ $log->description ?? 'N/A' }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                        <td colspan="6" class="text-center text-muted">
                                         No activity records found.
                                     </td>
                                 </tr>
