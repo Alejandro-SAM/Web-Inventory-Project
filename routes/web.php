@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController; /* FOR USERS TABLE */
 use App\Http\Controllers\LogsController; /* FOR LOGS TABLE */
+use App\Http\Controllers\InventoryController; /* FOR INVENTORY TABLE */
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -40,6 +41,10 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
 
     Route::put('/users/{user}', [UserController::class, 'update'])
         ->name('users.update');
+
+    Route::get('/inventory', [InventoryController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('inventory');
 });
 
 require __DIR__.'/auth.php';
