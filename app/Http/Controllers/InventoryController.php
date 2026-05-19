@@ -128,4 +128,42 @@ class InventoryController extends Controller
                 ->appends($request->query()),
         ]);
     }
+
+    public function create()
+    {
+        return view('inventory-create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'it_internal_number' => ['nullable', 'string', 'max:255', 'unique:inventory,it_internal_number'],
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'asset_number' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'model' => ['nullable', 'string', 'max:255'],
+            'brand' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
+            'end_user' => ['nullable', 'string', 'max:255'],
+            'responsive' => ['nullable', 'boolean'],
+            'employee_id' => ['nullable', 'string', 'max:255'],
+            'next_maintenance' => ['nullable', 'date'],
+            'operating_system' => ['nullable', 'string', 'max:255'],
+            'confidentiality' => ['nullable', 'integer', 'between:0,3'],
+            'integrity' => ['nullable', 'integer', 'between:0,3'],
+            'availability' => ['nullable', 'integer', 'between:0,3'],
+            'classification' => ['nullable', 'string', 'max:255'],
+            'comments' => ['nullable', 'string'],
+            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
+        ]);
+
+        $validated['responsive'] = $request->has('responsive');
+        $validated['created_by'] = auth()->id();
+
+        Inventory::create($validated);
+
+        return redirect()
+            ->route('inventory')
+            ->with('success', 'Asset created successfully.');
+    }
 }

@@ -16,7 +16,7 @@
 
             <div>
                 @if (Auth::user()->user_level !== 'Read')
-                    <a href="#" class="btn btn-primary">
+                    <a href="{{ route('inventory.create') }}" class="btn btn-primary">
                         Add Asset
                     </a>
                 @endif

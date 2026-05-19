@@ -34,7 +34,7 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
         ->name('users.index');
 
     Route::get('/logs', [LogsController::class, 'index']) /* FOR LOGS TABLE */
-    ->name('logs');
+        ->name('logs');
 
     Route::post('/users', [UserController::class, 'store'])
         ->name('users.store');
@@ -43,8 +43,14 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
         ->name('users.update');
 
     Route::get('/inventory', [InventoryController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('inventory');
+        ->middleware(['auth'])
+        ->name('inventory');
+
+    Route::get('/inventory/create', [InventoryController::class, 'create'])
+        ->name('inventory.create');
+
+     Route::post('/inventory', [InventoryController::class, 'store'])
+        ->name('inventory.store');
 });
 
 require __DIR__.'/auth.php';
