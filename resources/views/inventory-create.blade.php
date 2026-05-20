@@ -68,7 +68,15 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Category</label>
-                            <input type="text" name="category" class="form-control" value="{{ old('category') }}">
+                            <select name="category" class="form-select">
+                                <option value="">Select category</option>
+
+                            @foreach ($categoryOptions as $category)
+                            <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>
+                            {{ $category }}
+                        </option>
+                        @endforeach
+                        </select>
                         </div>
 
                         <div class="col-md-4">
@@ -93,7 +101,15 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Classification</label>
-                            <input type="text" name="classification" class="form-control" value="{{ old('classification') }}">
+                            <select name="classification" class="form-select">
+                                <option value="">Select classification</option>
+
+                                    @foreach ($classificationOptions as $value => $label)
+                                    <option value="{{ $value }}" {{ old('classification') == $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
                         </div>
 
                         <div class="col-md-4">

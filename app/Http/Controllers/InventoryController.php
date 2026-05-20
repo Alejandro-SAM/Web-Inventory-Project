@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\Rule;
 use App\Models\Inventory;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('category')) {
-            $inventoryQuery->where('category', 'like', '%' . $request->category . '%');
+            $inventoryQuery->where('category', $request->category);
         }
 
         if ($request->filled('department')) {
@@ -114,25 +115,35 @@ class InventoryController extends Controller
             $inventoryQuery->whereDate('next_maintenance', '<=', $request->maintenance_to);
         }
 
-        if ($request->filled('created_from')) {
-            $inventoryQuery->whereDate('created_at', '>=', $request->created_from);
-        }
+        /* Only show the creation dates filter to admin users */
+        if ($user->user_level === 'Admin') {
+            if ($request->filled('created_from')) {
+                $inventoryQuery->whereDate('created_at', '>=', $request->created_from);
+            }
 
-        if ($request->filled('created_to')) {
-            $inventoryQuery->whereDate('created_at', '<=', $request->created_to);
+            if ($request->filled('created_to')) {
+                $inventoryQuery->whereDate('created_at', '<=', $request->created_to);
+            }
         }
+        /* End of creation date filter */
 
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
                 ->paginate(10)
                 ->appends($request->query()),
+
+                'categoryOptions' => $this->categoryOptions(),
+                'classificationOptions' => $this->classificationOptions(),
         ]);
     }
 
-    public function create()
-    {
-        return view('inventory-create');
-    }
+public function create()
+{
+    return view('inventory-create', [
+        'categoryOptions' => $this->categoryOptions(),
+        'classificationOptions' => $this->classificationOptions(),
+    ]);
+}
 
     public function store(Request $request)
     {
@@ -143,7 +154,7 @@ class InventoryController extends Controller
             'description' => ['nullable', 'string'],
             'model' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', Rule::in($this->categoryOptions())],
             'end_user' => ['nullable', 'string', 'max:255'],
             'responsive' => ['nullable', 'boolean'],
             'employee_id' => ['nullable', 'string', 'max:255'],
@@ -152,7 +163,7 @@ class InventoryController extends Controller
             'confidentiality' => ['nullable', 'integer', 'between:0,3'],
             'integrity' => ['nullable', 'integer', 'between:0,3'],
             'availability' => ['nullable', 'integer', 'between:0,3'],
-            'classification' => ['nullable', 'string', 'max:255'],
+            'classification' => ['nullable', 'integer', 'between:1,4'],
             'comments' => ['nullable', 'string'],
             'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
         ]);
@@ -165,5 +176,56 @@ class InventoryController extends Controller
         return redirect()
             ->route('inventory')
             ->with('success', 'Asset created successfully.');
+    }
+
+    /* FILTER FUNCTIONS */
+    private function categoryOptions(): array
+    {
+        return [
+            'Access Controller',
+            'Camera',
+            'Charger',
+            'Clock',
+            'Desktop',
+            'Digital Video Recorder',
+            'Documento',
+            'Hard Disk',
+            'Hololens VR',
+            'Industrial PC',
+            'Keyboard',
+            'Kit Tools',
+            'Laptop',
+            'Led',
+            'License',
+            'Memory',
+            'Mobile WiFi',
+            'Monitor',
+            'NAS',
+            'NVR',
+            'PatchPanel',
+            'PDA',
+            'Power Module',
+            'Printer',
+            'Projector',
+            'Radio',
+            'Scanner',
+            'SD-WAN',
+            'Server',
+            'Service',
+            'Speaker',
+            'Switch',
+            'Tablet',
+            'UPS',
+        ];
+    }
+
+    private function classificationOptions(): array
+    {
+        return [
+            1 => 'A (TOP SECRET)',
+            2 => 'B (SECRET)',
+            3 => 'C(INTERNAL)',
+            4 => 'D(GENERAL)',
+        ];
     }
 }

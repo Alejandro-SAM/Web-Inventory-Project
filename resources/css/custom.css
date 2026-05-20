@@ -1,0 +1,56 @@
+/* CUSTOM STYLES FOR THE WEBSITE, AVOID USING BOOTSTRAP PRE-BUILT STYLES*/
+/* This file is imported into app.css, which is the main CSS file for the website. */
+
+/* General wide table styling for stuff that doesn´t fit entirely in the container */
+.wide-table {
+    min-width: 4000px;
+}
+
+.wide-table th,
+.wide-table td {
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.wide-table th {
+    font-size: 0.85rem;
+}
+
+.wide-table td {
+    font-size: 0.9rem;
+}
+
+/* Column sizes */
+.col-xs {
+    min-width: 80px;
+}
+
+.col-sm-custom {
+    min-width: 120px;
+}
+
+.col-md-custom {
+    min-width: 160px;
+}
+
+.col-lg-custom {
+    min-width: 220px;
+}
+
+.col-xl-custom {
+    min-width: 300px;
+}
+
+/* Text columns */
+.text-wrap-cell {
+    white-space: normal !important;
+    min-width: 300px;
+    max-width: 420px;
+}
+
+/* Date range filters */
+.filter-date-range {
+    min-width: 240px;
+}
+
+/* End of General wide table styling for stuff that doesn´t fit entirely in the container */

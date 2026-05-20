@@ -1,3 +1,4 @@
+@import './custom.css'; /* Custom styles for the website */
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @tailwind base;
 @tailwind components;

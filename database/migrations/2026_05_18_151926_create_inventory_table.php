@@ -42,7 +42,7 @@ return new class extends Migration
             $table->tinyInteger('confidentiality')->nullable();
             $table->tinyInteger('integrity')->nullable();
             $table->tinyInteger('availability')->nullable();
-            $table->string('classification')->nullable();
+            $table->unsignedTinyInteger('classification')->nullable();
 
             // Comentarios
             $table->text('comments')->nullable();

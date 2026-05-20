@@ -34,36 +34,42 @@
             </div>
 
             <div class="card-body table-responsive">
-                <table class="table table-bordered table-hover align-middle">
+
+                <!-- Inventory table -->
+                <table class="table table-bordered table-hover align-middle wide-table">
 
                     <thead class="table-light">
                         <tr>
-                            <th>IT Internal Number</th>
-                            <th>Serial Number</th>
-                            <th>Asset Number</th>
-                            <th>Description</th>
-                            <th>Model</th>
-                            <th>Brand</th>
-                            <th>Category</th>
-                            <th>Department</th>
-                            <th>Location</th>
-                            <th>BU</th>
-                            <th>Plant</th>
-                            <th>End User</th>
-                            <th>Employee ID</th>
-                            <th>Responsive</th>
-                            <th>Next Maintenance</th>
-                            <th>OS</th>
-                            <th>C</th>
-                            <th>I</th>
-                            <th>A</th>
-                            <th>Classification</th>
-                            <th>State</th>
-                            <th>Created At</th>
+                            <th class="col-md-custom">IT Internal Number</th>
+                            <th class="col-md-custom">Serial Number</th>
+                            <th class="col-md-custom">Asset Number</th>
+                            <th class="col-lg-custom">Description</th>
+                            <th class="col-md-custom">Model</th>
+                            <th class="col-md-custom">Brand</th>
+                            <th class="col-md-custom">Category</th>
+                            <th class="col-md-custom">Department</th>
+                            <th class="col-md-custom">Location</th>
+                            <th class="col-md-custom">BU</th>
+                            <th class="col-md-custom">Plant</th>
+                            <th class="col-md-custom">End User</th>
+                            <th class="col-md-custom">Employee ID</th>
+                            <th class="col-md-custom">Responsive</th>
+                            <th class="col-md-custom">Next Maintenance</th>
+                            <th class="col-md-custom">OS</th>
+                            <th class="col-md-custom">C</th>
+                            <th class="col-md-custom">I</th>
+                            <th class="col-md-custom">A</th>
+                            <th class="col-md-custom">Classification</th>
+                            <th class="col-md-custom">State</th>
+
+                            <!-- Only show Created At column for Admin users -->
+                            @if (Auth::user()->user_level === 'Admin')
+                            <th class="col-md-custom">Created At</th>
+                            @endif
                         </tr>
 
                         <tr>
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -74,7 +80,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -85,7 +91,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -96,7 +102,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -107,7 +113,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -118,7 +124,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -129,18 +135,23 @@
                                 >
                             </th>
 
-                            <th>
-                                <input
-                                    form="inventoryFiltersForm"
-                                    type="text"
-                                    name="category"
-                                    class="form-control form-control-sm auto-filter-input"
-                                    placeholder="Category..."
-                                    value="{{ request('category') }}"
-                                >
+                            <th class="col-md-custom">
+                            <select
+                                form="inventoryFiltersForm"
+                                name="category"
+                                class="form-select form-select-sm auto-filter-select"
+                            >
+                            <option value="">All</option>
+
+                            @foreach ($categoryOptions as $category)
+                            <option value="{{ $category }}" {{ request('category') === $category ? 'selected' : '' }}>
+                            {{ $category }}
+                            </option>
+                            @endforeach
+                            </select>
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -151,7 +162,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -162,7 +173,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -173,7 +184,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -184,7 +195,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -195,7 +206,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -206,7 +217,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <select
                                     form="inventoryFiltersForm"
                                     name="responsive"
@@ -218,7 +229,7 @@
                                 </select>
                             </th>
 
-                            <th style="min-width: 220px;">
+                            <th class="col-md-custom" style="min-width: 220px;">
                                 <div class="d-flex gap-1">
                                     <input
                                         form="inventoryFiltersForm"
@@ -238,7 +249,7 @@
                                 </div>
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
                                     type="text"
@@ -249,7 +260,7 @@
                                 >
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <select
                                     form="inventoryFiltersForm"
                                     name="confidentiality"
@@ -263,7 +274,7 @@
                                 </select>
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <select
                                     form="inventoryFiltersForm"
                                     name="integrity"
@@ -277,7 +288,7 @@
                                 </select>
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <select
                                     form="inventoryFiltersForm"
                                     name="availability"
@@ -291,18 +302,23 @@
                                 </select>
                             </th>
 
-                            <th>
-                                <input
-                                    form="inventoryFiltersForm"
-                                    type="text"
-                                    name="classification"
-                                    class="form-control form-control-sm auto-filter-input"
-                                    placeholder="Class..."
-                                    value="{{ request('classification') }}"
-                                >
+                            <th class="col-md-custom">
+                            <select
+                                form="inventoryFiltersForm"
+                                name="classification"
+                                class="form-select form-select-sm auto-filter-select"
+                            >
+                            <option value="">All</option>
+
+                            @foreach ($classificationOptions as $value => $label)
+                            <option value="{{ $value }}" {{ request('classification') == $value ? 'selected' : '' }}>
+                            {{ $label }}
+                            </option>
+                            @endforeach
+                            </select>
                             </th>
 
-                            <th>
+                            <th class="col-md-custom">
                                 <select
                                     form="inventoryFiltersForm"
                                     name="state"
@@ -317,7 +333,9 @@
                                 </select>
                             </th>
 
-                            <th style="min-width: 220px;">
+                            <!--- Only show Created At filters for Admin users -->
+                            @if (Auth::user()->user_level === 'Admin')
+                            <th class="col-md-custom" style="min-width: 220px;">
                                 <div class="d-flex gap-2">
                                     <div class="d-flex gap-1">
                                         <input
@@ -344,6 +362,7 @@
                             </th>
                         </tr>
                     </thead>
+                            @endif
 
                     <tbody>
                         @forelse ($inventoryItems as $item)
@@ -378,7 +397,7 @@
                                 <td>{{ $item->confidentiality ?? 'N/A' }}</td>
                                 <td>{{ $item->integrity ?? 'N/A' }}</td>
                                 <td>{{ $item->availability ?? 'N/A' }}</td>
-                                <td>{{ $item->classification ?? 'N/A' }}</td>
+                                <td>{{ $classificationOptions[$item->classification] ?? 'N/A' }}</td>
 
                                 <td>
                                     @php
@@ -399,13 +418,17 @@
                                     </span>
                                 </td>
 
+                                <!-- Only show Created At for Admin users -->
+                                @if (Auth::user()->user_level === 'Admin')
                                 <td>
                                     {{ $item->created_at ? $item->created_at->format('Y-m-d H:i') : 'N/A' }}
                                 </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="22" class="text-center text-muted">
+                                <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
+                                <td colspan="{{ Auth::user()->user_level === 'Admin' ? 22 : 21 }}" class="text-center text-muted">
                                     No inventory records found.
                                 </td>
                             </tr>
