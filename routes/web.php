@@ -51,6 +51,9 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
 
      Route::post('/inventory', [InventoryController::class, 'store'])
         ->name('inventory.store');
+
+    Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])
+        ->name('inventory.update');
 });
 
 require __DIR__.'/auth.php';

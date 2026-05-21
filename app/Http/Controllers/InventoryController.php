@@ -268,4 +268,56 @@ public function create()
             4 => 'D(GENERAL)',
         ];
     }
+
+    public function update(Request $request, Inventory $inventory)
+    {
+        /*
+            Temporary permission rule:
+            Users with Read level cannot edit assets.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to edit inventory assets.');
+        }
+
+        $validated = $request->validate([
+            'it_internal_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),
+            ],
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'asset_number' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'model' => ['nullable', 'string', 'max:255'],
+            'brand' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
+
+            // Remove these fields if they are not in your inventory table yet
+            'department' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'business_unit' => ['nullable', 'string', 'max:255'],
+            'plant' => ['nullable', 'string', 'max:255'],
+
+            'end_user' => ['nullable', 'string', 'max:255'],
+            'responsive' => ['nullable', 'boolean'],
+            'employee_id' => ['nullable', 'string', 'max:255'],
+            'next_maintenance' => ['nullable', 'date'],
+            'operating_system' => ['nullable', 'string', 'max:255'],
+            'confidentiality' => ['nullable', 'integer', 'between:0,3'],
+            'integrity' => ['nullable', 'integer', 'between:0,3'],
+            'availability' => ['nullable', 'integer', 'between:0,3'],
+            'classification' => ['nullable', 'string', 'max:255'],
+            'comments' => ['nullable', 'string'],
+            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
+        ]);
+
+        $validated['responsive'] = $request->has('responsive');
+
+        $inventory->update($validated);
+
+        return redirect()
+            ->route('inventory', $request->query())
+            ->with('success', 'Asset updated successfully.');
+    }
 }
