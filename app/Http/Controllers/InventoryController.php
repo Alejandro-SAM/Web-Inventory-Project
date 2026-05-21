@@ -146,6 +146,36 @@ public function create()
     ]);
 }
 
+//Function to store the the inventory log fields for the purpose of registering the edit action
+private function inventoryLogFields(): array
+{
+    return [
+        'it_internal_number',
+        'serial_number',
+        'asset_number',
+        'description',
+        'model',
+        'brand',
+        'category',
+        'department',
+        'location',
+        'business_unit',
+        'plant',
+        'end_user',
+        'responsive',
+        'employee_id',
+        'next_maintenance',
+        'operating_system',
+        'confidentiality',
+        'integrity',
+        'availability',
+        'classification',
+        'comments',
+        'state',
+    ];
+}
+// End of function to store the the inventory log fields for the purpose of registering the edit action
+
     public function store(Request $request)
     {
 
@@ -269,55 +299,85 @@ public function create()
         ];
     }
 
-    public function update(Request $request, Inventory $inventory)
-    {
-        /*
-            Temporary permission rule:
-            Users with Read level cannot edit assets.
-        */
-        if (auth()->user()->user_level === 'Read') {
-            abort(403, 'You do not have permission to edit inventory assets.');
-        }
-
-        $validated = $request->validate([
-            'it_internal_number' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),
-            ],
-            'serial_number' => ['nullable', 'string', 'max:255'],
-            'asset_number' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'model' => ['nullable', 'string', 'max:255'],
-            'brand' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:255'],
-
-            // Remove these fields if they are not in your inventory table yet
-            'department' => ['nullable', 'string', 'max:255'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'business_unit' => ['nullable', 'string', 'max:255'],
-            'plant' => ['nullable', 'string', 'max:255'],
-
-            'end_user' => ['nullable', 'string', 'max:255'],
-            'responsive' => ['nullable', 'boolean'],
-            'employee_id' => ['nullable', 'string', 'max:255'],
-            'next_maintenance' => ['nullable', 'date'],
-            'operating_system' => ['nullable', 'string', 'max:255'],
-            'confidentiality' => ['nullable', 'integer', 'between:0,3'],
-            'integrity' => ['nullable', 'integer', 'between:0,3'],
-            'availability' => ['nullable', 'integer', 'between:0,3'],
-            'classification' => ['nullable', 'string', 'max:255'],
-            'comments' => ['nullable', 'string'],
-            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
-        ]);
-
-        $validated['responsive'] = $request->has('responsive');
-
-        $inventory->update($validated);
-
-        return redirect()
-            ->route('inventory', $request->query())
-            ->with('success', 'Asset updated successfully.');
+public function update(Request $request, Inventory $inventory)
+{
+    /*
+        Temporary permission rule:
+        Users with Read level cannot edit assets.
+    */
+    if (auth()->user()->user_level === 'Read') {
+        abort(403, 'You do not have permission to edit inventory assets.');
     }
+    //END OF PERMISSION RULE
+
+    $oldValues = $inventory->only($this->inventoryLogFields());
+
+    $validated = $request->validate([
+        'it_internal_number' => [
+            'nullable',
+            'string',
+            'max:255',
+            Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),
+        ],
+        'serial_number' => ['nullable', 'string', 'max:255'],
+        'asset_number' => ['nullable', 'string', 'max:255'],
+        'description' => ['nullable', 'string'],
+        'model' => ['nullable', 'string', 'max:255'],
+        'brand' => ['nullable', 'string', 'max:255'],
+        'category' => ['nullable', Rule::in($this->categoryOptions())],
+
+        'department' => ['nullable', 'string', 'max:255'],
+        'location' => ['nullable', 'string', 'max:255'],
+        'business_unit' => ['nullable', 'string', 'max:255'],
+        'plant' => ['nullable', 'string', 'max:255'],
+
+        'end_user' => ['nullable', 'string', 'max:255'],
+        'responsive' => ['nullable', 'boolean'],
+        'employee_id' => ['nullable', 'string', 'max:255'],
+        'next_maintenance' => ['nullable', 'date'],
+        'operating_system' => ['nullable', 'string', 'max:255'],
+        'confidentiality' => ['nullable', 'integer', 'between:0,3'],
+        'integrity' => ['nullable', 'integer', 'between:0,3'],
+        'availability' => ['nullable', 'integer', 'between:0,3'],
+        'classification' => ['nullable', 'integer', 'between:1,4'],
+        'comments' => ['nullable', 'string'],
+        'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
+    ]);
+
+    $validated['responsive'] = $request->has('responsive');
+
+    $inventory->update($validated);
+
+    $inventory->refresh();
+
+    $newValues = $inventory->only($this->inventoryLogFields());
+
+    $changedOldValues = [];
+    $changedNewValues = [];
+
+    foreach ($newValues as $field => $newValue) {
+        $oldValue = $oldValues[$field] ?? null;
+
+        if ($oldValue != $newValue) {
+            $changedOldValues[$field] = $oldValue;
+            $changedNewValues[$field] = $newValue;
+        }
+    }
+
+    if (!empty($changedNewValues)) {
+        ActivityLogger::log(
+            module: 'inventory',
+            action: 'updated',
+            description: 'Item ' . ($inventory->it_internal_number ?? $inventory->asset_number ?? $inventory->serial_number ?? $inventory->id) . ' was updated.',
+            targetType: 'inventory',
+            targetId: $inventory->id,
+            oldValues: $changedOldValues,
+            newValues: $changedNewValues
+        );
+    }
+
+    return redirect()
+        ->route('inventory', $request->query())
+        ->with('success', 'Asset updated successfully.');
+}
 }
