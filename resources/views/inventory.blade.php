@@ -61,10 +61,13 @@
                             <th class="col-md-custom">A</th>
                             <th class="col-md-custom">Classification</th>
                             <th class="col-md-custom">State</th>
-
                             <!-- Only show Created At column for Admin users -->
                             @if (Auth::user()->user_level === 'Admin')
                             <th class="col-md-custom">Created At</th>
+                            @endif
+                            <!-- Only show Actions column for Read/Write users -->
+                            @if (Auth::user()->user_level !== 'Read')
+                                <th>Actions</th>
                             @endif
                         </tr>
 
@@ -360,6 +363,11 @@
                                     </a>
                                 </div>
                             </th>
+
+                            <!--- Only show blank (Actions) column for Read/Write users -->
+                            @if (Auth::user()->user_level !== 'Read')
+                                <th></th>
+                            @endif
                         </tr>
                     </thead>
                             @endif
@@ -424,14 +432,444 @@
                                     {{ $item->created_at ? $item->created_at->format('Y-m-d H:i') : 'N/A' }}
                                 </td>
                                 @endif
+
+                                <!-- Only show Edit button for Read/Write users -->
+                                @if (Auth::user()->user_level !== 'Read')
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editAssetModal{{ $item->id }}"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                @endif
                             </tr>
+
+                            <!-- Only show Edit modal button for Read/Write users -->
+                            @if (Auth::user()->user_level !== 'Read')
+                                <div class="modal fade" id="editAssetModal{{ $item->id }}" tabindex="-1" aria-labelledby="editAssetModalLabel{{ $item->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                        <div class="modal-content">
+
+                                            <form method="POST" action="{{ route('inventory.update', $item->id) }}">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editAssetModalLabel{{ $item->id }}">
+                                                        Edit Asset - {{ $item->it_internal_number ?? 'N/A' }}
+                                                    </h5>
+
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    <div class="row g-3">
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">IT Internal Number</label>
+                                                            <input type="text" name="it_internal_number" class="form-control" value="{{ old('it_internal_number', $item->it_internal_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Serial Number</label>
+                                                            <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number', $item->serial_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Asset Number</label>
+                                                            <input type="text" name="asset_number" class="form-control" value="{{ old('asset_number', $item->asset_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Description</label>
+                                                            <textarea name="description" class="form-control" rows="2">{{ old('description', $item->description) }}</textarea>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Model</label>
+                                                            <input type="text" name="model" class="form-control" value="{{ old('model', $item->model) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Brand</label>
+                                                            <input type="text" name="brand" class="form-control" value="{{ old('brand', $item->brand) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Category</label>
+                                                            <input type="text" name="category" class="form-control" value="{{ old('category', $item->category) }}">
+                                                        </div>
+
+                                                        {{-- Remove this block if these columns are not in your inventory table --}}
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Department</label>
+                                                            <input type="text" name="department" class="form-control" value="{{ old('department', $item->department) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Location</label>
+                                                            <input type="text" name="location" class="form-control" value="{{ old('location', $item->location) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">BU</label>
+                                                            <input type="text" name="business_unit" class="form-control" value="{{ old('business_unit', $item->business_unit) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Plant</label>
+                                                            <input type="text" name="plant" class="form-control" value="{{ old('plant', $item->plant) }}">
+                                                        </div>
+                                                        {{-- End optional block --}}
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">End User</label>
+                                                            <input type="text" name="end_user" class="form-control" value="{{ old('end_user', $item->end_user) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Employee ID</label>
+                                                            <input type="text" name="employee_id" class="form-control" value="{{ old('employee_id', $item->employee_id) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Operating System</label>
+                                                            <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system', $item->operating_system) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Next Maintenance</label>
+                                                            <input
+                                                                type="date"
+                                                                name="next_maintenance"
+                                                                class="form-control"
+                                                                value="{{ old('next_maintenance', optional($item->next_maintenance)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Classification</label>
+                                                            <input type="text" name="classification" class="form-control" value="{{ old('classification', $item->classification) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">State</label>
+                                                            <select name="state" class="form-select">
+                                                                <option value="active" {{ old('state', $item->state) === 'active' ? 'selected' : '' }}>Active</option>
+                                                                <option value="inactive" {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                                                <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                                                <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
+                                                                <option value="lost" {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}>Lost</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Confidentiality</label>
+                                                            <select name="confidentiality" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('confidentiality', $item->confidentiality) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('confidentiality', $item->confidentiality) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('confidentiality', $item->confidentiality) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('confidentiality', $item->confidentiality) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Integrity</label>
+                                                            <select name="integrity" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('integrity', $item->integrity) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('integrity', $item->integrity) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('integrity', $item->integrity) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('integrity', $item->integrity) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Availability</label>
+                                                            <select name="availability" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('availability', $item->availability) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('availability', $item->availability) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('availability', $item->availability) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('availability', $item->availability) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Comments</label>
+                                                            <textarea name="comments" class="form-control" rows="3">{{ old('comments', $item->comments) }}</textarea>
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <div class="form-check">
+                                                                <input
+                                                                    class="form-check-input"
+                                                                    type="checkbox"
+                                                                    name="responsive"
+                                                                    id="responsive{{ $item->id }}"
+                                                                    value="1"
+                                                                    {{ old('responsive', $item->responsive) ? 'checked' : '' }}
+                                                                >
+
+                                                                <label class="form-check-label" for="responsive{{ $item->id }}">
+                                                                    Has responsive document
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        Cancel
+                                                    </button>
+
+                                                    <button type="submit" class="btn btn-primary">
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                         @empty
                             <tr>
                                 <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
-                                <td colspan="{{ Auth::user()->user_level === 'Admin' ? 22 : 21 }}" class="text-center text-muted">
+                                <td colspan="{{ Auth::user()->user_level === 'Admin' ? 23 : 22 }}" class="text-center text-muted">
                                     No inventory records found.
                                 </td>
+
+                                @if (Auth::user()->user_level !== 'Read')
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editAssetModal{{ $item->id }}"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                @endif
+
+                                <!-- Only show Edit button for Read/Write users -->
+                                @if (Auth::user()->user_level !== 'Read')
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editAssetModal{{ $item->id }}"
+                                        >
+                                            Edit
+                                        </button>
+                                    </td>
+                                @endif
                             </tr>
+
+                            <!-- Only show Edit modal button for Read/Write users -->
+                            @if (Auth::user()->user_level !== 'Read')
+                                <div class="modal fade" id="editAssetModal{{ $item->id }}" tabindex="-1" aria-labelledby="editAssetModalLabel{{ $item->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                        <div class="modal-content">
+
+                                            <form method="POST" action="{{ route('inventory.update', $item->id) }}">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editAssetModalLabel{{ $item->id }}">
+                                                        Edit Asset - {{ $item->it_internal_number ?? 'N/A' }}
+                                                    </h5>
+
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    <div class="row g-3">
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">IT Internal Number</label>
+                                                            <input type="text" name="it_internal_number" class="form-control" value="{{ old('it_internal_number', $item->it_internal_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Serial Number</label>
+                                                            <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number', $item->serial_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Asset Number</label>
+                                                            <input type="text" name="asset_number" class="form-control" value="{{ old('asset_number', $item->asset_number) }}">
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Description</label>
+                                                            <textarea name="description" class="form-control" rows="2">{{ old('description', $item->description) }}</textarea>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Model</label>
+                                                            <input type="text" name="model" class="form-control" value="{{ old('model', $item->model) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Brand</label>
+                                                            <input type="text" name="brand" class="form-control" value="{{ old('brand', $item->brand) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Category</label>
+                                                            <input type="text" name="category" class="form-control" value="{{ old('category', $item->category) }}">
+                                                        </div>
+
+                                                        {{-- Remove this block if these columns are not in your inventory table --}}
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Department</label>
+                                                            <input type="text" name="department" class="form-control" value="{{ old('department', $item->department) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Location</label>
+                                                            <input type="text" name="location" class="form-control" value="{{ old('location', $item->location) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">BU</label>
+                                                            <input type="text" name="business_unit" class="form-control" value="{{ old('business_unit', $item->business_unit) }}">
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Plant</label>
+                                                            <input type="text" name="plant" class="form-control" value="{{ old('plant', $item->plant) }}">
+                                                        </div>
+                                                        {{-- End optional block --}}
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">End User</label>
+                                                            <input type="text" name="end_user" class="form-control" value="{{ old('end_user', $item->end_user) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Employee ID</label>
+                                                            <input type="text" name="employee_id" class="form-control" value="{{ old('employee_id', $item->employee_id) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Operating System</label>
+                                                            <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system', $item->operating_system) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Next Maintenance</label>
+                                                            <input
+                                                                type="date"
+                                                                name="next_maintenance"
+                                                                class="form-control"
+                                                                value="{{ old('next_maintenance', optional($item->next_maintenance)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Classification</label>
+                                                            <input type="text" name="classification" class="form-control" value="{{ old('classification', $item->classification) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">State</label>
+                                                            <select name="state" class="form-select">
+                                                                <option value="active" {{ old('state', $item->state) === 'active' ? 'selected' : '' }}>Active</option>
+                                                                <option value="inactive" {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                                                <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                                                <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
+                                                                <option value="lost" {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}>Lost</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Confidentiality</label>
+                                                            <select name="confidentiality" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('confidentiality', $item->confidentiality) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('confidentiality', $item->confidentiality) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('confidentiality', $item->confidentiality) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('confidentiality', $item->confidentiality) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Integrity</label>
+                                                            <select name="integrity" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('integrity', $item->integrity) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('integrity', $item->integrity) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('integrity', $item->integrity) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('integrity', $item->integrity) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Availability</label>
+                                                            <select name="availability" class="form-select">
+                                                                <option value="">N/A</option>
+                                                                <option value="0" {{ old('availability', $item->availability) == '0' ? 'selected' : '' }}>0</option>
+                                                                <option value="1" {{ old('availability', $item->availability) == '1' ? 'selected' : '' }}>1</option>
+                                                                <option value="2" {{ old('availability', $item->availability) == '2' ? 'selected' : '' }}>2</option>
+                                                                <option value="3" {{ old('availability', $item->availability) == '3' ? 'selected' : '' }}>3</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <label class="form-label">Comments</label>
+                                                            <textarea name="comments" class="form-control" rows="3">{{ old('comments', $item->comments) }}</textarea>
+                                                        </div>
+
+                                                        <div class="col-md-12">
+                                                            <div class="form-check">
+                                                                <input
+                                                                    class="form-check-input"
+                                                                    type="checkbox"
+                                                                    name="responsive"
+                                                                    id="responsive{{ $item->id }}"
+                                                                    value="1"
+                                                                    {{ old('responsive', $item->responsive) ? 'checked' : '' }}
+                                                                >
+
+                                                                <label class="form-check-label" for="responsive{{ $item->id }}">
+                                                                    Has responsive document
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        Cancel
+                                                    </button>
+
+                                                    <button type="submit" class="btn btn-primary">
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endforelse
                     </tbody>
 
