@@ -1,7 +1,7 @@
 /* CUSTOM STYLES FOR THE WEBSITE, AVOID USING BOOTSTRAP PRE-BUILT STYLES*/
 /* This file is imported into app.css, which is the main CSS file for the website. */
 
-/* General wide table styling for stuff that doesn´t fit entirely in the container */
+/* General wide table styling for items that dont fit entirely in the container */
 .wide-table {
     min-width: 4000px;
 }
@@ -53,4 +53,10 @@
     min-width: 240px;
 }
 
-/* End of General wide table styling for stuff that doesn´t fit entirely in the container */
+/* End of General wide table styling for items that dont fit entirely in the container */
+
+/* Custom style for the modal body in the inventory table */
+.inventory-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ActivityLogger; // Import the ActivityLogger service for logs table
 use Illuminate\Validation\Rule;
 use App\Models\Inventory;
 use App\Http\Controllers\Controller;
@@ -147,6 +148,12 @@ public function create()
 
     public function store(Request $request)
     {
+
+    // FORBID READ LEVEL USERS FROM FORCE ADDING ASSETS THROUGH URL OR OTHER MEANS
+    if (auth()->user()->user_level === 'Read') {
+    abort(403, 'You do not have permission to create inventory records.');
+    }
+
         $validated = $request->validate([
             'it_internal_number' => ['nullable', 'string', 'max:255', 'unique:inventory,it_internal_number'],
             'serial_number' => ['nullable', 'string', 'max:255'],
@@ -171,7 +178,40 @@ public function create()
         $validated['responsive'] = $request->has('responsive');
         $validated['created_by'] = auth()->id();
 
-        Inventory::create($validated);
+        $inventory = Inventory::create($validated);
+
+        ActivityLogger::log(
+                module: 'inventory',
+                action: 'created',
+                description: 'Item ' . ($inventory->it_internal_number ?? $inventory->asset_number ?? $inventory->serial_number ?? $inventory->id) . ' was created.',
+                targetType: 'inventory',
+                targetId: $inventory->id,
+                oldValues: null,
+                newValues: [
+                    'it_internal_number' => $inventory->it_internal_number,
+                    'serial_number' => $inventory->serial_number,
+                    'asset_number' => $inventory->asset_number,
+                    'description' => $inventory->description,
+                    'model' => $inventory->model,
+                    'brand' => $inventory->brand,
+                    'category' => $inventory->category,
+                    'department' => $inventory->department,
+                    'location' => $inventory->location,
+                    'business_unit' => $inventory->business_unit,
+                    'plant' => $inventory->plant,
+                    'end_user' => $inventory->end_user,
+                    'responsive' => $inventory->responsive,
+                    'employee_id' => $inventory->employee_id,
+                    'next_maintenance' => $inventory->next_maintenance,
+                    'operating_system' => $inventory->operating_system,
+                    'confidentiality' => $inventory->confidentiality,
+                    'integrity' => $inventory->integrity,
+                    'availability' => $inventory->availability,
+                    'classification' => $inventory->classification,
+                    'comments' => $inventory->comments,
+                    'state' => $inventory->state,
+                    ]
+                );
 
         return redirect()
             ->route('inventory')
