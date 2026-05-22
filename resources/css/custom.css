@@ -1,9 +1,11 @@
 /* CUSTOM STYLES FOR THE WEBSITE, AVOID USING BOOTSTRAP PRE-BUILT STYLES*/
 /* This file is imported into app.css, which is the main CSS file for the website. */
 
-/* General wide table styling for stuff that doesn´t fit entirely in the container */
+/* General wide table styling for items that dont fit entirely in the container */
 .wide-table {
-    min-width: 4000px;
+    width: auto !important;
+    min-width: 0 !important;
+    table-layout: auto;
 }
 
 .wide-table th,
@@ -48,9 +50,57 @@
     max-width: 420px;
 }
 
+.col-date-custom {
+    min-width: 240px;
+}
+
+.col-actions-custom {
+    min-width: 110px;
+}
+
 /* Date range filters */
 .filter-date-range {
     min-width: 240px;
 }
 
-/* End of General wide table styling for stuff that doesn´t fit entirely in the container */
+/* End of General wide table styling for items that dont fit entirely in the container */
+
+/* Custom style for the modal body in the inventory table */
+.inventory-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Sticky headers only for the inventory table */
+.inventory-table-responsive {
+    max-height: 75vh;
+    overflow: auto;
+}
+
+/* Avoid visual gaps behind sticky table headers */
+#inventoryTable {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* First header row: column names */
+#inventoryTable thead tr:first-child th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background-color: #f8f9fa;
+}
+
+/* Second header row: filters */
+#inventoryTable thead tr:nth-child(2) th {
+    position: sticky;
+    top: var(--inventory-first-header-height, 42px);
+    z-index: 4;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Small shadow to separate sticky headers from table content */
+#inventoryTable thead tr:nth-child(2) th {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.08);
+}
