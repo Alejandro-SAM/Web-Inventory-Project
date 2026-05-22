@@ -3,7 +3,9 @@
 
 /* General wide table styling for items that dont fit entirely in the container */
 .wide-table {
-    min-width: 4000px;
+    width: auto !important;
+    min-width: 0 !important;
+    table-layout: auto;
 }
 
 .wide-table th,
@@ -46,6 +48,14 @@
     white-space: normal !important;
     min-width: 300px;
     max-width: 420px;
+}
+
+.col-date-custom {
+    min-width: 240px;
+}
+
+.col-actions-custom {
+    min-width: 110px;
 }
 
 /* Date range filters */

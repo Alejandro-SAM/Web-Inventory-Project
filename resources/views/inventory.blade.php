@@ -34,46 +34,178 @@
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
             <!-- Hidden form for automatic filters end -->
 
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <strong>Inventory Assets</strong>
+
+                <!-- DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
+                    <div class="dropdown">
+        <button
+            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+        >
+            Columns
+        </button>
+
+        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
+            <div class="small text-muted mb-2">
+                Show / hide table columns
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="serial_number" id="toggle_serial_number" checked>
+                <label class="form-check-label" for="toggle_serial_number">Serial Number</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="asset_number" id="toggle_asset_number" checked>
+                <label class="form-check-label" for="toggle_asset_number">Asset Number</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="description" id="toggle_description" checked>
+                <label class="form-check-label" for="toggle_description">Description</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="model" id="toggle_model" checked>
+                <label class="form-check-label" for="toggle_model">Model</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="brand" id="toggle_brand" checked>
+                <label class="form-check-label" for="toggle_brand">Brand</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="category" id="toggle_category" checked>
+                <label class="form-check-label" for="toggle_category">Category</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="department" id="toggle_department" checked>
+                <label class="form-check-label" for="toggle_department">Department</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="location" id="toggle_location" checked>
+                <label class="form-check-label" for="toggle_location">Location</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="business_unit" id="toggle_business_unit" checked>
+                <label class="form-check-label" for="toggle_business_unit">BU</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="plant" id="toggle_plant" checked>
+                <label class="form-check-label" for="toggle_plant">Plant</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="end_user" id="toggle_end_user" checked>
+                <label class="form-check-label" for="toggle_end_user">End User</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="employee_id" id="toggle_employee_id" checked>
+                <label class="form-check-label" for="toggle_employee_id">Employee ID</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="responsive" id="toggle_responsive" checked>
+                <label class="form-check-label" for="toggle_responsive">Responsive</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="next_maintenance" id="toggle_next_maintenance" checked>
+                <label class="form-check-label" for="toggle_next_maintenance">Next Maintenance</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="operating_system" id="toggle_operating_system" checked>
+                <label class="form-check-label" for="toggle_operating_system">OS</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="confidentiality" id="toggle_confidentiality" checked>
+                <label class="form-check-label" for="toggle_confidentiality">C</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="integrity" id="toggle_integrity" checked>
+                <label class="form-check-label" for="toggle_integrity">I</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="availability" id="toggle_availability" checked>
+                <label class="form-check-label" for="toggle_availability">A</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="classification" id="toggle_classification" checked>
+                <label class="form-check-label" for="toggle_classification">Classification</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="state" id="toggle_state" checked>
+                <label class="form-check-label" for="toggle_state">State</label>
+            </div>
+
+            @if (Auth::user()->user_level === 'Admin')
+                <div class="form-check">
+                    <input class="form-check-input inventory-column-toggle" type="checkbox" value="created_at" id="toggle_created_at" checked>
+                    <label class="form-check-label" for="toggle_created_at">Created At</label>
+                </div>
+            @endif
+
+            <hr class="my-2">
+
+            <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="resetInventoryColumns">
+                Reset columns
+            </button>
+        </div>
+    </div>
+            <!-- END OF DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
             </div>
 
             <div class="card-body table-responsive">
 
                 <!-- Inventory table -->
-                <table class="table table-bordered table-hover align-middle wide-table">
+                <table id="inventoryTable" class="table table-bordered table-hover align-middle wide-table">
 
                     <thead class="table-light">
-                        <tr>
-                            <th class="col-md-custom">IT Internal Number</th>
-                            <th class="col-md-custom">Serial Number</th>
-                            <th class="col-md-custom">Asset Number</th>
-                            <th class="col-lg-custom">Description</th>
-                            <th class="col-md-custom">Model</th>
-                            <th class="col-md-custom">Brand</th>
-                            <th class="col-md-custom">Category</th>
-                            <th class="col-md-custom">Department</th>
-                            <th class="col-md-custom">Location</th>
-                            <th class="col-md-custom">BU</th>
-                            <th class="col-md-custom">Plant</th>
-                            <th class="col-md-custom">End User</th>
-                            <th class="col-md-custom">Employee ID</th>
-                            <th class="col-md-custom">Responsive</th>
-                            <th class="col-md-custom">Next Maintenance</th>
-                            <th class="col-md-custom">OS</th>
-                            <th class="col-md-custom">C</th>
-                            <th class="col-md-custom">I</th>
-                            <th class="col-md-custom">A</th>
-                            <th class="col-md-custom">Classification</th>
-                            <th class="col-md-custom">State</th>
-                            <!-- Only show Created At column for Admin users -->
-                            @if (Auth::user()->user_level === 'Admin')
-                            <th class="col-md-custom">Created At</th>
-                            @endif
-                            <!-- Only show Actions column for Read/Write users -->
-                            @if (Auth::user()->user_level !== 'Read')
-                                <th>Actions</th>
-                            @endif
+                    <tr>
+                        <th class="col-md-custom" data-column="it_internal_number">IT Internal Number</th>
+                        <th class="col-md-custom" data-column="serial_number">Serial Number</th>
+                        <th class="col-md-custom" data-column="asset_number">Asset Number</th>
+                        <th class="col-lg-custom" data-column="description">Description</th>
+                        <th class="col-md-custom" data-column="model">Model</th>
+                        <th class="col-md-custom" data-column="brand">Brand</th>
+                        <th class="col-md-custom" data-column="category">Category</th>
+                        <th class="col-md-custom" data-column="department">Department</th>
+                        <th class="col-md-custom" data-column="location">Location</th>
+                        <th class="col-md-custom" data-column="business_unit">BU</th>
+                        <th class="col-md-custom" data-column="plant">Plant</th>
+                        <th class="col-md-custom" data-column="end_user">End User</th>
+                        <th class="col-md-custom" data-column="employee_id">Employee ID</th>
+                        <th class="col-md-custom" data-column="responsive">Responsive</th>
+                        <th class="col-md-custom" data-column="next_maintenance">Next Maintenance</th>
+                        <th class="col-md-custom" data-column="operating_system">OS</th>
+                        <th class="col-md-custom" data-column="confidentiality">C</th>
+                        <th class="col-md-custom" data-column="integrity">I</th>
+                        <th class="col-md-custom" data-column="availability">A</th>
+                        <th class="col-md-custom" data-column="classification">Classification</th>
+                        <th class="col-md-custom" data-column="state">State</th>
+
+                        @if (Auth::user()->user_level === 'Admin')
+                        <th class="col-date-custom" data-column="created_at">Created At</th>
+                        @endif
+
+                        @if (Auth::user()->user_level !== 'Read')
+                        <th class="col-actions-custom" data-column="actions">Actions</th>
+                        @endif
                         </tr>
 
                         <tr>
@@ -237,7 +369,7 @@
                                 </select>
                             </th>
 
-                            <th class="col-md-custom" style="min-width: 220px;">
+                            <th class="col-date-custom" data-column="next_maintenance">
                                 <div class="d-flex gap-1">
                                     <input
                                         form="inventoryFiltersForm"
@@ -368,14 +500,13 @@
                                     </a>
                                 </div>
                             </th>
-
+                            @endif
                             <!--- Only show blank (Actions) column for Read/Write users -->
                             @if (Auth::user()->user_level !== 'Read')
                                 <th></th>
                             @endif
-                        </tr>
+                    </tr>
                     </thead>
-                            @endif
 
                     <tbody>
                         @forelse ($inventoryItems as $item)
@@ -1128,5 +1259,110 @@
     </script>
     @endif
     <!-- End of Error Handling for Add Asset Modal -->
+
+    <!-- Column Collapser script -->
+     <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.getElementById('inventoryTable');
+
+        if (!table) {
+            return;
+        }
+
+        const storageKey = 'inventory_hidden_columns_{{ Auth::user()->user_level }}';
+        const toggles = document.querySelectorAll('.inventory-column-toggle');
+        const resetButton = document.getElementById('resetInventoryColumns');
+
+        function getColumnIndex(columnName) {
+            const headerCells = table.querySelectorAll('thead tr:first-child th');
+
+            for (let index = 0; index < headerCells.length; index++) {
+                if (headerCells[index].dataset.column === columnName) {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        function setColumnVisibility(columnName, visible) {
+            const columnIndex = getColumnIndex(columnName);
+
+            if (columnIndex === -1) {
+                return;
+            }
+
+            const rows = table.querySelectorAll('tr');
+
+            rows.forEach(function (row) {
+                const cell = row.children[columnIndex];
+
+                if (cell) {
+                    cell.classList.toggle('d-none', !visible);
+                }
+            });
+        }
+
+        function getHiddenColumns() {
+            return JSON.parse(localStorage.getItem(storageKey)) || [];
+        }
+
+        function saveHiddenColumns(hiddenColumns) {
+            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+        }
+
+        function applySavedPreferences() {
+            const hiddenColumns = getHiddenColumns();
+
+            toggles.forEach(function (toggle) {
+                const columnName = toggle.value;
+                const shouldBeVisible = !hiddenColumns.includes(columnName);
+
+                toggle.checked = shouldBeVisible;
+                setColumnVisibility(columnName, shouldBeVisible);
+            });
+        }
+
+        toggles.forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                let hiddenColumns = getHiddenColumns();
+                const columnName = this.value;
+
+                if (this.checked) {
+                    hiddenColumns = hiddenColumns.filter(function (item) {
+                        return item !== columnName;
+                    });
+                } else {
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                }
+
+                saveHiddenColumns(hiddenColumns);
+                setColumnVisibility(columnName, this.checked);
+            });
+        });
+
+        if (resetButton) {
+            resetButton.addEventListener('click', function () {
+                localStorage.removeItem(storageKey);
+
+                toggles.forEach(function (toggle) {
+                    toggle.checked = true;
+                    setColumnVisibility(toggle.value, true);
+                });
+            });
+        }
+
+        document.querySelectorAll('.dropdown-menu').forEach(function (dropdown) {
+            dropdown.addEventListener('click', function (event) {
+                event.stopPropagation();
+            });
+        });
+
+        applySavedPreferences();
+    });
+</script>
+    <!-- End of Column Collapser script -->
 
 </x-app-layout>
