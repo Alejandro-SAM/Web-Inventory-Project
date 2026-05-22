@@ -14,14 +14,6 @@
                 </p>
             </div>
 
-            <div>
-                @if (Auth::user()->user_level !== 'Read')
-                    <a href="{{ route('inventory.create') }}" class="btn btn-primary">
-                        Add Asset
-                    </a>
-                @endif
-            </div>
-
             <div class="d-flex gap-2">
                 @if (Auth::user()->user_level !== 'Read')
                     <button
