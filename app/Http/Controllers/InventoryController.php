@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ActivityLogger; // Import the ActivityLogger service for logs table
-use Illuminate\Validation\Rule;
-use App\Models\Inventory;
 use App\Http\Controllers\Controller;
+use App\Imports\InventoryImport;
+use App\Models\Inventory;
+use App\Models\InventoryImportRow;
+use App\Services\ActivityLogger;
+use App\Services\InventoryImportNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Imports\InventoryImport;
-use App\Models\InventoryImportRow;
-use App\Services\InventoryImportNormalizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryController extends Controller
@@ -382,10 +382,10 @@ public function update(Request $request, Inventory $inventory)
         );
     }
 
-        return redirect()
-            ->route('inventory', $request->query())
-            ->with('success', 'Asset updated successfully.');
-    }
+    return redirect()
+        ->route('inventory', $request->query())
+        ->with('success', 'Asset updated successfully.');
+}
 
     // Process the Excel file and send it for review
     public function importPreview(Request $request)
@@ -608,4 +608,5 @@ public function update(Request $request, Inventory $inventory)
             ->route('inventory')
             ->with('success', 'Import cancelled successfully.');
     }
+
 }
