@@ -464,7 +464,33 @@ class InventoryImportNormalizer
             ];
         }
 
+        /*
+            Treat common empty placeholders as null.
+            This prevents values like "N/A" from being marked as invalid dates.
+        */
+        $cleanValue = strtolower(trim((string) $value));
+
+        $nullValues = [
+            'n/a',
+            'na',
+            'none',
+            'null',
+            '-',
+            'no aplica',
+        ];
+
+        if (in_array($cleanValue, $nullValues, true)) {
+            return [
+                'value' => null,
+                'error' => false,
+            ];
+        }
+
         try {
+            /*
+                Excel stores dates as serial numbers in many cases.
+                If the value is numeric, convert it using PhpSpreadsheet.
+            */
             if (is_numeric($value)) {
                 return [
                     'value' => ExcelDate::excelToDateTimeObject($value)->format('Y-m-d'),
@@ -472,6 +498,9 @@ class InventoryImportNormalizer
                 ];
             }
 
+            /*
+                If the value is already a text date, let Carbon parse it.
+            */
             return [
                 'value' => Carbon::parse($value)->format('Y-m-d'),
                 'error' => false,
