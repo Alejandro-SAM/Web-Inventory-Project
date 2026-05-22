@@ -8,6 +8,12 @@ use App\Models\Inventory;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Imports\InventoryImport;
+use App\Models\InventoryImportRow;
+use App\Services\InventoryImportNormalizer;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryController extends Controller
 {
@@ -380,4 +386,227 @@ public function update(Request $request, Inventory $inventory)
         ->route('inventory', $request->query())
         ->with('success', 'Asset updated successfully.');
 }
+
+// Process the Excel file and send it for review
+    public function importPreview(Request $request)
+    {
+        /*
+            Read users cannot upload inventory files.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to upload inventory files.');
+        }
+
+        $request->validate([
+            'inventory_file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        ]);
+
+        $batchId = (string) Str::uuid();
+
+        Excel::import(
+            new InventoryImport($batchId, auth()->id()),
+            $request->file('inventory_file')
+        );
+
+        return redirect()
+            ->route('inventory.import.review', $batchId)
+            ->with('success', 'File processed. Please review the import results.');
+    }
+
+    // General review screen
+    public function importReview(string $batchId)
+    {
+        /*
+            Read users cannot review inventory imports.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to review inventory imports.');
+        }
+
+        $rows = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->orderBy('row_number')
+            ->paginate(20);
+
+        $validCount = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->where('status', 'valid')
+            ->count();
+
+        $invalidCount = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->where('status', 'invalid')
+            ->count();
+
+        $importedCount = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->where('status', 'imported')
+            ->count();
+
+        return view('inventory-import-review', [
+            'batchId' => $batchId,
+            'rows' => $rows,
+            'validCount' => $validCount,
+            'invalidCount' => $invalidCount,
+            'importedCount' => $importedCount,
+        ]);
+    }
+
+    // See only invalid rows for focused review
+    public function reviewInvalidRows(string $batchId)
+    {
+        /*
+            Read users cannot review invalid import rows.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to review import errors.');
+        }
+
+        $rows = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->where('status', 'invalid')
+            ->orderBy('row_number')
+            ->paginate(20);
+
+        return view('inventory-import-invalid', [
+            'batchId' => $batchId,
+            'rows' => $rows,
+        ]);
+    }
+
+    // Edit and revalidate an invalid row
+    public function updateImportRow(Request $request, InventoryImportRow $row, InventoryImportNormalizer $normalizer)
+    {
+        /*
+            Read users cannot edit temporary import rows.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to edit import rows.');
+        }
+
+        /*
+            Prevent users from editing rows uploaded by someone else.
+        */
+        if ((int) $row->created_by !== (int) auth()->id()) {
+            abort(403, 'This import row does not belong to you.');
+        }
+
+        $editedData = [
+            'it_internal_number' => $request->input('it_internal_number'),
+            'serial_number' => $request->input('serial_number'),
+            'asset_number' => $request->input('asset_number'),
+            'description' => $request->input('description'),
+            'model' => $request->input('model'),
+            'brand' => $request->input('brand'),
+            'category' => $request->input('category'),
+            'department' => $request->input('department'),
+            'location' => $request->input('location'),
+            'business_unit' => $request->input('business_unit'),
+            'plant' => $request->input('plant'),
+            'end_user' => $request->input('end_user'),
+            'responsive' => $request->input('responsive'),
+            'employee_id' => $request->input('employee_id'),
+            'comments' => $request->input('comments'),
+            'next_maintenance' => $request->input('next_maintenance'),
+            'operating_system' => $request->input('operating_system'),
+            'confidentiality' => $request->input('confidentiality'),
+            'integrity' => $request->input('integrity'),
+            'availability' => $request->input('availability'),
+            'classification' => $request->input('classification'),
+            'state' => $request->input('state'),
+        ];
+
+        /*
+            Re-normalize edited data.
+            If errors are solved, the row becomes valid.
+        */
+        $result = $normalizer->normalize($editedData);
+
+        $row->update([
+            'raw_data' => $editedData,
+            'normalized_data' => $result['data'],
+            'errors' => $result['errors'],
+            'status' => $result['status'],
+        ]);
+
+        return redirect()
+            ->route('inventory.import.invalid', $row->batch_id)
+            ->with('success', 'Import row updated successfully.');
+    }
+
+    // Confirm import of valid rows
+    public function confirmImport(string $batchId)
+    {
+        /*
+            Read users cannot confirm inventory imports.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to import inventory assets.');
+        }
+
+        $validRows = InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->where('status', 'valid')
+            ->get();
+
+        $imported = 0;
+        $failed = 0;
+
+        DB::transaction(function () use ($validRows, &$imported, &$failed) {
+            foreach ($validRows as $row) {
+                try {
+                    $data = $row->normalized_data;
+                    $data['created_by'] = auth()->id();
+
+                    Inventory::create($data);
+
+                    $row->update([
+                        'status' => 'imported',
+                        'errors' => [],
+                    ]);
+
+                    $imported++;
+                } catch (\Throwable $e) {
+                    /*
+                        Keep the row in the temporary table if final insert fails.
+                    */
+                    $row->update([
+                        'status' => 'invalid',
+                        'errors' => [
+                            'Database insert failed: ' . $e->getMessage(),
+                        ],
+                    ]);
+
+                    $failed++;
+                }
+            }
+        });
+
+        return redirect()
+            ->route('inventory')
+            ->with('success', "Import completed. Imported: {$imported}. Failed: {$failed}.");
+    }
+
+    // Cancel process
+    public function cancelImport(string $batchId)
+    {
+        /*
+            Read users cannot cancel inventory imports.
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to cancel inventory imports.');
+        }
+
+        InventoryImportRow::where('batch_id', $batchId)
+            ->where('created_by', auth()->id())
+            ->whereIn('status', ['valid', 'invalid'])
+            ->update([
+                'status' => 'cancelled',
+            ]);
+
+        return redirect()
+            ->route('inventory')
+            ->with('success', 'Import cancelled successfully.');
+    }
+
 }
