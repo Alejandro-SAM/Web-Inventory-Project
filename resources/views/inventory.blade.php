@@ -2,55 +2,45 @@
 
     <div class="container mt-4">
 
-        <!-- PAGE TITLE -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="mb-0">
-                    Inventory
-                </h1>
+<!-- PAGE TITLE -->
+<div class="mb-4">
+    <h1 class="mb-0">
+        Inventory
+    </h1>
 
-                <p class="text-muted mb-0">
-                    Review, filter and manage IT inventory assets.
-                </p>
-            </div>
-
-            <!-- Show Add Asset button only for users with Create or Admin level -->
-            <div>
-                @if (Auth::user()->user_level !== 'Read')
-                    <button 
-                        type="button" 
-                        class="btn btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#addAssetModal"
-                    >
-                    Add Asset
-                    </button>
-                    @endif
-            <div class="d-flex gap-2">
-                @if (Auth::user()->user_level !== 'Read')
-                    <button
-                        type="button"
-                        class="btn btn-success"
-                        data-bs-toggle="modal"
-                        data-bs-target="#uploadInventoryExcelModal"
-                    >
-                        Upload Excel
-                    </button>
-
-                    <a href="{{ route('inventory.create') }}" class="btn btn-primary">
-                        Add Asset
-                    </a>
-                @endif
-            </div>
-        </div>
+    <p class="text-muted mb-0">
+        Review, filter and manage IT inventory assets.
+    </p>
+</div>
         <div class="card">
 
             <!-- Hidden form for automatic filters -->
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
             <!-- Hidden form for automatic filters end -->
 
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Inventory Assets</strong>
+<div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Inventory Assets</strong>
+
+    <div class="d-flex gap-2 align-items-center">
+        @if (Auth::user()->user_level !== 'Read')
+            <button 
+                type="button" 
+                class="btn btn-sm btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#addAssetModal"
+            >
+                Add Asset
+            </button>
+
+            <button
+                type="button"
+                class="btn btn-sm btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#uploadInventoryExcelModal"
+            >
+                Upload Excel
+            </button>
+        @endif
 
                 <!-- DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
                     <div class="dropdown">
@@ -184,6 +174,7 @@
     </div>
             <!-- END OF DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
             </div>
+        </div>
 
             <div class="card-body p-0">
                 <div class="table-responsive inventory-table-responsive">
