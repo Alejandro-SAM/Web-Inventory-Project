@@ -14,6 +14,18 @@
                 </p>
             </div>
 
+            <!-- Show Add Asset button only for users with Create or Admin level -->
+            <div>
+                @if (Auth::user()->user_level !== 'Read')
+                    <button 
+                        type="button" 
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addAssetModal"
+                    >
+                    Add Asset
+                    </button>
+                    @endif
             <div class="d-flex gap-2">
                 @if (Auth::user()->user_level !== 'Read')
                     <button
@@ -29,20 +41,6 @@
                         Add Asset
                     </a>
                 @endif
-
-            <!-- Show Add Asset button only for users with Create or Admin level -->
-            <div>
-                @if (Auth::user()->user_level !== 'Read')
-                    <button 
-                        type="button" 
-                        class="btn btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#addAssetModal"
-                    >
-                    Add Asset
-                    </button>
-                    @endif
-
             </div>
         </div>
         <div class="card">
@@ -1044,59 +1042,6 @@
     </script>
     <!-- End of Auto-submit filter form on change -->
 
-
-    @if (Auth::user()->user_level !== 'Read')
-        <div class="modal fade" id="uploadInventoryExcelModal" tabindex="-1" aria-labelledby="uploadInventoryExcelModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-
-                    <form method="POST" action="{{ route('inventory.import.preview') }}" enctype="multipart/form-data">
-                        @csrf
-
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="uploadInventoryExcelModalLabel">
-                                Upload Inventory Excel
-                            </h5>
-
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <label class="form-label">Excel file</label>
-
-                            <input
-                                type="file"
-                                name="inventory_file"
-                                class="form-control"
-                                accept=".xlsx,.xls,.csv"
-                                required
-                            >
-
-                            <small class="text-muted d-block mt-2">
-                                The system will process the file first and show a review table before inserting records into inventory.
-                            </small>
-
-                            <div class="alert alert-info mt-3 mb-0">
-                                Compatible headers include: IT Internal Number, Serial Number, Asset Number, Description, Model, Brand, Category, Department, Location, BU, Plant, End User, Responsive, ID Employee, Comments, Next Maintenance preventive, Operation System, Confidentiality, Integrity, Availability, Classification and State.
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-
-                            <button type="submit" class="btn btn-success">
-                                Process File
-                            </button>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-    @endif
-
     <!-- Error Handling for Add Asset Modal -->
      @if ($errors->any())
     <script>
@@ -1247,4 +1192,56 @@
     });
 </script>
     <!-- End of Script for table header height read -->
+
+    @if (Auth::user()->user_level !== 'Read')
+        <div class="modal fade" id="uploadInventoryExcelModal" tabindex="-1" aria-labelledby="uploadInventoryExcelModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <form method="POST" action="{{ route('inventory.import.preview') }}" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadInventoryExcelModalLabel">
+                                Upload Inventory Excel
+                            </h5>
+
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <label class="form-label">Excel file</label>
+
+                            <input
+                                type="file"
+                                name="inventory_file"
+                                class="form-control"
+                                accept=".xlsx,.xls,.csv"
+                                required
+                            >
+
+                            <small class="text-muted d-block mt-2">
+                                The system will process the file first and show a review table before inserting records into inventory.
+                            </small>
+
+                            <div class="alert alert-info mt-3 mb-0">
+                                Compatible headers include: IT Internal Number, Serial Number, Asset Number, Description, Model, Brand, Category, Department, Location, BU, Plant, End User, Responsive, ID Employee, Comments, Next Maintenance preventive, Operation System, Confidentiality, Integrity, Availability, Classification and State.
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-success">
+                                Process File
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    @endif
 </x-app-layout>
