@@ -170,10 +170,11 @@
             <!-- END OF DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
             </div>
 
-            <div class="card-body table-responsive">
+            <div class="card-body p-0">
+                <div class="table-responsive inventory-table-responsive">
 
                 <!-- Inventory table -->
-                <table id="inventoryTable" class="table table-bordered table-hover align-middle wide-table">
+                <table id="inventoryTable" class="table table-bordered table-hover align-middle wide-table mb-0">
 
                     <thead class="table-light">
                     <tr>
@@ -791,6 +792,7 @@
 
                 </table>
             </div>
+        </div>
 
             <div class="card-footer">
                 {{ $inventoryItems->links() }}
@@ -1144,5 +1146,36 @@
     });
 </script>
     <!-- End of Column Collapser script -->
+
+    <!-- Script for table header height read -->
+     <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inventoryTable = document.getElementById('inventoryTable');
+
+        if (!inventoryTable) {
+            return;
+        }
+
+        function updateInventoryStickyHeaderOffset() {
+            const firstHeaderRow = inventoryTable.querySelector('thead tr:first-child');
+
+            if (!firstHeaderRow) {
+                return;
+            }
+
+            const firstHeaderHeight = firstHeaderRow.offsetHeight;
+
+            inventoryTable.style.setProperty(
+                '--inventory-first-header-height',
+                firstHeaderHeight + 'px'
+            );
+        }
+
+        updateInventoryStickyHeaderOffset();
+
+        window.addEventListener('resize', updateInventoryStickyHeaderOffset);
+    });
+</script>
+    <!-- End of Script for table header height read -->
 
 </x-app-layout>
