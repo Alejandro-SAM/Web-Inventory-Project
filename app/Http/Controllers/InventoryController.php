@@ -130,7 +130,7 @@ class InventoryController extends Controller
 
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
-                ->paginate(10)
+                ->paginate(100)
                 ->appends($request->query()),
 
                 'categoryOptions' => $this->categoryOptions(),
