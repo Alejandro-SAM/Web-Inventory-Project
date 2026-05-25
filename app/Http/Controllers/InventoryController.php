@@ -582,6 +582,22 @@ public function update(Request $request, Inventory $inventory)
             }
         });
 
+        if ($imported > 0) {
+            ActivityLogger::log(
+                module: 'inventory',
+                action: 'uploaded_from_excel',
+                description: 'User uploaded ' . $imported . ' items from Excel.',
+                targetType: 'inventory',
+                targetId: null,
+                oldValues: null,
+                newValues: [
+                    'batch_id' => $batchId,
+                    'imported_items' => $imported,
+                    'failed_items' => $failed,
+                ]
+            );
+        }
+
         return redirect()
             ->route('inventory')
             ->with('success', "Import completed. Imported: {$imported}. Failed: {$failed}.");
