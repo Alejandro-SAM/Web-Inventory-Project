@@ -107,12 +107,23 @@ class InventoryImportNormalizer
                 'os',
             ])),
 
-            'classification' => $this->cleanText($this->getValue($row, [
-                'classification',
-                'clasificacion',
-                'clasificación',
-            ])),
+            'classification' => null,
         ];
+
+        /*
+        Normalize asset classification.
+        */
+        $classificationResult = $this->normalizeClassification($this->getValue($row, [
+            'classification',
+            'clasificacion',
+            'clasificación',
+        ]));
+
+        $data['classification'] = $classificationResult['value'];
+
+        if ($classificationResult['error']) {
+        $errors[] = 'Classification is not valid.';
+        }
 
         /*
             Require at least one main identifier.
@@ -554,6 +565,61 @@ class InventoryImportNormalizer
         if (!array_key_exists($value, $map)) {
             return [
                 'value' => 'active',
+                'error' => true,
+            ];
+        }
+
+        return [
+            'value' => $map[$value],
+            'error' => false,
+        ];
+    }
+
+    /**
+     * Normalize classification values to integer codes.
+     */
+    private function normalizeClassification($value): array
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return [
+                'value' => null,
+                'error' => false,
+            ];
+        }
+
+        $value = strtoupper(trim((string) $value));
+
+        /*
+        Normalize spaces to handle values like:
+        D (GENERAL), D(GENERAL), D  (GENERAL)
+        */
+        $value = preg_replace('/\s+/', ' ', $value);
+
+        $map = [
+            '1' => 1,
+            'A' => 1,
+            'A (TOP SECRET)' => 1,
+            'A(TOP SECRET)' => 1,
+
+            '2' => 2,
+            'B' => 2,
+            'B (SECRET)' => 2,
+            'B(SECRET)' => 2,
+
+            '3' => 3,
+            'C' => 3,
+            'C (INTERNAL)' => 3,
+            'C(INTERNAL)' => 3,
+
+            '4' => 4,
+            'D' => 4,
+            'D (GENERAL)' => 4,
+            'D(GENERAL)' => 4,
+        ];
+
+        if (!array_key_exists($value, $map)) {
+            return [
+                'value' => null,
                 'error' => true,
             ];
         }

@@ -536,7 +536,7 @@ public function update(Request $request, Inventory $inventory)
 
     // Confirm import of valid rows
     public function confirmImport(string $batchId)
-    {
+    {        
         /*
             Read users cannot confirm inventory imports.
         */
@@ -567,18 +567,18 @@ public function update(Request $request, Inventory $inventory)
 
                     $imported++;
                 } catch (\Throwable $e) {
-                    /*
-                        Keep the row in the temporary table if final insert fails.
-                    */
-                    $row->update([
-                        'status' => 'invalid',
-                        'errors' => [
-                            'Database insert failed: ' . $e->getMessage(),
-                        ],
-                    ]);
+                /*
+                Keep the row in the temporary table if final insert fails.
+                */
+                $row->update([
+                'status' => 'invalid',
+                'errors' => [
+                'Database insert failed: ' . $e->getMessage(),
+        ],
+    ]);
 
-                    $failed++;
-                }
+    $failed++;
+}
             }
         });
 
