@@ -114,6 +114,9 @@
                             <th>Serial Number</th>
                             <th>Asset Number</th>
                             <th>Description</th>
+                            <th>Warranty Start Date</th>
+                            <th>Warranty Expiry Date</th>
+                            <th>Purchase Origin Country</th>
                             <th>Errors</th>
                         </tr>
                     </thead>
@@ -146,6 +149,9 @@
                                 <td>{{ $data['serial_number'] ?? 'N/A' }}</td>
                                 <td>{{ $data['asset_number'] ?? 'N/A' }}</td>
                                 <td>{{ $data['description'] ?? 'N/A' }}</td>
+                                <td>{{ $data['warranty_start_date'] ?? 'N/A' }}</td>
+                                <td>{{ $data['warranty_expiry_date'] ?? 'N/A' }}</td>
+                                <td>{{ $data['purchase_origin_country'] ?? 'N/A' }}</td>
 
                                 <td>
                                     @if (!empty($errors))
@@ -161,7 +167,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">
+                                <td colspan="10" class="text-center text-muted">
                                     No processed rows found.
                                 </td>
                             </tr>

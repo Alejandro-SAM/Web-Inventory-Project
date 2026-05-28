@@ -104,6 +104,7 @@
                                                         'model' => 'Model',
                                                         'brand' => 'Brand',
                                                         'category' => 'Category',
+                                                        'purchase_origin_country' => 'Purchase Origin Country',
                                                         'department' => 'Department',
                                                         'location' => 'Location',
                                                         'business_unit' => 'BU',
@@ -140,6 +141,26 @@
                                                             name="next_maintenance"
                                                             class="form-control"
                                                             value="{{ $data['next_maintenance'] ?? '' }}"
+                                                        >
+                                                    </div>
+
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Warranty Start Date</label>
+                                                        <input
+                                                            type="date"
+                                                            name="warranty_start_date"
+                                                            class="form-control"
+                                                            value="{{ $data['warranty_start_date'] ?? '' }}"
+                                                        >
+                                                    </div>
+
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Warranty Expiry Date</label>
+                                                        <input
+                                                            type="date"
+                                                            name="warranty_expiry_date"
+                                                            class="form-control"
+                                                            value="{{ $data['warranty_expiry_date'] ?? '' }}"
                                                         >
                                                     </div>
 

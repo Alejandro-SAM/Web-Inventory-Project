@@ -55,6 +55,16 @@ class InventoryImportNormalizer
                 'categoría',
             ])),
 
+            'purchase_origin_country' => $this->cleanText($this->getValue($row, [
+            'purchase_origin_country',
+            'purchase origin country',
+            'purchase country',
+            'origin country',
+            'country of origin',
+            'pais de origen',
+            'país de origen',
+            ])),
+
             'department' => $this->cleanText($this->getValue($row, [
                 'department',
                 'departamento',
@@ -171,6 +181,47 @@ class InventoryImportNormalizer
 
         if ($dateResult['error']) {
             $errors[] = 'Next Maintenance date is not valid.';
+        }
+
+        /*
+    Normalize warranty start date.
+        */
+        $warrantyStartDateResult = $this->normalizeDate($this->getValue($row, [
+            'warranty_start_date',
+            'warranty start date',
+            'warranty start',
+            'start warranty',
+            'fecha inicio garantia',
+            'fecha inicio garantía',
+            'inicio garantia',
+            'inicio garantía',
+        ]));
+
+        $data['warranty_start_date'] = $warrantyStartDateResult['value'];
+
+        if ($warrantyStartDateResult['error']) {
+            $errors[] = 'Warranty Start Date is not valid.';
+        }
+
+        /*
+            Normalize warranty expiry date.
+        */
+        $warrantyExpiryDateResult = $this->normalizeDate($this->getValue($row, [
+            'warranty_expiry_date',
+            'warranty expiry date',
+            'warranty expiration date',
+            'warranty end date',
+            'warranty expires',
+            'fecha fin garantia',
+            'fecha fin garantía',
+            'vencimiento garantia',
+            'vencimiento garantía',
+        ]));
+
+        $data['warranty_expiry_date'] = $warrantyExpiryDateResult['value'];
+
+        if ($warrantyExpiryDateResult['error']) {
+            $errors[] = 'Warranty Expiry Date is not valid.';
         }
 
         /*

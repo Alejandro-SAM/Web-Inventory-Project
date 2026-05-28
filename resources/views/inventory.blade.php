@@ -89,6 +89,21 @@
             </div>
 
             <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="warranty_start_date" id="toggle_warranty_start_date" checked>
+                <label class="form-check-label" for="toggle_warranty_start_date">Warranty Start Date</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="warranty_expiry_date" id="toggle_warranty_expiry_date" checked>
+                <label class="form-check-label" for="toggle_warranty_expiry_date">Warranty Expiry Date</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="purchase_origin_country" id="toggle_purchase_origin_country" checked>
+                <label class="form-check-label" for="toggle_purchase_origin_country">Purchase Origin Country</label>
+            </div>
+
+            <div class="form-check">
                 <input class="form-check-input inventory-column-toggle" type="checkbox" value="department" id="toggle_department" checked>
                 <label class="form-check-label" for="toggle_department">Department</label>
             </div>
@@ -191,6 +206,9 @@
                         <th class="col-md-custom" data-column="model">Model</th>
                         <th class="col-md-custom" data-column="brand">Brand</th>
                         <th class="col-md-custom" data-column="category">Category</th>
+                        <th class="col-md-custom" data-column="warranty_start_date">Warranty Start Date</th>
+                        <th class="col-md-custom" data-column="warranty_expiry_date">Warranty Expiry Date</th>
+                        <th class="col-md-custom" data-column="purchase_origin_country">Purchase Origin Country</th>
                         <th class="col-md-custom" data-column="department">Department</th>
                         <th class="col-md-custom" data-column="location">Location</th>
                         <th class="col-md-custom" data-column="business_unit">BU</th>
@@ -296,6 +314,57 @@
                             </option>
                             @endforeach
                             </select>
+                            </th>
+
+                            <th class="col-md-custom" style="min-width: 220px;">
+                                <div class="d-flex gap-2">
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_start_from"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_start_from') }}"
+                                    >
+
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_start_to"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_start_to') }}"
+                                    >
+                                </div>
+                            </th>
+
+                            <th class="col-md-custom" style="min-width: 220px;">
+                                <div class="d-flex gap-2">
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_expiry_from"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_expiry_from') }}"
+                                    >
+
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_expiry_to"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_expiry_to') }}"
+                                    >
+                                </div>
+                            </th>
+
+                            <th class="col-md-custom">
+                                <input
+                                    form="inventoryFiltersForm"
+                                    type="text"
+                                    name="purchase_origin_country"
+                                    class="form-control form-control-sm auto-filter-input"
+                                    placeholder="Origin country..."
+                                    value="{{ request('purchase_origin_country') }}"
+                                >
                             </th>
 
                             <th class="col-md-custom">
@@ -525,6 +594,9 @@
                                 <td>{{ $item->model ?? 'N/A' }}</td>
                                 <td>{{ $item->brand ?? 'N/A' }}</td>
                                 <td>{{ $item->category ?? 'N/A' }}</td>
+                                <td>{{ $item->warranty_start_date ? $item->warranty_start_date->format('Y-m-d') : 'N/A' }}</td>
+                                <td>{{ $item->warranty_expiry_date ? $item->warranty_expiry_date->format('Y-m-d') : 'N/A' }}</td>
+                                <td>{{ $item->purchase_origin_country ?? 'N/A' }}</td>
                                 <td>{{ $item->department ?? 'N/A' }}</td>
                                 <td>{{ $item->location ?? 'N/A' }}</td>
                                 <td>{{ $item->business_unit ?? 'N/A' }}</td>
@@ -645,6 +717,37 @@
                                                         <div class="col-md-4">
                                                             <label class="form-label">Category</label>
                                                             <input type="text" name="category" class="form-control" value="{{ old('category', $item->category) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Warranty Start Date</label>
+                                                            <input
+                                                                type="date"
+                                                                name="warranty_start_date"
+                                                                class="form-control"
+                                                                value="{{ old('warranty_start_date', optional($item->warranty_start_date)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Warranty Expiry Date</label>
+                                                            <input
+                                                                type="date"
+                                                                name="warranty_expiry_date"
+                                                                class="form-control"
+                                                                value="{{ old('warranty_expiry_date', optional($item->warranty_expiry_date)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Purchase Origin Country</label>
+                                                            <input
+                                                                type="text"
+                                                                name="purchase_origin_country"
+                                                                class="form-control"
+                                                                value="{{ old('purchase_origin_country', $item->purchase_origin_country) }}"
+                                                                placeholder="Example: Mexico"
+                                                            >
                                                         </div>
 
                                                         {{-- Remove this block if these columns are not in your inventory table --}}
@@ -788,7 +891,7 @@
 @empty
     <tr>
         <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
-        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 23 : (Auth::user()->user_level === 'Read' ? 21 : 22) }}" class="text-center text-muted py-4">
+        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 26 : (Auth::user()->user_level === 'Read' ? 24 : 25) }}" class="text-center text-muted py-4">
             No inventory records found.
         </td>
     </tr>
@@ -880,6 +983,37 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Warranty Start Date</label>
+                                <input
+                                    type="date"
+                                    name="warranty_start_date"
+                                    class="form-control"
+                                    value="{{ old('warranty_start_date') }}"
+                                >
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Warranty Expiry Date</label>
+                                <input
+                                    type="date"
+                                    name="warranty_expiry_date"
+                                    class="form-control"
+                                    value="{{ old('warranty_expiry_date') }}"
+                                >
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Origin Country</label>
+                                <input
+                                    type="text"
+                                    name="purchase_origin_country"
+                                    class="form-control"
+                                    value="{{ old('purchase_origin_country') }}"
+                                    placeholder="Example: Mexico"
+                                >
                             </div>
 
                             <div class="col-md-4">
@@ -1216,7 +1350,7 @@
                             </small>
 
                             <div class="alert alert-info mt-3 mb-0">
-                                Compatible headers include: IT Internal Number, Serial Number, Asset Number, Description, Model, Brand, Category, Department, Location, BU, Plant, End User, Responsive, ID Employee, Comments, Next Maintenance preventive, Operation System, Confidentiality, Integrity, Availability, Classification and State.
+                                Compatible headers include: IT Internal Number, Serial Number, Asset Number, Description, Model, Brand, Category, Warranty Start Date, Warranty Expiry Date, Purchase Origin Country, Department, Location, BU, Plant, End User, Responsive, ID Employee, Comments, Next Maintenance preventive, Operation System, Confidentiality, Integrity, Availability, Classification and State.
                             </div>
                         </div>
 

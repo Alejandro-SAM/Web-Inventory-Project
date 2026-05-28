@@ -122,6 +122,26 @@ class InventoryController extends Controller
             $inventoryQuery->whereDate('next_maintenance', '<=', $request->maintenance_to);
         }
 
+        if ($request->filled('warranty_start_from')) {
+        $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
+        }
+
+        if ($request->filled('warranty_start_to')) {
+            $inventoryQuery->whereDate('warranty_start_date', '<=', $request->warranty_start_to);
+        }
+
+        if ($request->filled('warranty_expiry_from')) {
+            $inventoryQuery->whereDate('warranty_expiry_date', '>=', $request->warranty_expiry_from);
+        }
+
+        if ($request->filled('warranty_expiry_to')) {
+            $inventoryQuery->whereDate('warranty_expiry_date', '<=', $request->warranty_expiry_to);
+        }
+
+        if ($request->filled('purchase_origin_country')) {
+            $inventoryQuery->where('purchase_origin_country', 'like', '%' . $request->purchase_origin_country . '%');
+        }
+
         /* Only show the creation dates filter to admin users */
         if ($user->user_level === 'Admin') {
             if ($request->filled('created_from')) {
@@ -163,6 +183,9 @@ private function inventoryLogFields(): array
         'model',
         'brand',
         'category',
+        'warranty_start_date',
+        'warranty_expiry_date',
+        'purchase_origin_country',
         'department',
         'location',
         'business_unit',
@@ -198,6 +221,13 @@ private function inventoryLogFields(): array
             'model' => ['nullable', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', Rule::in($this->categoryOptions())],
+            'warranty_start_date' => ['nullable', 'date'],
+            'warranty_expiry_date' => ['nullable', 'date', 'after_or_equal:warranty_start_date'],
+            'purchase_origin_country' => ['nullable', 'string', 'max:255'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'business_unit' => ['nullable', 'string', 'max:255'],
+            'plant' => ['nullable', 'string', 'max:255'],
             'end_user' => ['nullable', 'string', 'max:255'],
             'responsive' => ['nullable', 'boolean'],
             'employee_id' => ['nullable', 'string', 'max:255'],
@@ -231,6 +261,9 @@ private function inventoryLogFields(): array
                     'model' => $inventory->model,
                     'brand' => $inventory->brand,
                     'category' => $inventory->category,
+                    'warranty_start_date' => $inventory->warranty_start_date,
+                    'warranty_expiry_date' => $inventory->warranty_expiry_date,
+                    'purchase_origin_country' => $inventory->purchase_origin_country,
                     'department' => $inventory->department,
                     'location' => $inventory->location,
                     'business_unit' => $inventory->business_unit,
@@ -331,7 +364,9 @@ public function update(Request $request, Inventory $inventory)
         'model' => ['nullable', 'string', 'max:255'],
         'brand' => ['nullable', 'string', 'max:255'],
         'category' => ['nullable', Rule::in($this->categoryOptions())],
-
+        'warranty_start_date' => ['nullable', 'date'],
+        'warranty_expiry_date' => ['nullable', 'date', 'after_or_equal:warranty_start_date'],
+        'purchase_origin_country' => ['nullable', 'string', 'max:255'],
         'department' => ['nullable', 'string', 'max:255'],
         'location' => ['nullable', 'string', 'max:255'],
         'business_unit' => ['nullable', 'string', 'max:255'],
@@ -499,6 +534,9 @@ public function update(Request $request, Inventory $inventory)
             'model' => $request->input('model'),
             'brand' => $request->input('brand'),
             'category' => $request->input('category'),
+            'warranty_start_date' => $request->input('warranty_start_date'),
+            'warranty_expiry_date' => $request->input('warranty_expiry_date'),
+            'purchase_origin_country' => $request->input('purchase_origin_country'),
             'department' => $request->input('department'),
             'location' => $request->input('location'),
             'business_unit' => $request->input('business_unit'),
