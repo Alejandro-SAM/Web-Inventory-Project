@@ -10,25 +10,64 @@ class DashboardController extends Controller
     public function index()
     {
         /*
-            Dashboard summary cards.
+            Selected plant filter.
 
-            These values are shown at the top of the dashboard to give
-            the user a quick overview of the current inventory status.
+            This filter is received from the dashboard view through the GET parameter "plant".
+            If no plant is selected, the dashboard shows global inventory data.
         */
-        $totalAssets = Inventory::count();
-
-        $activeAssets = Inventory::where('state', 'active')->count();
-
-        $maintenanceAssets = Inventory::where('state', 'maintenance')->count();
+        $selectedPlant = request('plant');
 
         /*
-            Count assets whose warranty will expire within the next 90 days.
+            Plant list for the dashboard filter.
 
-            This helps IT anticipate warranty expiration before assets lose coverage.
+            This list is not filtered because the user must be able to select
+            any available plant from the inventory.
         */
-        $warrantiesExpiringSoonCount = Inventory::whereBetween('warranty_expiry_date', [
+        $plants = Inventory::whereNotNull('plant')
+            ->select('plant')
+            ->distinct()
+            ->orderBy('plant')
+            ->pluck('plant');
+        
+        /*
+            Reusable query helper.
+
+            This allows the dashboard to apply the selected plant filter
+            to most dashboard sections without repeating the same condition.
+        */
+        $inventoryQuery = function () use ($selectedPlant) {
+            $query = Inventory::query();
+
+            if (!empty($selectedPlant)) {
+                $query->where('plant', $selectedPlant);
+            }
+
+            return $query;
+        };
+
+        /*
+            Dashboard summary cards.
+
+            These values respect the selected plant filter, except when no plant
+            is selected, in which case they show global inventory data.
+        */
+        $totalAssets = $inventoryQuery()->count();
+
+        $activeAssets = $inventoryQuery()
+            ->where('state', 'active')
+            ->count();
+
+        $maintenanceAssets = $inventoryQuery()
+            ->where('state', 'maintenance')
+            ->count();
+
+        /*
+            Count assets whose warranty expires within the next 14 days.
+        */
+        $warrantiesExpiringSoonCount = $inventoryQuery()
+            ->whereBetween('warranty_expiry_date', [
                 now()->toDateString(),
-                now()->addDays(90)->toDateString()
+                now()->addDays(14)->toDateString()
             ])
             ->count();
 
@@ -49,7 +88,8 @@ class DashboardController extends Controller
             This shows how many assets belong to each equipment type,
             for example laptops, desktops, monitors, printers, etc.
         */
-        $assetsByCategory = Inventory::select('category', DB::raw('COUNT(*) as total'))
+        $assetsByCategory = $inventoryQuery()
+            ->select('category', DB::raw('COUNT(*) as total'))
             ->whereNotNull('category')
             ->groupBy('category')
             ->orderByDesc('total')
@@ -61,7 +101,8 @@ class DashboardController extends Controller
             This allows IT to quickly compare active, inactive,
             maintenance, disposed or lost assets.
         */
-        $assetsByState = Inventory::select('state', DB::raw('COUNT(*) as total'))
+        $assetsByState = $inventoryQuery()
+            ->select('state', DB::raw('COUNT(*) as total'))
             ->whereNotNull('state')
             ->groupBy('state')
             ->orderByDesc('total')
@@ -73,36 +114,65 @@ class DashboardController extends Controller
             This helps identify which business units have the largest
             amount of assigned inventory assets.
         */
-        $assetsByBusinessUnit = Inventory::select('business_unit', DB::raw('COUNT(*) as total'))
+        $assetsByBusinessUnit = $inventoryQuery()
+            ->select('business_unit', DB::raw('COUNT(*) as total'))
             ->whereNotNull('business_unit')
             ->groupBy('business_unit')
             ->orderByDesc('total')
             ->get();
 
         /*
-            Table data: assets with warranties expiring soon.
+            Dashboard table: warranties expiring within the next 14 days.
 
-            The dashboard only shows the next 10 records to keep the view clean.
+            Only 10 records are shown in the main dashboard to avoid making
+            the page too long.
         */
-        $warrantiesExpiringSoon = Inventory::whereBetween('warranty_expiry_date', [
+        $warrantiesExpiringSoon = $inventoryQuery()
+            ->whereBetween('warranty_expiry_date', [
                 now()->toDateString(),
-                now()->addDays(90)->toDateString()
+                now()->addDays(14)->toDateString()
             ])
             ->orderBy('warranty_expiry_date')
             ->limit(10)
             ->get();
 
         /*
-            Table data: upcoming maintenance.
+            Dashboard table: maintenance scheduled within the next 14 days.
 
-            This shows assets with scheduled maintenance in the next 30 days.
+            Only 10 records are shown in the main dashboard. The full list
+            is available through the "View More" modal.
         */
-        $upcomingMaintenance = Inventory::whereBetween('next_maintenance', [
+        $upcomingMaintenance = $inventoryQuery()
+            ->whereBetween('next_maintenance', [
                 now()->toDateString(),
-                now()->addDays(30)->toDateString()
+                now()->addDays(14)->toDateString()
             ])
             ->orderBy('next_maintenance')
             ->limit(10)
+            ->get();
+
+        /*
+            Full modal list: all future warranty expirations.
+
+            This data is used by the "View More" modal. It is not limited to
+            14 days because the purpose is to show the complete upcoming list.
+        */
+        $allWarrantiesExpiringSoon = $inventoryQuery()
+            ->whereNotNull('warranty_expiry_date')
+            ->whereDate('warranty_expiry_date', '>=', now()->toDateString())
+            ->orderBy('warranty_expiry_date')
+            ->get();
+
+        /*
+            Full modal list: all future maintenance records.
+
+            This data is used by the "View More" modal. It shows all future
+            maintenance dates ordered from closest to furthest.
+        */
+        $allUpcomingMaintenance = $inventoryQuery()
+            ->whereNotNull('next_maintenance')
+            ->whereDate('next_maintenance', '>=', now()->toDateString())
+            ->orderBy('next_maintenance')
             ->get();
 
         /*
@@ -144,7 +214,11 @@ class DashboardController extends Controller
             'assetsByStateLabels',
             'assetsByStateData',
             'assetsByBusinessUnitLabels',
-            'assetsByBusinessUnitData'
+            'assetsByBusinessUnitData',
+            'allWarrantiesExpiringSoon',
+            'allUpcomingMaintenance',
+            'plants',
+            'selectedPlant',
         ));
     }
 }
