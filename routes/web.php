@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController; /* FOR USERS TABLE */
 use App\Http\Controllers\LogsController; /* FOR LOGS TABLE */
 use App\Http\Controllers\InventoryController; /* FOR INVENTORY TABLE */
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -72,6 +73,10 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
 
     Route::post('/inventory/import/{batchId}/cancel', [InventoryController::class, 'cancelImport'])
         ->name('inventory.import.cancel');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware(['auth'])
+        ->name('dashboard');
 
 });
 
