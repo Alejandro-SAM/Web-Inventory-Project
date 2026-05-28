@@ -598,10 +598,11 @@ public function update(Request $request, Inventory $inventory)
 
                     Inventory::create($data);
 
-                    $row->update([
-                        'status' => 'imported',
-                        'errors' => [],
-                    ]);
+                /*
+                    Remove the temporary row after successful import.
+                    Failed rows stay in inventory_import_rows for review.
+                */
+                $row->delete();
 
                     $imported++;
                 } catch (\Throwable $e) {
