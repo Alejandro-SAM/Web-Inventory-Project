@@ -117,11 +117,7 @@ class InventoryImportNormalizer
                 'os',
             ])),
 
-            'classification' => $this->cleanText($this->getValue($row, [
-                'classification',
-                'clasificacion',
-                'clasificación',
-            ])),
+            'classification' => null,
         ];
 
         /*
@@ -163,6 +159,21 @@ class InventoryImportNormalizer
 
         if ($responsiveResult['error']) {
             $errors[] = 'Responsive value is not valid.';
+        }
+
+        /*
+            Normalize classification value.
+        */
+        $classificationResult = $this->normalizeClassification($this->getValue($row, [
+            'classification',
+            'clasificacion',
+            'clasificación',
+        ]));
+
+        $data['classification'] = $classificationResult['value'];
+
+        if ($classificationResult['error']) {
+            $errors[] = 'Classification value is not valid. Use 1, 2, 3, 4, A, B, C, D, A (TOP SECRET), B (SECRET), C(INTERNAL) or D(GENERAL).';
         }
 
         /*
@@ -563,6 +574,70 @@ class InventoryImportNormalizer
             ];
         }
     }
+
+        /**
+         * Convert classification values to tiny integers from 1 to 4.
+         */
+        private function normalizeClassification($value): array
+        {
+            if ($value === null || trim((string) $value) === '') {
+                return [
+                    'value' => null,
+                    'error' => false,
+                ];
+            }
+
+            $value = strtolower(trim((string) $value));
+
+            /*
+                Normalize spaces to make matching more tolerant.
+            */
+            $value = preg_replace('/\s+/', ' ', $value);
+
+            /*
+                Remove spaces before parentheses:
+                "c (internal)" => "c(internal)"
+            */
+            $value = str_replace(' (', '(', $value);
+
+            $map = [
+                '1' => 1,
+                'a' => 1,
+                'a(top secret)' => 1,
+                'a (top secret)' => 1,
+                'top secret' => 1,
+
+                '2' => 2,
+                'b' => 2,
+                'b(secret)' => 2,
+                'b (secret)' => 2,
+                'secret' => 2,
+
+                '3' => 3,
+                'c' => 3,
+                'c(internal)' => 3,
+                'c (internal)' => 3,
+                'internal' => 3,
+
+                '4' => 4,
+                'd' => 4,
+                'd(general)' => 4,
+                'd (general)' => 4,
+                'general' => 4,
+            ];
+
+            if (!array_key_exists($value, $map)) {
+                return [
+                    'value' => null,
+                    'error' => true,
+                ];
+            }
+
+            return [
+                'value' => $map[$value],
+                'error' => false,
+            ];
+        }
 
     /**
      * Normalize state values to inventory enum values.
