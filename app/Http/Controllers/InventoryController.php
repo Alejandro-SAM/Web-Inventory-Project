@@ -432,6 +432,20 @@ public function update(Request $request, Inventory $inventory)
             abort(403, 'You do not have permission to upload inventory files.');
         }
 
+        /*
+            Clean abandoned import batches older than 24 hours.
+            If the oldest row of a batch is older than 24 hours,
+            the whole batch is deleted.
+        */
+        $expiredBatchIds = InventoryImportRow::select('batch_id')
+            ->groupBy('batch_id')
+            ->havingRaw('MIN(created_at) < ?', [now()->subHours(24)])
+            ->pluck('batch_id');
+
+        if ($expiredBatchIds->isNotEmpty()) {
+            InventoryImportRow::whereIn('batch_id', $expiredBatchIds)->delete();
+        }
+
         $request->validate([
             'inventory_file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
         ]);
@@ -572,59 +586,84 @@ public function update(Request $request, Inventory $inventory)
             ->with('success', 'Import row updated successfully.');
     }
 
-    // Confirm import of valid rows
-    public function confirmImport(string $batchId)
-    {
-        /*
-            Read users cannot confirm inventory imports.
-        */
-        if (auth()->user()->user_level === 'Read') {
-            abort(403, 'You do not have permission to import inventory assets.');
-        }
+        // Confirm import of valid rows
+        public function confirmImport(string $batchId)
+        {
+            /*
+                Read users cannot confirm inventory imports.
+            */
+            if (auth()->user()->user_level === 'Read') {
+                abort(403, 'You do not have permission to import inventory assets.');
+            }
 
-        $validRows = InventoryImportRow::where('batch_id', $batchId)
-            ->where('created_by', auth()->id())
-            ->where('status', 'valid')
-            ->get();
+            $validRows = InventoryImportRow::where('batch_id', $batchId)
+                ->where('created_by', auth()->id())
+                ->where('status', 'valid')
+                ->get();
 
-        $imported = 0;
-        $failed = 0;
+            $imported = 0;
+            $failed = 0;
+            $failedRowIds = [];
 
-        DB::transaction(function () use ($validRows, &$imported, &$failed) {
-            foreach ($validRows as $row) {
-                try {
-                    $data = $row->normalized_data;
-                    $data['created_by'] = auth()->id();
+            DB::transaction(function () use ($batchId, $validRows, &$imported, &$failed, &$failedRowIds) {
+                foreach ($validRows as $row) {
+                    try {
+                        $data = $row->normalized_data;
+                        $data['created_by'] = auth()->id();
 
-                    Inventory::create($data);
+                        Inventory::create($data);
+
+                        /*
+                            Remove the temporary row after successful import.
+                        */
+                        $row->delete();
+
+                        $imported++;
+                    } catch (\Throwable $e) {
+                        /*
+                            Keep rows that failed during final insert.
+                            These were valid rows, so a database failure should be reviewable.
+                        */
+                        $row->update([
+                            'status' => 'invalid',
+                            'errors' => [
+                                'Database insert failed: ' . $e->getMessage(),
+                            ],
+                        ]);
+
+                        $failedRowIds[] = $row->id;
+                        $failed++;
+                    }
+                }
 
                 /*
-                    Remove the temporary row after successful import.
-                    Failed rows stay in inventory_import_rows for review.
+                    Remove invalid rows from this batch because the user chose
+                    to import only valid rows and ignore incompatible ones.
                 */
-                $row->delete();
+                $ignoredInvalidRowsQuery = InventoryImportRow::where('batch_id', $batchId)
+                    ->where('created_by', auth()->id())
+                    ->where('status', 'invalid');
 
-                    $imported++;
-                } catch (\Throwable $e) {
-                    /*
-                        Keep the row in the temporary table if final insert fails.
-                    */
-                    $row->update([
-                        'status' => 'invalid',
-                        'errors' => [
-                            'Database insert failed: ' . $e->getMessage(),
-                        ],
-                    ]);
-
-                    $failed++;
+                /*
+                    Do not delete rows that became invalid because Inventory::create() failed.
+                */
+                if (!empty($failedRowIds)) {
+                    $ignoredInvalidRowsQuery->whereNotIn('id', $failedRowIds);
                 }
-            }
-        });
 
-        return redirect()
-            ->route('inventory')
-            ->with('success', "Import completed. Imported: {$imported}. Failed: {$failed}.");
-    }
+                $ignoredInvalidRowsQuery->delete();
+            });
+
+            if ($failed > 0) {
+                return redirect()
+                    ->route('inventory.import.invalid', $batchId)
+                    ->with('error', "Import completed with database errors. Imported: {$imported}. Failed: {$failed}.");
+            }
+
+            return redirect()
+                ->route('inventory')
+                ->with('success', "Import completed. Imported: {$imported}. Ignored invalid rows were removed.");
+        }
 
     // Cancel process
     public function cancelImport(string $batchId)
@@ -639,9 +678,7 @@ public function update(Request $request, Inventory $inventory)
         InventoryImportRow::where('batch_id', $batchId)
             ->where('created_by', auth()->id())
             ->whereIn('status', ['valid', 'invalid'])
-            ->update([
-                'status' => 'cancelled',
-            ]);
+            ->delete();
 
         return redirect()
             ->route('inventory')

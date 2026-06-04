@@ -39,6 +39,15 @@ class InventoryImport implements ToCollection, WithHeadingRow, WithChunkReading
 
             $result = $normalizer->normalize($rawData, $this->seenItNumbers);
 
+            /*
+                Ignore "document" type entries from Excel imports.
+                They should not be stored temporarily, reviewed, or imported.
+            */
+            if ($this->shouldIgnoreRow($result['data'])) {
+                $this->rowNumber++;
+                continue;
+            }
+
             if (!empty($result['data']['it_internal_number'])) {
                 $this->seenItNumbers[] = $result['data']['it_internal_number'];
             }
@@ -77,5 +86,18 @@ class InventoryImport implements ToCollection, WithHeadingRow, WithChunkReading
         }
 
         return true;
+    }
+
+    /**
+     * Determine if an Excel row should be ignored completely.
+     */
+    private function shouldIgnoreRow(array $data): bool
+    {
+        $category = strtolower(trim((string) ($data['category'] ?? '')));
+
+        return in_array($category, [
+            'documento',
+            'document',
+        ], true);
     }
 }

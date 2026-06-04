@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout :hide-navigation="true">
     <div class="container mt-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -9,9 +9,27 @@
                 </p>
             </div>
 
-            <a href="{{ route('inventory.import.review', $batchId) }}" class="btn btn-secondary">
-                Back to Import Review
-            </a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('inventory.import.review', $batchId) }}" class="btn btn-secondary">
+                    Back to Import Review
+                </a>
+
+                <form method="POST" action="{{ route('inventory.import.confirm', $batchId) }}">
+                    @csrf
+
+                    <button type="submit" class="btn btn-success">
+                        Import only valid rows
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('inventory.import.cancel', $batchId) }}">
+                    @csrf
+
+                    <button type="submit" class="btn btn-outline-danger">
+                        Cancel whole import process
+                    </button>
+                </form>
+            </div>
         </div>
 
         @if (session('success'))
