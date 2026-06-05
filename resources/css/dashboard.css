@@ -1,0 +1,318 @@
+/* ==============================
+   DASHBOARD GENERAL LAYOUT
+================================= */
+
+.dashboard-page {
+    background: #f3f6fb;
+    min-height: 100vh;
+}
+
+.dashboard-section {
+    margin-bottom: 1.5rem;
+}
+
+/* ==============================
+   DASHBOARD HERO
+================================= */
+
+.dashboard-hero {
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+}
+
+.dashboard-hero-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.dashboard-hero-subtitle {
+    margin-top: 0.35rem;
+    color: #dbeafe;
+    font-size: 0.95rem;
+}
+
+/* ==============================
+   DASHBOARD FILTER STATUS
+================================= */
+
+.dashboard-filter-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-filter-panel.is-filtered {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.dashboard-filter-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard-filter-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.dashboard-filter-status.all {
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-filter-status.active {
+    color: #1d4ed8;
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+}
+
+.dashboard-filter-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.dashboard-filter-select {
+    min-width: 220px;
+}
+
+.dashboard-filter-note {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 0.65rem;
+    margin-bottom: 0;
+}
+
+/* ==============================
+   DASHBOARD KPI CARDS
+================================= */
+
+.dashboard-kpi-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-kpi-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: #2563eb;
+}
+
+.dashboard-kpi-card.success::before {
+    background: #16a34a;
+}
+
+.dashboard-kpi-card.warning::before {
+    background: #f59e0b;
+}
+
+.dashboard-kpi-card.danger::before {
+    background: #dc2626;
+}
+
+.dashboard-kpi-label {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard-kpi-value {
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.dashboard-kpi-helper {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-top: 0.45rem;
+}
+
+/* ==============================
+   DASHBOARD ACTION CARDS
+================================= */
+
+.dashboard-action-card {
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.dashboard-action-card:hover {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #3b82f6;
+    transform: translateY(-5px);
+    box-shadow: 0 22px 40px rgba(37, 99, 235, 0.25);
+}
+
+.dashboard-action-card:hover p {
+    color: #1e40af;
+}
+
+.dashboard-action-card:hover h2,
+.dashboard-action-card:hover .dashboard-kpi-value {
+    color: #0f172a;
+}
+
+/* ==============================
+   DASHBOARD CHART CARDS
+================================= */
+
+.dashboard-chart-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-chart-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.dashboard-chart-subtitle {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+.dashboard-chart-wrapper {
+    height: 280px;
+    position: relative;
+}
+
+/* ==============================
+   DASHBOARD TABLE CARDS
+================================= */
+
+.dashboard-table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-table-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* ==============================
+   DASHBOARD BUTTONS
+================================= */
+
+.dashboard-clear-button {
+    background: #e5e7eb;
+    color: #374151;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dashboard-clear-button:hover {
+    background: #d1d5db;
+    color: #111827;
+}
+
+.dashboard-clear-button.is-visible {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.dashboard-clear-button.is-visible:hover {
+    background: #bfdbfe;
+}
+
+/* ==============================
+   BACK TO TOP BUTTON
+================================= */
+
+.dashboard-back-to-top {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.28);
+    transition: all 0.2s ease;
+}
+
+.dashboard-back-to-top:hover {
+    background: #1e3a8a;
+    transform: translateY(-3px);
+}
+
+/* ==============================
+   CHANGE COLORS BASED ON PLANT
+================================= */
+
+/* All Plants */
+.dashboard-hero.theme-all-plants {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%);
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.25);
+}
+
+/* Plant B */
+.dashboard-hero.theme-plant-b {
+    background: linear-gradient(135deg, #064e3b 0%, #059669 55%, #34d399 100%);
+    box-shadow: 0 18px 40px rgba(5, 150, 105, 0.28);
+}
+
+/* Plant D */
+.dashboard-hero.theme-plant-d {
+    background: linear-gradient(135deg, #881337 0%, #e11d48 55%, #fb7185 100%);
+    box-shadow: 0 18px 40px rgba(225, 29, 72, 0.28);
+}
+
+/* Plant G */
+.dashboard-hero.theme-plant-g {
+    background: linear-gradient(135deg, #581c87 0%, #7e22ce 55%, #a855f7 100%);
+    box-shadow: 0 18px 40px rgba(126, 34, 206, 0.28);
+}
+
+/* Plant H */
+.dashboard-hero.theme-plant-h {
+    background: linear-gradient(135deg, #7c2d12 0%, #ea580c 55%, #fb923c 100%);
+    box-shadow: 0 18px 40px rgba(234, 88, 12, 0.28);
+}
+
+/* Plant MP */
+.dashboard-hero.theme-plant-mp {
+    background: linear-gradient(135deg, #164e63 0%, #0891b2 55%, #22d3ee 100%);
+    box-shadow: 0 18px 40px rgba(8, 145, 178, 0.28);
+}

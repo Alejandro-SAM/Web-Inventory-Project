@@ -1,11 +1,48 @@
 <x-app-layout>
-    <div class="py-6 scroll-smooth">
+    @php
+        $normalizedSelectedPlant = strtoupper(trim($selectedPlant ?? ''));
+    
+        $plantThemeClass = match ($selectedPlant ?? '') {
+            'B' => 'theme-plant-b',
+            'D' => 'theme-plant-d',
+            'G' => 'theme-plant-g',
+            'H' => 'theme-plant-h',
+            'MP' => 'theme-plant-mp',
+            default => 'theme-all-plants',
+        };
+    @endphp    
+
+    <div class="dashboard-page py-6 scroll-smooth">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Dashboard title --}}
-            <h1 class="text-2xl font-bold mb-6">
-                Inventory Dashboard
-            </h1>
+             {{-- Dashboard hero --}}
+            <div class="dashboard-hero {{ $plantThemeClass }}">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="dashboard-hero-title">
+                            Inventory Dashboard
+                        </h1>
+
+                        <p class="dashboard-hero-subtitle">
+                            Overview of IT assets, warranties, maintenance and plant distribution.
+                        </p>
+                    </div>
+
+                    <div>
+                        @if (!empty($selectedPlant))
+                            <span class="dashboard-filter-status active">
+                                <span class="dashboard-filter-dot"></span>
+                                Filtered by: {{ $selectedPlant }}
+                            </span>
+                        @else
+                            <span class="dashboard-filter-status all">
+                                <span class="dashboard-filter-dot"></span>
+                                Showing all plants
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
 
             {{--
                 Plant filter.
@@ -13,79 +50,95 @@
                 This form reloads the dashboard using a GET parameter.
                 All dashboard sections are filtered by plant except the "Assets by Plant" chart.
             --}}
-            <div class="bg-white p-4 rounded-lg shadow mb-6 max-w-xl">
-                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col md:flex-row md:items-end gap-3">
-                    <div class="flex-1">
-                        <label for="plant" class="block text-sm font-medium text-gray-600 mb-1">
-                            Filter by Plant
-                        </label>
+            <div class="dashboard-filter-panel {{ !empty($selectedPlant) ? 'is-filtered' : '' }} {{ $plantThemeClass }}">
+                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                    <div>
+                        <p class="dashboard-filter-label">
+                            Dashboard scope
+                        </p>
 
-                        <select name="plant"
-                                id="plant"
-                                onchange="showDashboardLoading(); this.form.submit();"
-                                class="w-full rounded border-gray-300 text-sm">
-                            <option value="">All Plants</option>
-
-                            @foreach ($plants as $plant)
-                                <option value="{{ $plant }}" @selected($selectedPlant === $plant)>
-                                    {{ $plant }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if (!empty($selectedPlant))
+                            <p class="dashboard-filter-note">
+                                The dashboard information is currently showing results only for this plant.
+                                The "Assets by Plant" chart remains global for comparison.
+                            </p>
+                        @else
+                            <p class="dashboard-filter-note">
+                                The dashboard is currently showing information from all registered plants.
+                            </p>
+                        @endif
                     </div>
 
-                    <div class="flex gap-2">
-                        <a href="{{ route('dashboard') }}"
-                        onclick="showDashboardLoading();"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">
-                            Clear
-                        </a>
+                    <div class="flex flex-col md:flex-row md:items-end gap-3">
+                        <div>
+                            <label for="plant" class="block text-sm font-medium text-gray-600 mb-1">
+                                Filter by Plant
+                            </label>
+
+                            <select name="plant"
+                                    id="plant"
+                                    onchange="showDashboardLoading(); this.form.submit();"
+                                    class="dashboard-filter-select w-full rounded border-gray-300 text-sm">
+                                <option value="">All Plants</option>
+
+                                @foreach ($plants as $plant)
+                                    <option value="{{ $plant }}" @selected($selectedPlant === $plant)>
+                                        {{ $plant }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <a href="{{ route('dashboard') }}"
+                            onclick="showDashboardLoading();"
+                            class="dashboard-clear-button {{ !empty($selectedPlant) ? 'is-visible' : '' }}">
+                                Clear filter
+                            </a>
+                        </div>
                     </div>
                 </form>
-
-                @if (!empty($selectedPlant))
-                    <p class="text-xs text-gray-500 mt-3">
-                        Current filter: <span class="font-semibold">{{ $selectedPlant }}</span>
-                    </p>
-                @endif
             </div>
 
             {{--
-                Sticky summary cards.
+                Summary cards.
 
-                These cards remain visible while scrolling so the user can keep
-                the main inventory indicators available at all times.
+                These cards show the main inventory indicators for the selected dashboard scope.
             --}}
-            <div class="mb-6">
+            <div class="dashboard-section">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <p class="text-sm text-gray-500">Total Assets</p>
-                        <h2 class="text-2xl font-bold">{{ $totalAssets }}</h2>
+                    <div class="dashboard-kpi-card">
+                        <p class="dashboard-kpi-label">Total Assets</p>
+                        <h2 class="dashboard-kpi-value">{{ $totalAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Registered IT assets
+                        </p>
                     </div>
 
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <p class="text-sm text-gray-500">Active Assets</p>
-                        <h2 class="text-2xl font-bold">{{ $activeAssets }}</h2>
+                    <div class="dashboard-kpi-card success">
+                        <p class="dashboard-kpi-label">Active Assets</p>
+                        <h2 class="dashboard-kpi-value">{{ $activeAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Currently active assets
+                        </p>
                     </div>
 
-                    {{--
-                        This card works as a shortcut to the upcoming maintenance section.
-                    --}}
                     <a href="#upcoming-maintenance-section"
-                    class="dashboard-action-card bg-white p-4 rounded-lg shadow cursor-pointer block">
-                        <p class="text-sm text-gray-500">In Maintenance</p>
-                        <h2 class="text-2xl font-bold">{{ $maintenanceAssets }}</h2>
-                        <p class="text-xs text-gray-400 mt-2">Click to view related assets</p>
+                    class="dashboard-kpi-card dashboard-action-card warning block">
+                        <p class="dashboard-kpi-label">In Maintenance</p>
+                        <h2 class="dashboard-kpi-value">{{ $maintenanceAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Click to view related assets
+                        </p>
                     </a>
 
-                    {{--
-                        This card works as a shortcut to the warranties section.
-                    --}}
                     <a href="#warranties-expiring-section"
-                    class="dashboard-action-card bg-white p-4 rounded-lg shadow cursor-pointer block">
-                        <p class="text-sm text-gray-500">Warranties Expiring Soon</p>
-                        <h2 class="text-2xl font-bold">{{ $warrantiesExpiringSoonCount }}</h2>
-                        <p class="text-xs text-gray-400 mt-2">Click to view related assets</p>
+                    class="dashboard-kpi-card dashboard-action-card danger block">
+                        <p class="dashboard-kpi-label">Warranties Expiring Soon</p>
+                        <h2 class="dashboard-kpi-value">{{ $warrantiesExpiringSoonCount }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Click to view related assets
+                        </p>
                     </a>
                 </div>
             </div>
@@ -96,24 +149,48 @@
                 Each canvas is used by Chart.js to render a different inventory chart.
             --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Plant</h2>
-                    <canvas id="assetsByPlantChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <h2 class="dashboard-chart-title">Assets by Plant</h2>
+                    <p class="dashboard-chart-subtitle">
+                        Global distribution of assets by plant.
+                    </p>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByPlantChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Category</h2>
-                    <canvas id="assetsByCategoryChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <h2 class="dashboard-chart-title">Assets by Category</h2>
+                    <p class="dashboard-chart-subtitle">
+                        Asset distribution by registered category.
+                    </p>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByCategoryChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by State</h2>
-                    <canvas id="assetsByStateChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <h2 class="dashboard-chart-title">Assets by State</h2>
+                    <p class="dashboard-chart-subtitle">
+                        Current status of the selected asset scope.
+                    </p>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByStateChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Business Unit</h2>
-                    <canvas id="assetsByBusinessUnitChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <h2 class="dashboard-chart-title">Assets by Business Unit</h2>
+                    <p class="dashboard-chart-subtitle">
+                        Asset distribution by business unit.
+                    </p>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByBusinessUnitChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -567,6 +644,27 @@
         const assetsByBusinessUnitData = @json($assetsByBusinessUnitData);
 
         /*
+            More colorful chart palette.
+
+            These colors are used across all dashboard charts to make the dashboard
+            easier to read and more visually attractive.
+        */
+        const chartColors = [
+            '#2563eb', // Blue
+            '#22c55e', // Green
+            '#f97316', // Orange
+            '#ef4444', // Red
+            '#a855f7', // Purple
+            '#06b6d4', // Cyan
+            '#eab308', // Yellow
+            '#ec4899', // Pink
+            '#14b8a6', // Teal
+            '#6366f1', // Indigo
+            '#84cc16', // Lime
+            '#f43f5e'  // Rose
+        ];
+
+        /*
             Reusable bar chart function.
 
             This avoids repeating the same Chart.js configuration
@@ -580,11 +678,18 @@
                     datasets: [{
                         label: label,
                         data: data,
-                        borderWidth: 1
+                        backgroundColor: chartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: chartColors,
+                        hoverBorderColor: '#0f172a',
+                        hoverBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             display: false
@@ -615,11 +720,15 @@
                     datasets: [{
                         label: label,
                         data: data,
-                        borderWidth: 1
+                        backgroundColor: chartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 10
                     }]
                 },
                 options: {
-                    responsive: true
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
             });
         }
@@ -655,34 +764,6 @@
             'Assets by Business Unit'
         );
     </script>
-    <style>
-        /*
-            Dashboard interactive cards.
-
-            These cards are clickable shortcuts, so the hover state is intentionally
-            stronger to make the interaction clearer for the user.
-        */
-        .dashboard-action-card {
-            transition: all 0.25s ease;
-            border: 1px solid transparent;
-            background: #ffffff;
-        }
-
-        .dashboard-action-card:hover {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-color: #3b82f6;
-            transform: translateY(-5px);
-            box-shadow: 0 22px 40px rgba(37, 99, 235, 0.25);
-        }
-
-        .dashboard-action-card:hover p {
-            color: #1e40af;
-        }
-
-        .dashboard-action-card:hover h2 {
-            color: #0f172a;
-        }
-    </style>
 
     {{--
         Back to top button.
@@ -692,7 +773,7 @@
     <button type="button"
             id="backToTopButton"
             onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            class="hidden fixed bottom-6 right-6 z-50 px-4 py-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700">
+            class="dashboard-back-to-top hidden fixed bottom-6 right-6 z-50 flex items-center justify-center">
         ↑
     </button>
 
@@ -717,9 +798,9 @@
         This appears when the user changes the plant filter.
     --}}
     <div id="dashboardLoading"
-        class="hidden fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white px-6 py-4 rounded-lg shadow text-sm text-gray-700">
-            Loading dashboard...
+        class="hidden fixed inset-0 z-50 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-white px-6 py-4 rounded-xl shadow text-sm text-gray-700 border border-gray-200">
+            Updating dashboard filter...
         </div>
     </div>
 
