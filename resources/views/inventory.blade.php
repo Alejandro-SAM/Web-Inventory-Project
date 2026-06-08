@@ -228,9 +228,7 @@
                         <th class="col-date-custom" data-column="created_at">Created At</th>
                         @endif
 
-                        @if (Auth::user()->user_level !== 'Read')
                         <th class="col-actions-custom" data-column="actions">Actions</th>
-                        @endif
                         </tr>
 
                         <tr>
@@ -577,10 +575,8 @@
                                 </div>
                             </th>
                             @endif
-                            <!--- Only show blank (Actions) column for Read/Write users -->
-                            @if (Auth::user()->user_level !== 'Read')
+                            <!--- Blank actions column -->
                                 <th></th>
-                            @endif
                     </tr>
                     </thead>
 
@@ -648,9 +644,10 @@
                                 </td>
                                 @endif
 
-                                <!-- Only show Edit button for Read/Write users -->
-                                @if (Auth::user()->user_level !== 'Read')
-                                    <td>
+                                <!-- Actions -->
+                                <td>
+                                    <!-- Hide edit button only for Read users -->
+                                    @if (Auth::user()->user_level !== 'Read')
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-warning"
@@ -659,8 +656,16 @@
                                         >
                                             Edit
                                         </button>
-                                    </td>
-                                @endif
+                                    @endif
+
+                                    <!-- Show Print Data button globally -->
+                                    <a
+                                        href="{{ route('inventory.print-data', $item->id) }}"
+                                        class="btn btn-sm btn-info text-white"
+                                    >
+                                        Print Data
+                                    </a>
+                                </td>
                             </tr>
 
                             <!-- Only show Edit modal button for Read/Write users -->
@@ -891,7 +896,7 @@
 @empty
     <tr>
         <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
-        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 26 : (Auth::user()->user_level === 'Read' ? 24 : 25) }}" class="text-center text-muted py-4">
+        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 26 : 25 }}" class="text-center text-muted py-4">
             No inventory records found.
         </td>
     </tr>

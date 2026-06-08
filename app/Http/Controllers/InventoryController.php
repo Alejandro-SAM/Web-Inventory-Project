@@ -685,4 +685,51 @@ public function update(Request $request, Inventory $inventory)
             ->with('success', 'Import cancelled successfully.');
     }
 
+    // Download print data for a specific inventory item
+    
+    public function downloadPrintData(Inventory $inventory)
+    {
+        /*
+            Read users can download print data because this action
+            does not modify inventory records.
+        */
+
+        $fileName = 'current_asset_label.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function () use ($inventory) {
+            $file = fopen('php://output', 'w');
+
+            /*
+                UTF-8 BOM helps Excel and some Windows tools
+                read accents and special characters correctly.
+            */
+            fwrite($file, "\xEF\xBB\xBF");
+
+            fputcsv($file, [
+                'it_internal_number',
+                'serial_number',
+                'asset_number',
+                'plant',
+                'end_user',
+            ]);
+
+            fputcsv($file, [
+                $inventory->it_internal_number ?? '',
+                $inventory->serial_number ?? '',
+                $inventory->asset_number ?? '',
+                $inventory->plant ?? '',
+                $inventory->end_user ?? '',
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
 }

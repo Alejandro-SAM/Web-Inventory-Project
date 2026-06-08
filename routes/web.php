@@ -54,6 +54,10 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
 
     Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])
         ->name('inventory.update');
+
+    Route::get('/inventory/{inventory}/print-data', [InventoryController::class, 'downloadPrintData'])
+        ->middleware(['auth'])
+        ->name('inventory.print-data'); // For downloading print data for a specific inventory item
     
     Route::post('/inventory/import/preview', [InventoryController::class, 'importPreview'])
         ->name('inventory.import.preview');
