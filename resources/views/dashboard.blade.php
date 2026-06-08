@@ -1,8 +1,8 @@
 <x-app-layout>
     @php
         $normalizedSelectedPlant = strtoupper(trim($selectedPlant ?? ''));
-    
-        $plantThemeClass = match ($selectedPlant ?? '') {
+
+        $plantThemeClass = match ($normalizedSelectedPlant) {
             'B' => 'theme-plant-b',
             'D' => 'theme-plant-d',
             'G' => 'theme-plant-g',
@@ -10,14 +10,14 @@
             'MP' => 'theme-plant-mp',
             default => 'theme-all-plants',
         };
-    @endphp    
+    @endphp
 
     <div class="dashboard-page py-6 scroll-smooth">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-             {{-- Dashboard hero --}}
+            {{-- Dashboard hero with integrated plant filter --}}
             <div class="dashboard-hero {{ $plantThemeClass }}">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
                     <div>
                         <h1 class="dashboard-hero-title">
                             Inventory Dashboard
@@ -28,57 +28,18 @@
                         </p>
                     </div>
 
-                    <div>
-                        @if (!empty($selectedPlant))
-                            <span class="dashboard-filter-status active">
-                                <span class="dashboard-filter-dot"></span>
-                                Filtered by: {{ $selectedPlant }}
-                            </span>
-                        @else
-                            <span class="dashboard-filter-status all">
-                                <span class="dashboard-filter-dot"></span>
-                                Showing all plants
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{--
-                Plant filter.
-
-                This form reloads the dashboard using a GET parameter.
-                All dashboard sections are filtered by plant except the "Assets by Plant" chart.
-            --}}
-            <div class="dashboard-filter-panel {{ !empty($selectedPlant) ? 'is-filtered' : '' }} {{ $plantThemeClass }}">
-                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-                    <div>
-                        <p class="dashboard-filter-label">
-                            Dashboard scope
-                        </p>
-
-                        @if (!empty($selectedPlant))
-                            <p class="dashboard-filter-note">
-                                The dashboard information is currently showing results only for this plant.
-                                The "Assets by Plant" chart remains global for comparison.
-                            </p>
-                        @else
-                            <p class="dashboard-filter-note">
-                                The dashboard is currently showing information from all registered plants.
-                            </p>
-                        @endif
-                    </div>
-
-                    <div class="flex flex-col md:flex-row md:items-end gap-3">
+                    <form method="GET"
+                          action="{{ route('dashboard') }}"
+                          class="dashboard-hero-filter">
                         <div>
-                            <label for="plant" class="block text-sm font-medium text-gray-600 mb-1">
+                            <label for="plant" class="dashboard-hero-filter-label">
                                 Filter by Plant
                             </label>
 
                             <select name="plant"
                                     id="plant"
                                     onchange="showDashboardLoading(); this.form.submit();"
-                                    class="dashboard-filter-select w-full rounded border-gray-300 text-sm">
+                                    class="dashboard-hero-filter-select">
                                 <option value="">All Plants</option>
 
                                 @foreach ($plants as $plant)
@@ -89,15 +50,13 @@
                             </select>
                         </div>
 
-                        <div>
-                            <a href="{{ route('dashboard') }}"
-                            onclick="showDashboardLoading();"
-                            class="dashboard-clear-button {{ !empty($selectedPlant) ? 'is-visible' : '' }}">
-                                Clear filter
-                            </a>
-                        </div>
-                    </div>
-                </form>
+                        <a href="{{ route('dashboard') }}"
+                           onclick="showDashboardLoading();"
+                           class="dashboard-hero-clear-button {{ !empty($selectedPlant) ? 'is-visible' : '' }}">
+                            Clear filter
+                        </a>
+                    </form>
+                </div>
             </div>
 
             {{--
@@ -124,7 +83,11 @@
                     </div>
 
                     <a href="#upcoming-maintenance-section"
-                    class="dashboard-kpi-card dashboard-action-card warning block">
+                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link warning block">
+                        <div class="dashboard-kpi-link-arrow">
+                            ↓
+                        </div>
+
                         <p class="dashboard-kpi-label">In Maintenance</p>
                         <h2 class="dashboard-kpi-value">{{ $maintenanceAssets }}</h2>
                         <p class="dashboard-kpi-helper">
@@ -133,7 +96,11 @@
                     </a>
 
                     <a href="#warranties-expiring-section"
-                    class="dashboard-kpi-card dashboard-action-card danger block">
+                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link danger block">
+                        <div class="dashboard-kpi-link-arrow">
+                            ↓
+                        </div>
+
                         <p class="dashboard-kpi-label">Warranties Expiring Soon</p>
                         <h2 class="dashboard-kpi-value">{{ $warrantiesExpiringSoonCount }}</h2>
                         <p class="dashboard-kpi-helper">
@@ -161,10 +128,22 @@
                 </div>
 
                 <div class="dashboard-chart-card">
-                    <h2 class="dashboard-chart-title">Assets by Category</h2>
-                    <p class="dashboard-chart-subtitle">
-                        Asset distribution by registered category.
-                    </p>
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by Category</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Asset distribution by registered category.
+                            </p>
+                        </div>
+
+                        <button type="button"
+                                class="dashboard-chart-filter-toggle"
+                                onclick="toggleChartFilter('categoryChartFilters')">
+                            Filter columns
+                        </button>
+                    </div>
+
+                    <div id="categoryChartFilters" class="dashboard-chart-filter-panel hidden"></div>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByCategoryChart"></canvas>
@@ -183,10 +162,22 @@
                 </div>
 
                 <div class="dashboard-chart-card">
-                    <h2 class="dashboard-chart-title">Assets by Business Unit</h2>
-                    <p class="dashboard-chart-subtitle">
-                        Asset distribution by business unit.
-                    </p>
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by Business Unit</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Asset distribution by business unit.
+                            </p>
+                        </div>
+
+                        <button type="button"
+                                class="dashboard-chart-filter-toggle"
+                                onclick="toggleChartFilter('businessUnitChartFilters')">
+                            Filter columns
+                        </button>
+                    </div>
+
+                    <div id="businessUnitChartFilters" class="dashboard-chart-filter-panel hidden"></div>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByBusinessUnitChart"></canvas>
@@ -208,7 +199,7 @@
                     - Remaining warranty time
                     - Details button
                 --}}
-                <div id="warranties-expiring-section" class="bg-white p-5 rounded-lg shadow scroll-mt-32">
+                <div id="warranties-expiring-section" class="dashboard-table-card scroll-mt-32">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-semibold">Warranties Expiring Soon</h2>
@@ -217,11 +208,13 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                onclick="document.getElementById('all-warranties-modal').showModal()"
-                                class="px-3 py-2 text-xs bg-gray-800 text-white rounded hover:bg-gray-700">
-                            View More
-                        </button>
+                        <select id="warrantyRangeFilter"
+                                onchange="handleWarrantyRangeFilter(this.value)"
+                                class="text-xs rounded border-gray-300">
+                            <option value="14">View within 14 days</option>
+                            <option value="3months">View within 1 to 3 months</option>
+                            <option value="all">View all</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -233,7 +226,7 @@
                                     <th class="text-left py-2">Details</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="warrantyRows14Days">
                                 @forelse ($warrantiesExpiringSoon as $asset)
                                     @php
                                         /*
@@ -377,6 +370,124 @@
                                     </tr>
                                 @endforelse
                             </tbody>
+
+                            <tbody id="warrantyRowsThreeMonths" class="hidden">
+                                @forelse ($warrantiesExpiringThreeMonths as $asset)
+                                    @php
+                                        $daysLeft = now()
+                                            ->startOfDay()
+                                            ->diffInDays(\Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(), false);
+                                    @endphp
+
+                                    <tr class="border-b">
+                                        <td class="py-2 font-medium">
+                                            {{ $asset->it_internal_number }}
+                                        </td>
+
+                                        <td class="py-2">
+                                            @if ($daysLeft > 1)
+                                                {{ $daysLeft }} days left
+                                            @elseif ($daysLeft === 1)
+                                                1 day left
+                                            @elseif ($daysLeft === 0)
+                                                Expires today
+                                            @else
+                                                Expired
+                                            @endif
+                                        </td>
+
+                                        <td class="py-2">
+                                            <button type="button"
+                                                    onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').showModal()"
+                                                    class="px-3 py-1 bg-gray-800 text-white rounded text-xs hover:bg-gray-700">
+                                                View Details
+                                            </button>
+
+                                            <dialog id="warranty-details-{{ $asset->id }}-three-months" class="rounded-lg shadow-xl p-0 w-full max-w-2xl">
+                                                <div class="p-5">
+                                                    <div class="flex justify-between items-center mb-4">
+                                                        <h3 class="text-lg font-semibold">
+                                                            Asset Warranty Details
+                                                        </h3>
+
+                                                        <button type="button"
+                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
+                                                                class="text-gray-500 hover:text-gray-800 text-xl">
+                                                            &times;
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <p class="text-gray-500">IT Number</p>
+                                                            <p class="font-medium">{{ $asset->it_internal_number }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Serial Number</p>
+                                                            <p class="font-medium">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Asset Number</p>
+                                                            <p class="font-medium">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Category</p>
+                                                            <p class="font-medium">{{ $asset->category ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Brand</p>
+                                                            <p class="font-medium">{{ $asset->brand ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Model</p>
+                                                            <p class="font-medium">{{ $asset->model ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Plant</p>
+                                                            <p class="font-medium">{{ $asset->plant ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Business Unit</p>
+                                                            <p class="font-medium">{{ $asset->business_unit ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">End User</p>
+                                                            <p class="font-medium">{{ $asset->end_user ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Warranty Expiry Date</p>
+                                                            <p class="font-medium">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 text-right">
+                                                        <button type="button"
+                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
+                                                                class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+                                                            Close
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </dialog>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="py-3 text-gray-500">
+                                            No warranties expiring within 1 to 3 months.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -386,7 +497,7 @@
 
                     The In Maintenance card redirects the user to this section.
                 --}}
-                <div id="upcoming-maintenance-section" class="bg-white p-5 rounded-lg shadow scroll-mt-32">
+                <div id="upcoming-maintenance-section" class="dashboard-table-card scroll-mt-32">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-semibold">Upcoming Maintenance</h2>
@@ -395,11 +506,13 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                onclick="document.getElementById('all-maintenance-modal').showModal()"
-                                class="px-3 py-2 text-xs bg-gray-800 text-white rounded hover:bg-gray-700">
-                            View More
-                        </button>
+                        <select id="maintenanceRangeFilter"
+                                onchange="handleMaintenanceRangeFilter(this.value)"
+                                class="text-xs rounded border-gray-300">
+                            <option value="14">View within 14 days</option>
+                            <option value="3months">View within 1 to 3 months</option>
+                            <option value="all">View all</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -412,7 +525,7 @@
                                     <th class="text-left py-2">Maintenance Date</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="maintenanceRows14Days">
                                 @forelse ($upcomingMaintenance as $asset)
                                     <tr class="border-b">
                                         <td class="py-2">{{ $asset->it_internal_number }}</td>
@@ -424,6 +537,23 @@
                                     <tr>
                                         <td colspan="4" class="py-3 text-gray-500">
                                             No upcoming maintenance.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+
+                            <tbody id="maintenanceRowsThreeMonths" class="hidden">
+                                @forelse ($upcomingMaintenanceThreeMonths as $asset)
+                                    <tr class="border-b">
+                                        <td class="py-2">{{ $asset->it_internal_number }}</td>
+                                        <td class="py-2">{{ $asset->category }}</td>
+                                        <td class="py-2">{{ $asset->end_user }}</td>
+                                        <td class="py-2">{{ $asset->next_maintenance }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-3 text-gray-500">
+                                            No upcoming maintenance within 1 to 3 months.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -628,7 +758,6 @@
     <script>
         /*
             Convert Laravel collections into JavaScript arrays.
-
             Laravel safely passes PHP data to JavaScript.
         */
         const assetsByPlantLabels = @json($assetsByPlantLabels);
@@ -643,35 +772,25 @@
         const assetsByBusinessUnitLabels = @json($assetsByBusinessUnitLabels);
         const assetsByBusinessUnitData = @json($assetsByBusinessUnitData);
 
-        /*
-            More colorful chart palette.
-
-            These colors are used across all dashboard charts to make the dashboard
-            easier to read and more visually attractive.
-        */
         const chartColors = [
-            '#2563eb', // Blue
-            '#22c55e', // Green
-            '#f97316', // Orange
-            '#ef4444', // Red
-            '#a855f7', // Purple
-            '#06b6d4', // Cyan
-            '#eab308', // Yellow
-            '#ec4899', // Pink
-            '#14b8a6', // Teal
-            '#6366f1', // Indigo
-            '#84cc16', // Lime
-            '#f43f5e'  // Rose
+            '#2563eb',
+            '#22c55e',
+            '#f97316',
+            '#ef4444',
+            '#a855f7',
+            '#06b6d4',
+            '#eab308',
+            '#ec4899',
+            '#14b8a6',
+            '#6366f1',
+            '#84cc16',
+            '#f43f5e'
         ];
 
-        /*
-            Reusable bar chart function.
+        const dashboardCharts = {};
 
-            This avoids repeating the same Chart.js configuration
-            for every bar chart in the dashboard.
-        */
         function createBarChart(canvasId, labels, data, label) {
-            new Chart(document.getElementById(canvasId), {
+            const chart = new Chart(document.getElementById(canvasId), {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -705,15 +824,14 @@
                     }
                 }
             });
+
+            dashboardCharts[canvasId] = chart;
+
+            return chart;
         }
 
-        /*
-            Reusable doughnut chart function.
-
-            This is used for values with fewer categories, such as asset states.
-        */
         function createDoughnutChart(canvasId, labels, data, label) {
-            new Chart(document.getElementById(canvasId), {
+            const chart = new Chart(document.getElementById(canvasId), {
                 type: 'doughnut',
                 data: {
                     labels: labels,
@@ -731,12 +849,77 @@
                     maintainAspectRatio: false
                 }
             });
+
+            dashboardCharts[canvasId] = chart;
+
+            return chart;
         }
 
-        /*
-            Render dashboard charts.
-        */
-        createBarChart(
+        function toggleChartFilter(panelId) {
+            const panel = document.getElementById(panelId);
+
+            if (!panel) {
+                return;
+            }
+
+            panel.classList.toggle('hidden');
+        }
+
+        function buildChartColumnFilters(panelId, chartId, labels, data, datasetLabel) {
+            const panel = document.getElementById(panelId);
+
+            if (!panel) {
+                return;
+            }
+
+            panel.innerHTML = '';
+
+            const list = document.createElement('div');
+            list.className = 'dashboard-chart-filter-list';
+
+            labels.forEach((itemLabel) => {
+                const labelElement = document.createElement('label');
+                labelElement.className = 'dashboard-chart-filter-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.value = itemLabel;
+
+                checkbox.addEventListener('change', () => {
+                    const checkedLabels = Array
+                        .from(panel.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(input => input.value);
+
+                    const filteredLabels = [];
+                    const filteredData = [];
+
+                    labels.forEach((originalLabel, originalIndex) => {
+                        if (checkedLabels.includes(originalLabel)) {
+                            filteredLabels.push(originalLabel);
+                            filteredData.push(data[originalIndex]);
+                        }
+                    });
+
+                    const chart = dashboardCharts[chartId];
+
+                    chart.data.labels = filteredLabels;
+                    chart.data.datasets[0].data = filteredData;
+                    chart.data.datasets[0].backgroundColor = chartColors;
+                    chart.data.datasets[0].label = datasetLabel;
+                    chart.update();
+                });
+
+                labelElement.appendChild(checkbox);
+                labelElement.appendChild(document.createTextNode(itemLabel));
+
+                list.appendChild(labelElement);
+            });
+
+            panel.appendChild(list);
+        }
+
+        createDoughnutChart(
             'assetsByPlantChart',
             assetsByPlantLabels,
             assetsByPlantData,
@@ -758,6 +941,22 @@
         );
 
         createBarChart(
+            'assetsByBusinessUnitChart',
+            assetsByBusinessUnitLabels,
+            assetsByBusinessUnitData,
+            'Assets by Business Unit'
+        );
+
+        buildChartColumnFilters(
+            'categoryChartFilters',
+            'assetsByCategoryChart',
+            assetsByCategoryLabels,
+            assetsByCategoryData,
+            'Assets by Category'
+        );
+
+        buildChartColumnFilters(
+            'businessUnitChartFilters',
             'assetsByBusinessUnitChart',
             assetsByBusinessUnitLabels,
             assetsByBusinessUnitData,
@@ -811,6 +1010,52 @@
         */
         function showDashboardLoading() {
             document.getElementById('dashboardLoading').classList.remove('hidden');
+        }
+    </script>
+
+    <script>
+        function handleWarrantyRangeFilter(value) {
+            const rows14Days = document.getElementById('warrantyRows14Days');
+            const rowsThreeMonths = document.getElementById('warrantyRowsThreeMonths');
+
+            if (value === 'all') {
+                document.getElementById('all-warranties-modal').showModal();
+                document.getElementById('warrantyRangeFilter').value = '14';
+                rows14Days.classList.remove('hidden');
+                rowsThreeMonths.classList.add('hidden');
+                return;
+            }
+
+            if (value === '3months') {
+                rows14Days.classList.add('hidden');
+                rowsThreeMonths.classList.remove('hidden');
+                return;
+            }
+
+            rows14Days.classList.remove('hidden');
+            rowsThreeMonths.classList.add('hidden');
+        }
+
+        function handleMaintenanceRangeFilter(value) {
+            const rows14Days = document.getElementById('maintenanceRows14Days');
+            const rowsThreeMonths = document.getElementById('maintenanceRowsThreeMonths');
+
+            if (value === 'all') {
+                document.getElementById('all-maintenance-modal').showModal();
+                document.getElementById('maintenanceRangeFilter').value = '14';
+                rows14Days.classList.remove('hidden');
+                rowsThreeMonths.classList.add('hidden');
+                return;
+            }
+
+            if (value === '3months') {
+                rows14Days.classList.add('hidden');
+                rowsThreeMonths.classList.remove('hidden');
+                return;
+            }
+
+            rows14Days.classList.remove('hidden');
+            rowsThreeMonths.classList.add('hidden');
         }
     </script>
 </x-app-layout>

@@ -137,6 +137,18 @@ class DashboardController extends Controller
             ->get();
 
         /*
+            Dashboard table: warranties expiring within the next 3 months.
+        */
+        $warrantiesExpiringThreeMonths = $inventoryQuery()
+            ->whereBetween('warranty_expiry_date', [
+                now()->addDays(15)->toDateString(),
+                now()->addMonths(3)->toDateString()
+            ])
+            ->orderBy('warranty_expiry_date')
+            ->limit(10)
+            ->get();
+
+        /*
             Dashboard table: maintenance scheduled within the next 14 days.
 
             Only 10 records are shown in the main dashboard. The full list
@@ -146,6 +158,18 @@ class DashboardController extends Controller
             ->whereBetween('next_maintenance', [
                 now()->toDateString(),
                 now()->addDays(14)->toDateString()
+            ])
+            ->orderBy('next_maintenance')
+            ->limit(10)
+            ->get();
+
+        /*
+            Dashboard table: maintenance scheduled within the next 3 months.
+        */
+        $upcomingMaintenanceThreeMonths = $inventoryQuery()
+            ->whereBetween('next_maintenance', [
+                now()->addDays(15)->toDateString(),
+                now()->addMonths(3)->toDateString()
             ])
             ->orderBy('next_maintenance')
             ->limit(10)
@@ -206,7 +230,9 @@ class DashboardController extends Controller
             'assetsByState',
             'assetsByBusinessUnit',
             'warrantiesExpiringSoon',
+            'warrantiesExpiringThreeMonths',
             'upcomingMaintenance',
+            'upcomingMaintenanceThreeMonths',
             'assetsByPlantLabels',
             'assetsByPlantData',
             'assetsByCategoryLabels',
