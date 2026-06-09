@@ -18,6 +18,57 @@
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
             <!-- Hidden form for automatic filters end -->
 
+            @php
+                $selectedCategories = collect(request()->input('category', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedPlants = collect(request()->input('plant', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedConfidentiality = collect(request()->input('confidentiality', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedIntegrity = collect(request()->input('integrity', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedAvailability = collect(request()->input('availability', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedClassifications = collect(request()->input('classification', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedStates = collect(request()->input('state', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $plantFilterOptions = collect($plantOptions ?? [])
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->values();
+
+                $ciaFilterOptions = ['0', '1', '2', '3'];
+
+                $stateFilterOptions = [
+                    'active' => 'Active',
+                    'inactive' => 'Inactive',
+                    'maintenance' => 'Maintenance',
+                    'disposed' => 'Disposed',
+                    'lost' => 'Lost',
+                ];
+            @endphp
+
 <div class="card-header d-flex justify-content-between align-items-center">
     <strong>Inventory Assets</strong>
 
@@ -41,6 +92,10 @@
                 Upload Excel
             </button>
         @endif
+
+        <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-danger">
+            Reset filters
+        </a>
 
                 <!-- DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
                     <div class="dropdown">
@@ -299,19 +354,38 @@
                             </th>
 
                             <th class="col-md-custom">
-                            <select
-                                form="inventoryFiltersForm"
-                                name="category"
-                                class="form-select form-select-sm auto-filter-select"
-                            >
-                            <option value="">All</option>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedCategories) > 0 ? count($selectedCategories) . ' selected' : 'All' }}
+                                    </button>
 
-                            @foreach ($categoryOptions as $category)
-                            <option value="{{ $category }}" {{ request('category') === $category ? 'selected' : '' }}>
-                            {{ $category }}
-                            </option>
-                            @endforeach
-                            </select>
+                                    <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;">
+                                        @foreach ($categoryOptions as $category)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="category[]"
+                                                    value="{{ $category }}"
+                                                    id="filter_category_{{ $loop->index }}"
+                                                    {{ in_array((string) $category, $selectedCategories, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_category_{{ $loop->index }}">
+                                                    {{ $category }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom" style="min-width: 220px;">
@@ -399,14 +473,40 @@
                             </th>
 
                             <th class="col-md-custom">
-                                <input
-                                    form="inventoryFiltersForm"
-                                    type="text"
-                                    name="plant"
-                                    class="form-control form-control-sm auto-filter-input"
-                                    placeholder="Plant..."
-                                    value="{{ request('plant') }}"
-                                >
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedPlants) > 0 ? count($selectedPlants) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 180px; max-height: 260px; overflow-y: auto;">
+                                        @forelse ($plantFilterOptions as $plant)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="plant[]"
+                                                    value="{{ $plant }}"
+                                                    id="filter_plant_{{ $loop->index }}"
+                                                    {{ in_array((string) $plant, $selectedPlants, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_plant_{{ $loop->index }}">
+                                                    {{ $plant }}
+                                                </label>
+                                            </div>
+                                        @empty
+                                            <span class="dropdown-item-text text-muted small">No plant options</span>
+                                        @endforelse
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
@@ -475,76 +575,178 @@
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="confidentiality"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('confidentiality') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('confidentiality') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('confidentiality') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('confidentiality') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedConfidentiality) > 0 ? count($selectedConfidentiality) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="confidentiality[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_confidentiality_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedConfidentiality, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_confidentiality_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="integrity"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('integrity') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('integrity') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('integrity') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('integrity') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedIntegrity) > 0 ? count($selectedIntegrity) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="integrity[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_integrity_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedIntegrity, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_integrity_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="availability"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('availability') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('availability') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('availability') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('availability') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedAvailability) > 0 ? count($selectedAvailability) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="availability[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_availability_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedAvailability, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_availability_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                            <select
-                                form="inventoryFiltersForm"
-                                name="classification"
-                                class="form-select form-select-sm auto-filter-select"
-                            >
-                            <option value="">All</option>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedClassifications) > 0 ? count($selectedClassifications) . ' selected' : 'All' }}
+                                    </button>
 
-                            @foreach ($classificationOptions as $value => $label)
-                            <option value="{{ $value }}" {{ request('classification') == $value ? 'selected' : '' }}>
-                            {{ $label }}
-                            </option>
-                            @endforeach
-                            </select>
+                                    <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;">
+                                        @foreach ($classificationOptions as $value => $label)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="classification[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_classification_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedClassifications, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_classification_{{ $value }}">
+                                                    {{ $label }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="state"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="active" {{ request('state') === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ request('state') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                    <option value="maintenance" {{ request('state') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                    <option value="disposed" {{ request('state') === 'disposed' ? 'selected' : '' }}>Disposed</option>
-                                    <option value="lost" {{ request('state') === 'lost' ? 'selected' : '' }}>Lost</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedStates) > 0 ? count($selectedStates) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 180px;">
+                                        @foreach ($stateFilterOptions as $value => $label)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="state[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_state_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedStates, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_state_{{ $value }}">
+                                                    {{ $label }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <!--- Only show Created At filters for Admin users -->

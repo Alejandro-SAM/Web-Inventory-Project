@@ -58,9 +58,10 @@ class InventoryController extends Controller
             $inventoryQuery->where('brand', 'like', '%' . $request->brand . '%');
         }
 
-        if ($request->filled('category')) {
-            $inventoryQuery->where('category', $request->category);
-        }
+        $categoryFilters = collect((array) $request->input('category', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
 
         if ($request->filled('department')) {
             $inventoryQuery->where('department', 'like', '%' . $request->department . '%');
@@ -74,9 +75,10 @@ class InventoryController extends Controller
             $inventoryQuery->where('business_unit', 'like', '%' . $request->business_unit . '%');
         }
 
-        if ($request->filled('plant')) {
-            $inventoryQuery->where('plant', 'like', '%' . $request->plant . '%');
-        }
+        $plantFilters = collect((array) $request->input('plant', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
 
         if ($request->filled('end_user')) {
             $inventoryQuery->where('end_user', 'like', '%' . $request->end_user . '%');
@@ -94,24 +96,57 @@ class InventoryController extends Controller
             $inventoryQuery->where('operating_system', 'like', '%' . $request->operating_system . '%');
         }
 
-        if ($request->filled('confidentiality')) {
-            $inventoryQuery->where('confidentiality', $request->confidentiality);
+        $confidentialityFilters = collect((array) $request->input('confidentiality', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $integrityFilters = collect((array) $request->input('integrity', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $availabilityFilters = collect((array) $request->input('availability', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $classificationFilters = collect((array) $request->input('classification', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $stateFilters = collect((array) $request->input('state', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+   
+        if (!empty($categoryFilters)) {
+            $inventoryQuery->whereIn('category', $categoryFilters);
         }
 
-        if ($request->filled('integrity')) {
-            $inventoryQuery->where('integrity', $request->integrity);
+        if (!empty($plantFilters)) {
+            $inventoryQuery->whereIn('plant', $plantFilters);
         }
 
-        if ($request->filled('availability')) {
-            $inventoryQuery->where('availability', $request->availability);
+        if (!empty($confidentialityFilters)) {
+            $inventoryQuery->whereIn('confidentiality', $confidentialityFilters);
         }
 
-        if ($request->filled('classification')) {
-            $inventoryQuery->where('classification', 'like', '%' . $request->classification . '%');
+        if (!empty($integrityFilters)) {
+            $inventoryQuery->whereIn('integrity', $integrityFilters);
         }
 
-        if ($request->filled('state')) {
-            $inventoryQuery->where('state', $request->state);
+        if (!empty($availabilityFilters)) {
+            $inventoryQuery->whereIn('availability', $availabilityFilters);
+        }
+
+        if (!empty($classificationFilters)) {
+            $inventoryQuery->whereIn('classification', $classificationFilters);
+        }
+
+        if (!empty($stateFilters)) {
+            $inventoryQuery->whereIn('state', $stateFilters);
         }
 
         if ($request->filled('maintenance_from')) {
@@ -123,7 +158,7 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('warranty_start_from')) {
-        $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
+            $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
         }
 
         if ($request->filled('warranty_start_to')) {
@@ -154,13 +189,21 @@ class InventoryController extends Controller
         }
         /* End of creation date filter */
 
+        $plantOptions = Inventory::query()
+        ->whereNotNull('plant')
+        ->where('plant', '<>', '')
+        ->distinct()
+        ->orderBy('plant')
+        ->pluck('plant');
+
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
                 ->paginate(100)
                 ->appends($request->query()),
 
-                'categoryOptions' => $this->categoryOptions(),
-                'classificationOptions' => $this->classificationOptions(),
+            'categoryOptions' => $this->categoryOptions(),
+            'classificationOptions' => $this->classificationOptions(),
+            'plantOptions' => $plantOptions,
         ]);
     }
 
