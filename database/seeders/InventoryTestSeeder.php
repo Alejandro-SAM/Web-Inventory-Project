@@ -20,9 +20,9 @@ class InventoryTestSeeder extends Seeder
         $categories = ['Laptop', 'Desktop', 'Monitor', 'Printer', 'Scanner', 'Tablet'];
         $brands = ['Dell', 'HP', 'Lenovo', 'Epson', 'Zebra'];
         $departments = ['IT', 'HR', 'Finance', 'Production', 'Quality', 'Maintenance'];
-        $locations = ['Office', 'Warehouse', 'Production Line', 'Meeting Room', 'Remote'];
+        $locations = ['IT Office', 'Warehouse', 'Production Line', 'Administration', 'EHS'];
         $businessUnits = ['BU1', 'BU2', 'BU3', 'BU4', 'BU5', 'BU6'];
-        $plants = ['B', 'D', 'G', 'H', 'MP'];
+        $plants = ['B', 'D', 'G', 'H', 'MP', 'MPI', 'MPII'];
         $states = ['active', 'inactive', 'maintenance', 'disposed', 'lost'];
         $systems = ['Windows 10', 'Windows 11', 'Ubuntu', 'N/A'];
 

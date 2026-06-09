@@ -1,91 +1,134 @@
 <x-app-layout>
-    <div class="py-6 scroll-smooth">
+    <div class="dashboard-page py-6 scroll-smooth">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Dashboard title --}}
-            <h1 class="text-2xl font-bold mb-6">
-                Inventory Dashboard
-            </h1>
-
             {{--
-                Plant filter.
+                Dashboard hero.
 
-                This form reloads the dashboard using a GET parameter.
-                All dashboard sections are filtered by plant except the "Assets by Plant" chart.
+                This card now contains:
+                - Dashboard title
+                - Current plant filter status
+                - Plant checklist dropdown
+
+                The color is dynamic and comes from the controller through:
+                $dashboardThemeStyle
             --}}
-            <div class="bg-white p-4 rounded-lg shadow mb-6 max-w-xl">
-                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col md:flex-row md:items-end gap-3">
-                    <div class="flex-1">
-                        <label for="plant" class="block text-sm font-medium text-gray-600 mb-1">
+            <div class="dashboard-hero" style="{{ $dashboardThemeStyle }}">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h1 class="dashboard-hero-title">
+                            Inventory Dashboard
+                        </h1>
+
+                        <p class="dashboard-hero-subtitle">
+                            Overview of IT assets, warranties, maintenance and plant distribution.
+                        </p>
+                    </div>
+
+                    {{--
+                        Plant checklist filter.
+
+                        Important:
+                        - The input name is plants[] because this is now a multiple filter.
+                        - Reset does not submit selected values; it reloads the dashboard clean.
+                        - Apply submits the checked plants through GET.
+                    --}}
+                    <form method="GET"
+                          action="{{ route('dashboard') }}"
+                          id="plantFilterForm"
+                          class="dashboard-hero-filter">
+                        <label class="dashboard-hero-filter-label">
                             Filter by Plant
                         </label>
 
-                        <select name="plant"
-                                id="plant"
-                                onchange="showDashboardLoading(); this.form.submit();"
-                                class="w-full rounded border-gray-300 text-sm">
-                            <option value="">All Plants</option>
+                        <button type="button"
+                                class="dashboard-plant-dropdown-button"
+                                onclick="toggleDropdown('plantFilterDropdown')">
+                            <span>{{ $selectedPlantLabel }}</span>
+                            <span>▾</span>
+                        </button>
 
-                            @foreach ($plants as $plant)
-                                <option value="{{ $plant }}" @selected($selectedPlant === $plant)>
-                                    {{ $plant }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div id="plantFilterDropdown" class="dashboard-plant-dropdown-menu hidden">
+                            <div class="dashboard-plant-checklist">
+                                @foreach ($plants as $plant)
+                                    <label class="dashboard-plant-check-item">
+                                         <input type="checkbox"
+                                                name="plants[]"
+                                                value="{{ $plant }}"
+                                                class="plant-filter-checkbox"
+                                                onchange="submitPlantFilterOnChange()"
+                                                @checked(in_array($plant, $selectedPlantsArray, true))>
 
-                    <div class="flex gap-2">
-                        <a href="{{ route('dashboard') }}"
-                        onclick="showDashboardLoading();"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300">
-                            Clear
-                        </a>
-                    </div>
-                </form>
+                                        <span>{{ $plant }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
 
-                @if (!empty($selectedPlant))
-                    <p class="text-xs text-gray-500 mt-3">
-                        Current filter: <span class="font-semibold">{{ $selectedPlant }}</span>
-                    </p>
-                @endif
+                            <div class="dashboard-plant-filter-actions">
+                                {{--
+                                    Reset reloads the dashboard without plants[] parameters.
+
+                                    The controller interprets an empty filter as:
+                                    "all plants selected".
+                                --}}
+                                <button type="button"
+                                        class="dashboard-plant-filter-button primary"
+                                        onclick="resetPlantFilter()">
+                                    Reset all plants
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             {{--
-                Sticky summary cards.
+                Summary cards.
 
-                These cards remain visible while scrolling so the user can keep
-                the main inventory indicators available at all times.
+                These cards show the main inventory indicators for the selected dashboard scope.
             --}}
-            <div class="mb-6">
+            <div class="dashboard-section">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <p class="text-sm text-gray-500">Total Assets</p>
-                        <h2 class="text-2xl font-bold">{{ $totalAssets }}</h2>
+                    <div class="dashboard-kpi-card">
+                        <p class="dashboard-kpi-label">Total Assets</p>
+                        <h2 class="dashboard-kpi-value">{{ $totalAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Registered IT assets
+                        </p>
                     </div>
 
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <p class="text-sm text-gray-500">Active Assets</p>
-                        <h2 class="text-2xl font-bold">{{ $activeAssets }}</h2>
+                    <div class="dashboard-kpi-card success">
+                        <p class="dashboard-kpi-label">Active Assets</p>
+                        <h2 class="dashboard-kpi-value">{{ $activeAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Currently active assets
+                        </p>
                     </div>
 
-                    {{--
-                        This card works as a shortcut to the upcoming maintenance section.
-                    --}}
                     <a href="#upcoming-maintenance-section"
-                    class="dashboard-action-card bg-white p-4 rounded-lg shadow cursor-pointer block">
-                        <p class="text-sm text-gray-500">In Maintenance</p>
-                        <h2 class="text-2xl font-bold">{{ $maintenanceAssets }}</h2>
-                        <p class="text-xs text-gray-400 mt-2">Click to view related assets</p>
+                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link warning block">
+                        <div class="dashboard-kpi-link-arrow">
+                            ↓
+                        </div>
+
+                        <p class="dashboard-kpi-label">In Maintenance</p>
+                        <h2 class="dashboard-kpi-value">{{ $maintenanceAssets }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Click to view related assets
+                        </p>
                     </a>
 
-                    {{--
-                        This card works as a shortcut to the warranties section.
-                    --}}
                     <a href="#warranties-expiring-section"
-                    class="dashboard-action-card bg-white p-4 rounded-lg shadow cursor-pointer block">
-                        <p class="text-sm text-gray-500">Warranties Expiring Soon</p>
-                        <h2 class="text-2xl font-bold">{{ $warrantiesExpiringSoonCount }}</h2>
-                        <p class="text-xs text-gray-400 mt-2">Click to view related assets</p>
+                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link danger block">
+                        <div class="dashboard-kpi-link-arrow">
+                            ↓
+                        </div>
+
+                        <p class="dashboard-kpi-label">Warranties Expiring Soon</p>
+                        <h2 class="dashboard-kpi-value">{{ $warrantiesExpiringSoonCount }}</h2>
+                        <p class="dashboard-kpi-helper">
+                            Click to view related assets
+                        </p>
                     </a>
                 </div>
             </div>
@@ -93,27 +136,125 @@
             {{--
                 Charts section.
 
-                Each canvas is used by Chart.js to render a different inventory chart.
+                Changes included:
+                - Assets by Plant is now a doughnut chart.
+                - Assets by Category has a dropdown checklist filter.
+                - Assets by State has a dropdown checklist filter.
+                - Assets by Business Unit has a dropdown checklist filter.
+                - Doughnut charts include custom legends below the chart.
             --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Plant</h2>
-                    <canvas id="assetsByPlantChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <h2 class="dashboard-chart-title">Assets by Plant</h2>
+                    <p class="dashboard-chart-subtitle">
+                        Distribution of assets by selected plants.
+                    </p>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByPlantChart"></canvas>
+                    </div>
+
+                    {{--
+                        Custom legend for the plant doughnut chart.
+
+                        JavaScript will fill this div with:
+                        color + plant + asset count
+                    --}}
+                    <div id="assetsByPlantLegend" class="dashboard-doughnut-legend"></div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Category</h2>
-                    <canvas id="assetsByCategoryChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by Category</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Asset distribution by registered category.
+                            </p>
+                        </div>
+
+                        {{--
+                            Dropdown checklist.
+
+                            It hides/shows chart columns without reloading the page.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('categoryChartFilters')">
+                                Filter columns ▾
+                            </button>
+
+                            <div id="categoryChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByCategoryChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by State</h2>
-                    <canvas id="assetsByStateChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by State</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Current status of the selected asset scope.
+                            </p>
+                        </div>
+
+                        {{--
+                            Dropdown checklist for states.
+
+                            This was added so Assets by State behaves like
+                            Category and Business Unit.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('stateChartFilters')">
+                                Filter columns ▾
+                            </button>
+
+                            <div id="stateChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByStateChart"></canvas>
+                    </div>
+
+                    {{--
+                        Custom legend for the state doughnut chart.
+                    --}}
+                    <div id="assetsByStateLegend" class="dashboard-doughnut-legend"></div>
                 </div>
 
-                <div class="bg-white p-5 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-4">Assets by Business Unit</h2>
-                    <canvas id="assetsByBusinessUnitChart"></canvas>
+                <div class="dashboard-chart-card">
+                    <div class="dashboard-chart-header">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by Business Unit</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Asset distribution by business unit.
+                            </p>
+                        </div>
+
+                        {{--
+                            Dropdown checklist for Business Unit.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('businessUnitChartFilters')">
+                                Filter columns ▾
+                            </button>
+
+                            <div id="businessUnitChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-chart-wrapper">
+                        <canvas id="assetsByBusinessUnitChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -131,7 +272,7 @@
                     - Remaining warranty time
                     - Details button
                 --}}
-                <div id="warranties-expiring-section" class="bg-white p-5 rounded-lg shadow scroll-mt-32">
+                <div id="warranties-expiring-section" class="dashboard-table-card scroll-mt-32">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-semibold">Warranties Expiring Soon</h2>
@@ -140,11 +281,13 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                onclick="document.getElementById('all-warranties-modal').showModal()"
-                                class="px-3 py-2 text-xs bg-gray-800 text-white rounded hover:bg-gray-700">
-                            View More
-                        </button>
+                        <select id="warrantyRangeFilter"
+                                onchange="handleWarrantyRangeFilter(this.value)"
+                                class="text-xs rounded border-gray-300">
+                            <option value="14">View within 14 days</option>
+                            <option value="3months">View within 1 to 3 months</option>
+                            <option value="all">View all</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -156,7 +299,7 @@
                                     <th class="text-left py-2">Details</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="warrantyRows14Days">
                                 @forelse ($warrantiesExpiringSoon as $asset)
                                     @php
                                         /*
@@ -300,6 +443,124 @@
                                     </tr>
                                 @endforelse
                             </tbody>
+
+                            <tbody id="warrantyRowsThreeMonths" class="hidden">
+                                @forelse ($warrantiesExpiringThreeMonths as $asset)
+                                    @php
+                                        $daysLeft = now()
+                                            ->startOfDay()
+                                            ->diffInDays(\Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(), false);
+                                    @endphp
+
+                                    <tr class="border-b">
+                                        <td class="py-2 font-medium">
+                                            {{ $asset->it_internal_number }}
+                                        </td>
+
+                                        <td class="py-2">
+                                            @if ($daysLeft > 1)
+                                                {{ $daysLeft }} days left
+                                            @elseif ($daysLeft === 1)
+                                                1 day left
+                                            @elseif ($daysLeft === 0)
+                                                Expires today
+                                            @else
+                                                Expired
+                                            @endif
+                                        </td>
+
+                                        <td class="py-2">
+                                            <button type="button"
+                                                    onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').showModal()"
+                                                    class="px-3 py-1 bg-gray-800 text-white rounded text-xs hover:bg-gray-700">
+                                                View Details
+                                            </button>
+
+                                            <dialog id="warranty-details-{{ $asset->id }}-three-months" class="rounded-lg shadow-xl p-0 w-full max-w-2xl">
+                                                <div class="p-5">
+                                                    <div class="flex justify-between items-center mb-4">
+                                                        <h3 class="text-lg font-semibold">
+                                                            Asset Warranty Details
+                                                        </h3>
+
+                                                        <button type="button"
+                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
+                                                                class="text-gray-500 hover:text-gray-800 text-xl">
+                                                            &times;
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <p class="text-gray-500">IT Number</p>
+                                                            <p class="font-medium">{{ $asset->it_internal_number }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Serial Number</p>
+                                                            <p class="font-medium">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Asset Number</p>
+                                                            <p class="font-medium">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Category</p>
+                                                            <p class="font-medium">{{ $asset->category ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Brand</p>
+                                                            <p class="font-medium">{{ $asset->brand ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Model</p>
+                                                            <p class="font-medium">{{ $asset->model ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Plant</p>
+                                                            <p class="font-medium">{{ $asset->plant ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Business Unit</p>
+                                                            <p class="font-medium">{{ $asset->business_unit ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">End User</p>
+                                                            <p class="font-medium">{{ $asset->end_user ?? 'N/A' }}</p>
+                                                        </div>
+
+                                                        <div>
+                                                            <p class="text-gray-500">Warranty Expiry Date</p>
+                                                            <p class="font-medium">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 text-right">
+                                                        <button type="button"
+                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
+                                                                class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+                                                            Close
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </dialog>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="py-3 text-gray-500">
+                                            No warranties expiring within 1 to 3 months.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -309,7 +570,7 @@
 
                     The In Maintenance card redirects the user to this section.
                 --}}
-                <div id="upcoming-maintenance-section" class="bg-white p-5 rounded-lg shadow scroll-mt-32">
+                <div id="upcoming-maintenance-section" class="dashboard-table-card scroll-mt-32">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-semibold">Upcoming Maintenance</h2>
@@ -318,11 +579,13 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                onclick="document.getElementById('all-maintenance-modal').showModal()"
-                                class="px-3 py-2 text-xs bg-gray-800 text-white rounded hover:bg-gray-700">
-                            View More
-                        </button>
+                        <select id="maintenanceRangeFilter"
+                                onchange="handleMaintenanceRangeFilter(this.value)"
+                                class="text-xs rounded border-gray-300">
+                            <option value="14">View within 14 days</option>
+                            <option value="3months">View within 1 to 3 months</option>
+                            <option value="all">View all</option>
+                        </select>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -335,7 +598,7 @@
                                     <th class="text-left py-2">Maintenance Date</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="maintenanceRows14Days">
                                 @forelse ($upcomingMaintenance as $asset)
                                     <tr class="border-b">
                                         <td class="py-2">{{ $asset->it_internal_number }}</td>
@@ -347,6 +610,23 @@
                                     <tr>
                                         <td colspan="4" class="py-3 text-gray-500">
                                             No upcoming maintenance.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+
+                            <tbody id="maintenanceRowsThreeMonths" class="hidden">
+                                @forelse ($upcomingMaintenanceThreeMonths as $asset)
+                                    <tr class="border-b">
+                                        <td class="py-2">{{ $asset->it_internal_number }}</td>
+                                        <td class="py-2">{{ $asset->category }}</td>
+                                        <td class="py-2">{{ $asset->end_user }}</td>
+                                        <td class="py-2">{{ $asset->next_maintenance }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-3 text-gray-500">
+                                            No upcoming maintenance within 1 to 3 months.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -550,9 +830,10 @@
 
     <script>
         /*
-            Convert Laravel collections into JavaScript arrays.
+            Convert Laravel data into JavaScript arrays.
 
-            Laravel safely passes PHP data to JavaScript.
+            These arrays come from DashboardController.php.
+            They already respect the global plant checklist filter.
         */
         const assetsByPlantLabels = @json($assetsByPlantLabels);
         const assetsByPlantData = @json($assetsByPlantData);
@@ -567,25 +848,85 @@
         const assetsByBusinessUnitData = @json($assetsByBusinessUnitData);
 
         /*
-            Reusable bar chart function.
+            Automatic chart color palette.
 
-            This avoids repeating the same Chart.js configuration
-            for every bar chart in the dashboard.
+            Colors are assigned by index.
+            If there are more labels than colors, the palette repeats.
+        */
+        const chartColors = [
+            '#2563eb',
+            '#22c55e',
+            '#f97316',
+            '#ef4444',
+            '#a855f7',
+            '#06b6d4',
+            '#eab308',
+            '#ec4899',
+            '#14b8a6',
+            '#6366f1',
+            '#84cc16',
+            '#f43f5e',
+            '#0ea5e9',
+            '#facc15',
+            '#10b981',
+            '#d946ef',
+            '#fb7185',
+            '#38bdf8'
+        ];
+
+        /*
+            Store Chart.js instances.
+
+            We need this so the dropdown checklist filters can update
+            existing charts instead of creating new ones.
+        */
+        const dashboardCharts = {};
+
+        /*
+            Return one color per label.
+
+            Example:
+            labels: [B, D, G]
+            colors: [blue, green, orange]
+        */
+        function getChartColors(labels) {
+            return labels.map((_, index) => chartColors[index % chartColors.length]);
+        }
+
+        /*
+            Create a reusable bar chart.
+
+            Used by:
+            - Assets by Category
+            - Assets by Business Unit
         */
         function createBarChart(canvasId, labels, data, label) {
-            new Chart(document.getElementById(canvasId), {
+            const colors = getChartColors(labels);
+
+            const chart = new Chart(document.getElementById(canvasId), {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: label,
                         data: data,
-                        borderWidth: 1
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: colors,
+                        hoverBorderColor: '#0f172a',
+                        hoverBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
+                        /*
+                            We hide the default legend because these bar charts
+                            already show labels on the axis.
+                        */
                         legend: {
                             display: false
                         }
@@ -594,44 +935,242 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                /*
+                                    Asset counts should be whole numbers.
+                                */
                                 precision: 0
                             }
                         }
                     }
                 }
             });
+
+            dashboardCharts[canvasId] = chart;
+
+            return chart;
         }
 
         /*
-            Reusable doughnut chart function.
+            Create a reusable doughnut chart.
 
-            This is used for values with fewer categories, such as asset states.
+            Used by:
+            - Assets by Plant
+            - Assets by State
         */
-        function createDoughnutChart(canvasId, labels, data, label) {
-            new Chart(document.getElementById(canvasId), {
+        function createDoughnutChart(canvasId, labels, data, label, legendId = null) {
+            const colors = getChartColors(labels);
+
+            const chart = new Chart(document.getElementById(canvasId), {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: label,
                         data: data,
-                        borderWidth: 1
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 10
                     }]
                 },
                 options: {
-                    responsive: true
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        /*
+                            We use our own custom legend because we want to show:
+                            color + label + asset count.
+                        */
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
+
+            dashboardCharts[canvasId] = chart;
+
+            /*
+                If a legend container exists, render the custom legend.
+            */
+            if (legendId) {
+                renderDoughnutLegend(legendId, labels, data, colors);
+            }
+
+            return chart;
+        }
+
+        /*
+            Render a custom legend for doughnut charts.
+
+            The legend shows:
+            - Color dot
+            - Label
+            - Count
+        */
+        function renderDoughnutLegend(legendId, labels, data, colors) {
+            const legend = document.getElementById(legendId);
+
+            if (!legend) {
+                return;
+            }
+
+            legend.innerHTML = '';
+
+            labels.forEach((label, index) => {
+                const item = document.createElement('div');
+                item.className = 'dashboard-doughnut-legend-item';
+
+                const color = document.createElement('span');
+                color.className = 'dashboard-doughnut-legend-color';
+                color.style.backgroundColor = colors[index];
+
+                const text = document.createElement('span');
+                text.textContent = label;
+
+                const value = document.createElement('span');
+                value.className = 'dashboard-doughnut-legend-value';
+                value.textContent = data[index];
+
+                item.appendChild(color);
+                item.appendChild(text);
+                item.appendChild(value);
+
+                legend.appendChild(item);
+            });
+        }
+
+        /*
+            Generic dropdown toggle.
+
+            Used by:
+            - Global plant checklist
+            - Category chart checklist
+            - State chart checklist
+            - Business Unit chart checklist
+        */
+        function toggleDropdown(elementId) {
+            const targetDropdown = document.getElementById(elementId);
+
+            if (!targetDropdown) {
+                return;
+            }
+
+            /*
+                Close every other dashboard dropdown before opening the selected one.
+            */
+            document.querySelectorAll('.dashboard-chart-filter-menu, .dashboard-plant-dropdown-menu')
+                .forEach(dropdown => {
+                    if (dropdown.id !== elementId) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+            targetDropdown.classList.toggle('hidden');
+        }
+
+        /*
+            Build a dropdown checklist for a chart.
+
+            This function creates one checkbox per label.
+            Example:
+            Category chart labels:
+            - Laptop
+            - Desktop
+            - Printer
+        */
+        function buildChartDropdownFilter(panelId, chartId, labels, data, datasetLabel, legendId = null) {
+            const panel = document.getElementById(panelId);
+
+            if (!panel) {
+                return;
+            }
+
+            panel.innerHTML = '';
+
+            const list = document.createElement('div');
+            list.className = 'dashboard-chart-filter-list';
+
+            labels.forEach((itemLabel) => {
+                const labelElement = document.createElement('label');
+                labelElement.className = 'dashboard-chart-filter-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.value = itemLabel;
+
+                /*
+                    Every time a checkbox changes, update the chart.
+                */
+                checkbox.addEventListener('change', () => {
+                    updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId);
+                });
+
+                labelElement.appendChild(checkbox);
+                labelElement.appendChild(document.createTextNode(itemLabel));
+
+                list.appendChild(labelElement);
+            });
+
+            panel.appendChild(list);
+        }
+
+        /*
+            Update a chart based on checked values.
+
+            This does not reload the dashboard.
+            It only updates the Chart.js instance in the browser.
+        */
+        function updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId = null) {
+            const panel = document.getElementById(panelId);
+            const chart = dashboardCharts[chartId];
+
+            if (!panel || !chart) {
+                return;
+            }
+
+            const checkedLabels = Array
+                .from(panel.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(input => input.value);
+
+            const filteredLabels = [];
+            const filteredData = [];
+
+            labels.forEach((originalLabel, originalIndex) => {
+                if (checkedLabels.includes(originalLabel)) {
+                    filteredLabels.push(originalLabel);
+                    filteredData.push(data[originalIndex]);
+                }
+            });
+
+            const filteredColors = getChartColors(filteredLabels);
+
+            chart.data.labels = filteredLabels;
+            chart.data.datasets[0].data = filteredData;
+            chart.data.datasets[0].backgroundColor = filteredColors;
+            chart.data.datasets[0].hoverBackgroundColor = filteredColors;
+            chart.data.datasets[0].label = datasetLabel;
+            chart.update();
+
+            /*
+                If this chart has a custom legend, update it too.
+            */
+            if (legendId) {
+                renderDoughnutLegend(legendId, filteredLabels, filteredData, filteredColors);
+            }
         }
 
         /*
             Render dashboard charts.
         */
-        createBarChart(
+
+        createDoughnutChart(
             'assetsByPlantChart',
             assetsByPlantLabels,
             assetsByPlantData,
-            'Assets by Plant'
+            'Assets by Plant',
+            'assetsByPlantLegend'
         );
 
         createBarChart(
@@ -645,7 +1184,8 @@
             'assetsByStateChart',
             assetsByStateLabels,
             assetsByStateData,
-            'Assets by State'
+            'Assets by State',
+            'assetsByStateLegend'
         );
 
         createBarChart(
@@ -654,35 +1194,81 @@
             assetsByBusinessUnitData,
             'Assets by Business Unit'
         );
-    </script>
-    <style>
+
         /*
-            Dashboard interactive cards.
+            Build dropdown filters for charts.
 
-            These cards are clickable shortcuts, so the hover state is intentionally
-            stronger to make the interaction clearer for the user.
+            Assets by Plant does not need a local chart filter because
+            it is controlled by the global plant checklist.
         */
-        .dashboard-action-card {
-            transition: all 0.25s ease;
-            border: 1px solid transparent;
-            background: #ffffff;
+
+        buildChartDropdownFilter(
+            'categoryChartFilters',
+            'assetsByCategoryChart',
+            assetsByCategoryLabels,
+            assetsByCategoryData,
+            'Assets by Category'
+        );
+
+        buildChartDropdownFilter(
+            'stateChartFilters',
+            'assetsByStateChart',
+            assetsByStateLabels,
+            assetsByStateData,
+            'Assets by State',
+            'assetsByStateLegend'
+        );
+
+        buildChartDropdownFilter(
+            'businessUnitChartFilters',
+            'assetsByBusinessUnitChart',
+            assetsByBusinessUnitLabels,
+            assetsByBusinessUnitData,
+            'Assets by Business Unit'
+        );
+
+        /*
+            Auto-submit plant filter.
+
+            This function is triggered whenever the user checks or unchecks
+            a plant from the global plant checklist.
+        */
+        function submitPlantFilterOnChange() {
+            const form = document.getElementById('plantFilterForm');
+
+            if (!form) {
+                return;
+            }
+
+            showDashboardLoading();
+            form.submit();
         }
 
-        .dashboard-action-card:hover {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-color: #3b82f6;
-            transform: translateY(-5px);
-            box-shadow: 0 22px 40px rgba(37, 99, 235, 0.25);
+        /*
+            Reset plant filter.
+
+            Since no plants[] are sent, the controller will automatically
+            select all plants again.
+        */
+        function resetPlantFilter() {
+            showDashboardLoading();
+            window.location.href = "{{ route('dashboard') }}";
         }
 
-        .dashboard-action-card:hover p {
-            color: #1e40af;
-        }
+        /*
+            Close dropdowns when clicking outside them.
 
-        .dashboard-action-card:hover h2 {
-            color: #0f172a;
-        }
-    </style>
+            This prevents dropdowns from staying open while the user interacts
+            with another area of the dashboard.
+        */
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.dashboard-chart-filter-dropdown')
+                && !event.target.closest('.dashboard-hero-filter')) {
+                document.querySelectorAll('.dashboard-chart-filter-menu, .dashboard-plant-dropdown-menu')
+                    .forEach(dropdown => dropdown.classList.add('hidden'));
+            }
+        });
+    </script>
 
     {{--
         Back to top button.
@@ -692,7 +1278,7 @@
     <button type="button"
             id="backToTopButton"
             onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            class="hidden fixed bottom-6 right-6 z-50 px-4 py-3 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-700">
+            class="dashboard-back-to-top hidden fixed bottom-6 right-6 z-50 flex items-center justify-center">
         ↑
     </button>
 
@@ -717,9 +1303,9 @@
         This appears when the user changes the plant filter.
     --}}
     <div id="dashboardLoading"
-        class="hidden fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white px-6 py-4 rounded-lg shadow text-sm text-gray-700">
-            Loading dashboard...
+        class="hidden fixed inset-0 z-50 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-white px-6 py-4 rounded-xl shadow text-sm text-gray-700 border border-gray-200">
+            Updating dashboard filter...
         </div>
     </div>
 
@@ -730,6 +1316,52 @@
         */
         function showDashboardLoading() {
             document.getElementById('dashboardLoading').classList.remove('hidden');
+        }
+    </script>
+
+    <script>
+        function handleWarrantyRangeFilter(value) {
+            const rows14Days = document.getElementById('warrantyRows14Days');
+            const rowsThreeMonths = document.getElementById('warrantyRowsThreeMonths');
+
+            if (value === 'all') {
+                document.getElementById('all-warranties-modal').showModal();
+                document.getElementById('warrantyRangeFilter').value = '14';
+                rows14Days.classList.remove('hidden');
+                rowsThreeMonths.classList.add('hidden');
+                return;
+            }
+
+            if (value === '3months') {
+                rows14Days.classList.add('hidden');
+                rowsThreeMonths.classList.remove('hidden');
+                return;
+            }
+
+            rows14Days.classList.remove('hidden');
+            rowsThreeMonths.classList.add('hidden');
+        }
+
+        function handleMaintenanceRangeFilter(value) {
+            const rows14Days = document.getElementById('maintenanceRows14Days');
+            const rowsThreeMonths = document.getElementById('maintenanceRowsThreeMonths');
+
+            if (value === 'all') {
+                document.getElementById('all-maintenance-modal').showModal();
+                document.getElementById('maintenanceRangeFilter').value = '14';
+                rows14Days.classList.remove('hidden');
+                rowsThreeMonths.classList.add('hidden');
+                return;
+            }
+
+            if (value === '3months') {
+                rows14Days.classList.add('hidden');
+                rowsThreeMonths.classList.remove('hidden');
+                return;
+            }
+
+            rows14Days.classList.remove('hidden');
+            rowsThreeMonths.classList.add('hidden');
         }
     </script>
 </x-app-layout>

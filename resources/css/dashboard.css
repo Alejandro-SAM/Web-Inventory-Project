@@ -1,0 +1,738 @@
+/* ==============================
+   DASHBOARD GENERAL LAYOUT
+================================= */
+
+.dashboard-page {
+    /*
+        Darker but still clean dashboard background.
+
+        This gives more contrast to the white cards without making
+        the page look too dark.
+    */
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 32rem),
+        linear-gradient(135deg, #dbe7f3 0%, #cbd8e8 45%, #e2e8f0 100%);
+
+    min-height: 100vh;
+}
+
+.dashboard-section {
+    margin-bottom: 1.5rem;
+}
+
+/* ==============================
+   DASHBOARD HERO
+================================= */
+
+.dashboard-hero {
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 50;
+
+    /*
+        The dashboard hero color now comes from CSS variables.
+
+        These variables are generated in DashboardController.php:
+        --dashboard-theme-start
+        --dashboard-theme-middle
+        --dashboard-theme-end
+        --dashboard-theme-shadow
+
+        This avoids creating one CSS class per plant manually.
+    */
+    background: linear-gradient(
+        135deg,
+        var(--dashboard-theme-start, #0f172a) 0%,
+        var(--dashboard-theme-middle, #1e3a8a) 55%,
+        var(--dashboard-theme-end, #2563eb) 100%
+    );
+
+    box-shadow: 0 18px 40px var(--dashboard-theme-shadow, rgba(37, 99, 235, 0.25));
+}
+
+.dashboard-hero-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.dashboard-hero-subtitle {
+    margin-top: 0.35rem;
+    color: #dbeafe;
+    font-size: 0.95rem;
+}
+
+/* ==============================
+   DASHBOARD FILTER STATUS
+================================= */
+
+.dashboard-filter-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-filter-panel.is-filtered {
+    border-color: #2563eb;
+    background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.dashboard-filter-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard-filter-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.dashboard-filter-status.all {
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+}
+
+.dashboard-filter-status.active {
+    color: #1d4ed8;
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+}
+
+.dashboard-filter-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.dashboard-filter-select {
+    min-width: 220px;
+}
+
+.dashboard-filter-note {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 0.65rem;
+    margin-bottom: 0;
+}
+
+/* ==============================
+   DASHBOARD KPI CARDS
+================================= */
+
+.dashboard-kpi-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-kpi-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 5px;
+    background: #2563eb;
+}
+
+.dashboard-kpi-card.success::before {
+    background: #16a34a;
+}
+
+.dashboard-kpi-card.warning::before {
+    background: #f59e0b;
+}
+
+.dashboard-kpi-card.danger::before {
+    background: #dc2626;
+}
+
+.dashboard-kpi-label {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.dashboard-kpi-value {
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.dashboard-kpi-helper {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-top: 0.45rem;
+}
+
+/* ==============================
+   DASHBOARD ACTION CARDS
+================================= */
+
+.dashboard-action-card {
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.dashboard-action-card:hover {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #3b82f6;
+    transform: translateY(-5px);
+    box-shadow: 0 22px 40px rgba(37, 99, 235, 0.25);
+}
+
+.dashboard-action-card:hover p {
+    color: #1e40af;
+}
+
+.dashboard-action-card:hover h2,
+.dashboard-action-card:hover .dashboard-kpi-value {
+    color: #0f172a;
+}
+
+/* ==============================
+   DASHBOARD CHART CARDS
+================================= */
+
+.dashboard-chart-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+.dashboard-chart-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.dashboard-chart-subtitle {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+
+.dashboard-chart-wrapper {
+    height: 280px;
+    position: relative;
+}
+
+/* ==============================
+   DASHBOARD TABLE CARDS
+================================= */
+
+.dashboard-table-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+}
+
+.dashboard-table-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* ==============================
+   DASHBOARD BUTTONS
+================================= */
+
+.dashboard-clear-button {
+    background: #e5e7eb;
+    color: #374151;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dashboard-clear-button:hover {
+    background: #d1d5db;
+    color: #111827;
+}
+
+.dashboard-clear-button.is-visible {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.dashboard-clear-button.is-visible:hover {
+    background: #bfdbfe;
+}
+
+/* ==============================
+   BACK TO TOP BUTTON
+================================= */
+
+.dashboard-back-to-top {
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.28);
+    transition: all 0.2s ease;
+}
+
+.dashboard-back-to-top:hover {
+    background: #1e3a8a;
+    transform: translateY(-3px);
+}
+
+/* ==============================
+   DASHBOARD HERO FILTER
+================================= */
+
+.dashboard-hero-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(6px);
+}
+
+.dashboard-hero-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 260px;
+    padding: 1rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+.dashboard-hero-filter-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #e0f2fe;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.dashboard-hero-filter-select {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.7rem;
+}
+
+.dashboard-hero-clear-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    transition: all 0.2s ease;
+}
+
+.dashboard-hero-clear-button:hover {
+    color: #0f172a;
+    background: #ffffff;
+}
+
+.dashboard-hero-clear-button:not(.is-visible) {
+    opacity: 0.55;
+}
+
+/* ==============================
+   DASHBOARD KPI LINK ARROW
+================================= */
+
+.dashboard-kpi-link {
+    position: relative;
+}
+
+.dashboard-kpi-link-arrow {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.9rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.dashboard-action-card:hover .dashboard-kpi-link-arrow {
+    transform: translateY(4px);
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+/* ==============================
+   DASHBOARD CHART FILTERS
+================================= */
+
+.dashboard-chart-filter-toggle {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.dashboard-chart-filter-toggle:hover {
+    background: #e0f2fe;
+    color: #075985;
+    border-color: #7dd3fc;
+}
+
+.dashboard-chart-filter-panel {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.85rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.dashboard-chart-filter-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.dashboard-chart-filter-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+    padding: 0.35rem 0.55rem;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+/* ==============================
+   DASHBOARD HERO PLANT DROPDOWN
+================================= */
+
+.dashboard-hero-filter {
+    position: relative;
+    min-width: 280px;
+    padding: 1rem;
+    border-radius: 16px;
+
+    /*
+        Glass effect over the hero background.
+    */
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+.dashboard-hero-filter-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #e0f2fe;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.dashboard-plant-dropdown-button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.55rem 0.75rem;
+}
+
+.dashboard-plant-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 1rem;
+    right: 1rem;
+
+    /*
+        High z-index so the plant checklist stays above KPI cards
+        and chart cards.
+    */
+    z-index: 999;
+
+    padding: 0.75rem;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+}
+
+.dashboard-plant-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.dashboard-plant-check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    padding: 0.35rem 0.45rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.dashboard-plant-check-item:hover {
+    background: #f1f5f9;
+}
+
+.dashboard-plant-filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.dashboard-plant-filter-actions .dashboard-plant-filter-button {
+    width: 100%;
+}
+
+.dashboard-plant-filter-button {
+    flex: 1;
+    border-radius: 10px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+}
+
+.dashboard-plant-filter-button.primary {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.dashboard-plant-filter-button:hover {
+    filter: brightness(0.97);
+}
+
+.dashboard-hero-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(6px);
+}
+
+/* ==============================
+   DASHBOARD CHART DROPDOWN FILTERS
+================================= */
+
+.dashboard-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.dashboard-chart-filter-dropdown {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dashboard-chart-filter-toggle {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    transition: all 0.2s ease;
+}
+
+.dashboard-chart-filter-toggle:hover {
+    background: #e0f2fe;
+    color: #075985;
+    border-color: #7dd3fc;
+}
+
+.dashboard-chart-filter-menu {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    z-index: 30;
+    width: 260px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 0.75rem;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
+.dashboard-chart-filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.dashboard-chart-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155;
+    padding: 0.35rem 0.45rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.dashboard-chart-filter-item:hover {
+    background: #f1f5f9;
+}
+
+/* ==============================
+   DASHBOARD DOUGHNUT LEGENDS
+================================= */
+
+.dashboard-doughnut-legend {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.5rem;
+}
+
+.dashboard-doughnut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.35rem 0.6rem;
+}
+
+.dashboard-doughnut-legend-color {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.dashboard-doughnut-legend-value {
+    margin-left: auto;
+    color: #0f172a;
+    font-weight: 900;
+}
+
+/* ==============================
+   DASHBOARD KPI LINK ARROW
+================================= */
+
+.dashboard-kpi-link {
+    position: relative;
+}
+
+.dashboard-kpi-link-arrow {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.9rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.dashboard-action-card:hover .dashboard-kpi-link-arrow {
+    transform: translateY(4px);
+    color: #ffffff;
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
