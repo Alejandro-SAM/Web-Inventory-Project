@@ -1,23 +1,20 @@
 <x-app-layout>
-    @php
-        $normalizedSelectedPlant = strtoupper(trim($selectedPlant ?? ''));
-
-        $plantThemeClass = match ($normalizedSelectedPlant) {
-            'B' => 'theme-plant-b',
-            'D' => 'theme-plant-d',
-            'G' => 'theme-plant-g',
-            'H' => 'theme-plant-h',
-            'MP' => 'theme-plant-mp',
-            default => 'theme-all-plants',
-        };
-    @endphp
-
     <div class="dashboard-page py-6 scroll-smooth">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- Dashboard hero with integrated plant filter --}}
-            <div class="dashboard-hero {{ $plantThemeClass }}">
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+            {{--
+                Dashboard hero.
+
+                This card now contains:
+                - Dashboard title
+                - Current plant filter status
+                - Plant checklist dropdown
+
+                The color is dynamic and comes from the controller through:
+                $dashboardThemeStyle
+            --}}
+            <div class="dashboard-hero" style="{{ $dashboardThemeStyle }}">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <h1 class="dashboard-hero-title">
                             Inventory Dashboard
@@ -28,33 +25,59 @@
                         </p>
                     </div>
 
+                    {{--
+                        Plant checklist filter.
+
+                        Important:
+                        - The input name is plants[] because this is now a multiple filter.
+                        - Reset does not submit selected values; it reloads the dashboard clean.
+                        - Apply submits the checked plants through GET.
+                    --}}
                     <form method="GET"
                           action="{{ route('dashboard') }}"
+                          id="plantFilterForm"
                           class="dashboard-hero-filter">
-                        <div>
-                            <label for="plant" class="dashboard-hero-filter-label">
-                                Filter by Plant
-                            </label>
+                        <label class="dashboard-hero-filter-label">
+                            Filter by Plant
+                        </label>
 
-                            <select name="plant"
-                                    id="plant"
-                                    onchange="showDashboardLoading(); this.form.submit();"
-                                    class="dashboard-hero-filter-select">
-                                <option value="">All Plants</option>
+                        <button type="button"
+                                class="dashboard-plant-dropdown-button"
+                                onclick="toggleDropdown('plantFilterDropdown')">
+                            <span>{{ $selectedPlantLabel }}</span>
+                            <span>▾</span>
+                        </button>
 
+                        <div id="plantFilterDropdown" class="dashboard-plant-dropdown-menu hidden">
+                            <div class="dashboard-plant-checklist">
                                 @foreach ($plants as $plant)
-                                    <option value="{{ $plant }}" @selected($selectedPlant === $plant)>
-                                        {{ $plant }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                                    <label class="dashboard-plant-check-item">
+                                         <input type="checkbox"
+                                                name="plants[]"
+                                                value="{{ $plant }}"
+                                                class="plant-filter-checkbox"
+                                                onchange="submitPlantFilterOnChange()"
+                                                @checked(in_array($plant, $selectedPlantsArray, true))>
 
-                        <a href="{{ route('dashboard') }}"
-                           onclick="showDashboardLoading();"
-                           class="dashboard-hero-clear-button {{ !empty($selectedPlant) ? 'is-visible' : '' }}">
-                            Clear filter
-                        </a>
+                                        <span>{{ $plant }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            <div class="dashboard-plant-filter-actions">
+                                {{--
+                                    Reset reloads the dashboard without plants[] parameters.
+
+                                    The controller interprets an empty filter as:
+                                    "all plants selected".
+                                --}}
+                                <button type="button"
+                                        class="dashboard-plant-filter-button primary"
+                                        onclick="resetPlantFilter()">
+                                    Reset all plants
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -113,22 +136,35 @@
             {{--
                 Charts section.
 
-                Each canvas is used by Chart.js to render a different inventory chart.
+                Changes included:
+                - Assets by Plant is now a doughnut chart.
+                - Assets by Category has a dropdown checklist filter.
+                - Assets by State has a dropdown checklist filter.
+                - Assets by Business Unit has a dropdown checklist filter.
+                - Doughnut charts include custom legends below the chart.
             --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="dashboard-chart-card">
                     <h2 class="dashboard-chart-title">Assets by Plant</h2>
                     <p class="dashboard-chart-subtitle">
-                        Global distribution of assets by plant.
+                        Distribution of assets by selected plants.
                     </p>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByPlantChart"></canvas>
                     </div>
+
+                    {{--
+                        Custom legend for the plant doughnut chart.
+
+                        JavaScript will fill this div with:
+                        color + plant + asset count
+                    --}}
+                    <div id="assetsByPlantLegend" class="dashboard-doughnut-legend"></div>
                 </div>
 
                 <div class="dashboard-chart-card">
-                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div class="dashboard-chart-header">
                         <div>
                             <h2 class="dashboard-chart-title">Assets by Category</h2>
                             <p class="dashboard-chart-subtitle">
@@ -136,14 +172,21 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                class="dashboard-chart-filter-toggle"
-                                onclick="toggleChartFilter('categoryChartFilters')">
-                            Filter columns
-                        </button>
-                    </div>
+                        {{--
+                            Dropdown checklist.
 
-                    <div id="categoryChartFilters" class="dashboard-chart-filter-panel hidden"></div>
+                            It hides/shows chart columns without reloading the page.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('categoryChartFilters')">
+                                Filter columns ▾
+                            </button>
+
+                            <div id="categoryChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByCategoryChart"></canvas>
@@ -151,18 +194,43 @@
                 </div>
 
                 <div class="dashboard-chart-card">
-                    <h2 class="dashboard-chart-title">Assets by State</h2>
-                    <p class="dashboard-chart-subtitle">
-                        Current status of the selected asset scope.
-                    </p>
+                    <div class="dashboard-chart-header">
+                        <div>
+                            <h2 class="dashboard-chart-title">Assets by State</h2>
+                            <p class="dashboard-chart-subtitle">
+                                Current status of the selected asset scope.
+                            </p>
+                        </div>
+
+                        {{--
+                            Dropdown checklist for states.
+
+                            This was added so Assets by State behaves like
+                            Category and Business Unit.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('stateChartFilters')">
+                                Filter columns ▾
+                            </button>
+
+                            <div id="stateChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByStateChart"></canvas>
                     </div>
+
+                    {{--
+                        Custom legend for the state doughnut chart.
+                    --}}
+                    <div id="assetsByStateLegend" class="dashboard-doughnut-legend"></div>
                 </div>
 
                 <div class="dashboard-chart-card">
-                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div class="dashboard-chart-header">
                         <div>
                             <h2 class="dashboard-chart-title">Assets by Business Unit</h2>
                             <p class="dashboard-chart-subtitle">
@@ -170,14 +238,19 @@
                             </p>
                         </div>
 
-                        <button type="button"
-                                class="dashboard-chart-filter-toggle"
-                                onclick="toggleChartFilter('businessUnitChartFilters')">
-                            Filter columns
-                        </button>
-                    </div>
+                        {{--
+                            Dropdown checklist for Business Unit.
+                        --}}
+                        <div class="dashboard-chart-filter-dropdown">
+                            <button type="button"
+                                    class="dashboard-chart-filter-toggle"
+                                    onclick="toggleDropdown('businessUnitChartFilters')">
+                                Filter columns ▾
+                            </button>
 
-                    <div id="businessUnitChartFilters" class="dashboard-chart-filter-panel hidden"></div>
+                            <div id="businessUnitChartFilters" class="dashboard-chart-filter-menu hidden"></div>
+                        </div>
+                    </div>
 
                     <div class="dashboard-chart-wrapper">
                         <canvas id="assetsByBusinessUnitChart"></canvas>
@@ -757,8 +830,10 @@
 
     <script>
         /*
-            Convert Laravel collections into JavaScript arrays.
-            Laravel safely passes PHP data to JavaScript.
+            Convert Laravel data into JavaScript arrays.
+
+            These arrays come from DashboardController.php.
+            They already respect the global plant checklist filter.
         */
         const assetsByPlantLabels = @json($assetsByPlantLabels);
         const assetsByPlantData = @json($assetsByPlantData);
@@ -772,6 +847,12 @@
         const assetsByBusinessUnitLabels = @json($assetsByBusinessUnitLabels);
         const assetsByBusinessUnitData = @json($assetsByBusinessUnitData);
 
+        /*
+            Automatic chart color palette.
+
+            Colors are assigned by index.
+            If there are more labels than colors, the palette repeats.
+        */
         const chartColors = [
             '#2563eb',
             '#22c55e',
@@ -784,12 +865,44 @@
             '#14b8a6',
             '#6366f1',
             '#84cc16',
-            '#f43f5e'
+            '#f43f5e',
+            '#0ea5e9',
+            '#facc15',
+            '#10b981',
+            '#d946ef',
+            '#fb7185',
+            '#38bdf8'
         ];
 
+        /*
+            Store Chart.js instances.
+
+            We need this so the dropdown checklist filters can update
+            existing charts instead of creating new ones.
+        */
         const dashboardCharts = {};
 
+        /*
+            Return one color per label.
+
+            Example:
+            labels: [B, D, G]
+            colors: [blue, green, orange]
+        */
+        function getChartColors(labels) {
+            return labels.map((_, index) => chartColors[index % chartColors.length]);
+        }
+
+        /*
+            Create a reusable bar chart.
+
+            Used by:
+            - Assets by Category
+            - Assets by Business Unit
+        */
         function createBarChart(canvasId, labels, data, label) {
+            const colors = getChartColors(labels);
+
             const chart = new Chart(document.getElementById(canvasId), {
                 type: 'bar',
                 data: {
@@ -797,11 +910,11 @@
                     datasets: [{
                         label: label,
                         data: data,
-                        backgroundColor: chartColors,
+                        backgroundColor: colors,
                         borderColor: '#ffffff',
                         borderWidth: 2,
                         borderRadius: 8,
-                        hoverBackgroundColor: chartColors,
+                        hoverBackgroundColor: colors,
                         hoverBorderColor: '#0f172a',
                         hoverBorderWidth: 2
                     }]
@@ -810,6 +923,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        /*
+                            We hide the default legend because these bar charts
+                            already show labels on the axis.
+                        */
                         legend: {
                             display: false
                         }
@@ -818,6 +935,9 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                /*
+                                    Asset counts should be whole numbers.
+                                */
                                 precision: 0
                             }
                         }
@@ -830,7 +950,16 @@
             return chart;
         }
 
-        function createDoughnutChart(canvasId, labels, data, label) {
+        /*
+            Create a reusable doughnut chart.
+
+            Used by:
+            - Assets by Plant
+            - Assets by State
+        */
+        function createDoughnutChart(canvasId, labels, data, label, legendId = null) {
+            const colors = getChartColors(labels);
+
             const chart = new Chart(document.getElementById(canvasId), {
                 type: 'doughnut',
                 data: {
@@ -838,7 +967,7 @@
                     datasets: [{
                         label: label,
                         data: data,
-                        backgroundColor: chartColors,
+                        backgroundColor: colors,
                         borderColor: '#ffffff',
                         borderWidth: 3,
                         hoverOffset: 10
@@ -846,26 +975,111 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    plugins: {
+                        /*
+                            We use our own custom legend because we want to show:
+                            color + label + asset count.
+                        */
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
 
             dashboardCharts[canvasId] = chart;
 
+            /*
+                If a legend container exists, render the custom legend.
+            */
+            if (legendId) {
+                renderDoughnutLegend(legendId, labels, data, colors);
+            }
+
             return chart;
         }
 
-        function toggleChartFilter(panelId) {
-            const panel = document.getElementById(panelId);
+        /*
+            Render a custom legend for doughnut charts.
 
-            if (!panel) {
+            The legend shows:
+            - Color dot
+            - Label
+            - Count
+        */
+        function renderDoughnutLegend(legendId, labels, data, colors) {
+            const legend = document.getElementById(legendId);
+
+            if (!legend) {
                 return;
             }
 
-            panel.classList.toggle('hidden');
+            legend.innerHTML = '';
+
+            labels.forEach((label, index) => {
+                const item = document.createElement('div');
+                item.className = 'dashboard-doughnut-legend-item';
+
+                const color = document.createElement('span');
+                color.className = 'dashboard-doughnut-legend-color';
+                color.style.backgroundColor = colors[index];
+
+                const text = document.createElement('span');
+                text.textContent = label;
+
+                const value = document.createElement('span');
+                value.className = 'dashboard-doughnut-legend-value';
+                value.textContent = data[index];
+
+                item.appendChild(color);
+                item.appendChild(text);
+                item.appendChild(value);
+
+                legend.appendChild(item);
+            });
         }
 
-        function buildChartColumnFilters(panelId, chartId, labels, data, datasetLabel) {
+        /*
+            Generic dropdown toggle.
+
+            Used by:
+            - Global plant checklist
+            - Category chart checklist
+            - State chart checklist
+            - Business Unit chart checklist
+        */
+        function toggleDropdown(elementId) {
+            const targetDropdown = document.getElementById(elementId);
+
+            if (!targetDropdown) {
+                return;
+            }
+
+            /*
+                Close every other dashboard dropdown before opening the selected one.
+            */
+            document.querySelectorAll('.dashboard-chart-filter-menu, .dashboard-plant-dropdown-menu')
+                .forEach(dropdown => {
+                    if (dropdown.id !== elementId) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+            targetDropdown.classList.toggle('hidden');
+        }
+
+        /*
+            Build a dropdown checklist for a chart.
+
+            This function creates one checkbox per label.
+            Example:
+            Category chart labels:
+            - Laptop
+            - Desktop
+            - Printer
+        */
+        function buildChartDropdownFilter(panelId, chartId, labels, data, datasetLabel, legendId = null) {
             const panel = document.getElementById(panelId);
 
             if (!panel) {
@@ -886,28 +1100,11 @@
                 checkbox.checked = true;
                 checkbox.value = itemLabel;
 
+                /*
+                    Every time a checkbox changes, update the chart.
+                */
                 checkbox.addEventListener('change', () => {
-                    const checkedLabels = Array
-                        .from(panel.querySelectorAll('input[type="checkbox"]:checked'))
-                        .map(input => input.value);
-
-                    const filteredLabels = [];
-                    const filteredData = [];
-
-                    labels.forEach((originalLabel, originalIndex) => {
-                        if (checkedLabels.includes(originalLabel)) {
-                            filteredLabels.push(originalLabel);
-                            filteredData.push(data[originalIndex]);
-                        }
-                    });
-
-                    const chart = dashboardCharts[chartId];
-
-                    chart.data.labels = filteredLabels;
-                    chart.data.datasets[0].data = filteredData;
-                    chart.data.datasets[0].backgroundColor = chartColors;
-                    chart.data.datasets[0].label = datasetLabel;
-                    chart.update();
+                    updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId);
                 });
 
                 labelElement.appendChild(checkbox);
@@ -919,11 +1116,61 @@
             panel.appendChild(list);
         }
 
+        /*
+            Update a chart based on checked values.
+
+            This does not reload the dashboard.
+            It only updates the Chart.js instance in the browser.
+        */
+        function updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId = null) {
+            const panel = document.getElementById(panelId);
+            const chart = dashboardCharts[chartId];
+
+            if (!panel || !chart) {
+                return;
+            }
+
+            const checkedLabels = Array
+                .from(panel.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(input => input.value);
+
+            const filteredLabels = [];
+            const filteredData = [];
+
+            labels.forEach((originalLabel, originalIndex) => {
+                if (checkedLabels.includes(originalLabel)) {
+                    filteredLabels.push(originalLabel);
+                    filteredData.push(data[originalIndex]);
+                }
+            });
+
+            const filteredColors = getChartColors(filteredLabels);
+
+            chart.data.labels = filteredLabels;
+            chart.data.datasets[0].data = filteredData;
+            chart.data.datasets[0].backgroundColor = filteredColors;
+            chart.data.datasets[0].hoverBackgroundColor = filteredColors;
+            chart.data.datasets[0].label = datasetLabel;
+            chart.update();
+
+            /*
+                If this chart has a custom legend, update it too.
+            */
+            if (legendId) {
+                renderDoughnutLegend(legendId, filteredLabels, filteredData, filteredColors);
+            }
+        }
+
+        /*
+            Render dashboard charts.
+        */
+
         createDoughnutChart(
             'assetsByPlantChart',
             assetsByPlantLabels,
             assetsByPlantData,
-            'Assets by Plant'
+            'Assets by Plant',
+            'assetsByPlantLegend'
         );
 
         createBarChart(
@@ -937,7 +1184,8 @@
             'assetsByStateChart',
             assetsByStateLabels,
             assetsByStateData,
-            'Assets by State'
+            'Assets by State',
+            'assetsByStateLegend'
         );
 
         createBarChart(
@@ -947,7 +1195,14 @@
             'Assets by Business Unit'
         );
 
-        buildChartColumnFilters(
+        /*
+            Build dropdown filters for charts.
+
+            Assets by Plant does not need a local chart filter because
+            it is controlled by the global plant checklist.
+        */
+
+        buildChartDropdownFilter(
             'categoryChartFilters',
             'assetsByCategoryChart',
             assetsByCategoryLabels,
@@ -955,13 +1210,64 @@
             'Assets by Category'
         );
 
-        buildChartColumnFilters(
+        buildChartDropdownFilter(
+            'stateChartFilters',
+            'assetsByStateChart',
+            assetsByStateLabels,
+            assetsByStateData,
+            'Assets by State',
+            'assetsByStateLegend'
+        );
+
+        buildChartDropdownFilter(
             'businessUnitChartFilters',
             'assetsByBusinessUnitChart',
             assetsByBusinessUnitLabels,
             assetsByBusinessUnitData,
             'Assets by Business Unit'
         );
+
+        /*
+            Auto-submit plant filter.
+
+            This function is triggered whenever the user checks or unchecks
+            a plant from the global plant checklist.
+        */
+        function submitPlantFilterOnChange() {
+            const form = document.getElementById('plantFilterForm');
+
+            if (!form) {
+                return;
+            }
+
+            showDashboardLoading();
+            form.submit();
+        }
+
+        /*
+            Reset plant filter.
+
+            Since no plants[] are sent, the controller will automatically
+            select all plants again.
+        */
+        function resetPlantFilter() {
+            showDashboardLoading();
+            window.location.href = "{{ route('dashboard') }}";
+        }
+
+        /*
+            Close dropdowns when clicking outside them.
+
+            This prevents dropdowns from staying open while the user interacts
+            with another area of the dashboard.
+        */
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.dashboard-chart-filter-dropdown')
+                && !event.target.closest('.dashboard-hero-filter')) {
+                document.querySelectorAll('.dashboard-chart-filter-menu, .dashboard-plant-dropdown-menu')
+                    .forEach(dropdown => dropdown.classList.add('hidden'));
+            }
+        });
     </script>
 
     {{--
