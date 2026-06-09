@@ -58,9 +58,10 @@ class InventoryController extends Controller
             $inventoryQuery->where('brand', 'like', '%' . $request->brand . '%');
         }
 
-        if ($request->filled('category')) {
-            $inventoryQuery->where('category', $request->category);
-        }
+        $categoryFilters = collect((array) $request->input('category', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
 
         if ($request->filled('department')) {
             $inventoryQuery->where('department', 'like', '%' . $request->department . '%');
@@ -74,9 +75,10 @@ class InventoryController extends Controller
             $inventoryQuery->where('business_unit', 'like', '%' . $request->business_unit . '%');
         }
 
-        if ($request->filled('plant')) {
-            $inventoryQuery->where('plant', 'like', '%' . $request->plant . '%');
-        }
+        $plantFilters = collect((array) $request->input('plant', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
 
         if ($request->filled('end_user')) {
             $inventoryQuery->where('end_user', 'like', '%' . $request->end_user . '%');
@@ -94,24 +96,57 @@ class InventoryController extends Controller
             $inventoryQuery->where('operating_system', 'like', '%' . $request->operating_system . '%');
         }
 
-        if ($request->filled('confidentiality')) {
-            $inventoryQuery->where('confidentiality', $request->confidentiality);
+        $confidentialityFilters = collect((array) $request->input('confidentiality', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $integrityFilters = collect((array) $request->input('integrity', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $availabilityFilters = collect((array) $request->input('availability', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $classificationFilters = collect((array) $request->input('classification', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+
+        $stateFilters = collect((array) $request->input('state', []))
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->values()
+            ->all();
+   
+        if (!empty($categoryFilters)) {
+            $inventoryQuery->whereIn('category', $categoryFilters);
         }
 
-        if ($request->filled('integrity')) {
-            $inventoryQuery->where('integrity', $request->integrity);
+        if (!empty($plantFilters)) {
+            $inventoryQuery->whereIn('plant', $plantFilters);
         }
 
-        if ($request->filled('availability')) {
-            $inventoryQuery->where('availability', $request->availability);
+        if (!empty($confidentialityFilters)) {
+            $inventoryQuery->whereIn('confidentiality', $confidentialityFilters);
         }
 
-        if ($request->filled('classification')) {
-            $inventoryQuery->where('classification', 'like', '%' . $request->classification . '%');
+        if (!empty($integrityFilters)) {
+            $inventoryQuery->whereIn('integrity', $integrityFilters);
         }
 
-        if ($request->filled('state')) {
-            $inventoryQuery->where('state', $request->state);
+        if (!empty($availabilityFilters)) {
+            $inventoryQuery->whereIn('availability', $availabilityFilters);
+        }
+
+        if (!empty($classificationFilters)) {
+            $inventoryQuery->whereIn('classification', $classificationFilters);
+        }
+
+        if (!empty($stateFilters)) {
+            $inventoryQuery->whereIn('state', $stateFilters);
         }
 
         if ($request->filled('maintenance_from')) {
@@ -123,7 +158,7 @@ class InventoryController extends Controller
         }
 
         if ($request->filled('warranty_start_from')) {
-        $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
+            $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
         }
 
         if ($request->filled('warranty_start_to')) {
@@ -154,13 +189,21 @@ class InventoryController extends Controller
         }
         /* End of creation date filter */
 
+        $plantOptions = Inventory::query()
+        ->whereNotNull('plant')
+        ->where('plant', '<>', '')
+        ->distinct()
+        ->orderBy('plant')
+        ->pluck('plant');
+
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
                 ->paginate(100)
                 ->appends($request->query()),
 
-                'categoryOptions' => $this->categoryOptions(),
-                'classificationOptions' => $this->classificationOptions(),
+            'categoryOptions' => $this->categoryOptions(),
+            'classificationOptions' => $this->classificationOptions(),
+            'plantOptions' => $plantOptions,
         ]);
     }
 
@@ -432,6 +475,20 @@ public function update(Request $request, Inventory $inventory)
             abort(403, 'You do not have permission to upload inventory files.');
         }
 
+        /*
+            Clean abandoned import batches older than 24 hours.
+            If the oldest row of a batch is older than 24 hours,
+            the whole batch is deleted.
+        */
+        $expiredBatchIds = InventoryImportRow::select('batch_id')
+            ->groupBy('batch_id')
+            ->havingRaw('MIN(created_at) < ?', [now()->subHours(24)])
+            ->pluck('batch_id');
+
+        if ($expiredBatchIds->isNotEmpty()) {
+            InventoryImportRow::whereIn('batch_id', $expiredBatchIds)->delete();
+        }
+
         $request->validate([
             'inventory_file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
         ]);
@@ -572,59 +629,84 @@ public function update(Request $request, Inventory $inventory)
             ->with('success', 'Import row updated successfully.');
     }
 
-    // Confirm import of valid rows
-    public function confirmImport(string $batchId)
-    {
-        /*
-            Read users cannot confirm inventory imports.
-        */
-        if (auth()->user()->user_level === 'Read') {
-            abort(403, 'You do not have permission to import inventory assets.');
-        }
+        // Confirm import of valid rows
+        public function confirmImport(string $batchId)
+        {
+            /*
+                Read users cannot confirm inventory imports.
+            */
+            if (auth()->user()->user_level === 'Read') {
+                abort(403, 'You do not have permission to import inventory assets.');
+            }
 
-        $validRows = InventoryImportRow::where('batch_id', $batchId)
-            ->where('created_by', auth()->id())
-            ->where('status', 'valid')
-            ->get();
+            $validRows = InventoryImportRow::where('batch_id', $batchId)
+                ->where('created_by', auth()->id())
+                ->where('status', 'valid')
+                ->get();
 
-        $imported = 0;
-        $failed = 0;
+            $imported = 0;
+            $failed = 0;
+            $failedRowIds = [];
 
-        DB::transaction(function () use ($validRows, &$imported, &$failed) {
-            foreach ($validRows as $row) {
-                try {
-                    $data = $row->normalized_data;
-                    $data['created_by'] = auth()->id();
+            DB::transaction(function () use ($batchId, $validRows, &$imported, &$failed, &$failedRowIds) {
+                foreach ($validRows as $row) {
+                    try {
+                        $data = $row->normalized_data;
+                        $data['created_by'] = auth()->id();
 
-                    Inventory::create($data);
+                        Inventory::create($data);
+
+                        /*
+                            Remove the temporary row after successful import.
+                        */
+                        $row->delete();
+
+                        $imported++;
+                    } catch (\Throwable $e) {
+                        /*
+                            Keep rows that failed during final insert.
+                            These were valid rows, so a database failure should be reviewable.
+                        */
+                        $row->update([
+                            'status' => 'invalid',
+                            'errors' => [
+                                'Database insert failed: ' . $e->getMessage(),
+                            ],
+                        ]);
+
+                        $failedRowIds[] = $row->id;
+                        $failed++;
+                    }
+                }
 
                 /*
-                    Remove the temporary row after successful import.
-                    Failed rows stay in inventory_import_rows for review.
+                    Remove invalid rows from this batch because the user chose
+                    to import only valid rows and ignore incompatible ones.
                 */
-                $row->delete();
+                $ignoredInvalidRowsQuery = InventoryImportRow::where('batch_id', $batchId)
+                    ->where('created_by', auth()->id())
+                    ->where('status', 'invalid');
 
-                    $imported++;
-                } catch (\Throwable $e) {
-                    /*
-                        Keep the row in the temporary table if final insert fails.
-                    */
-                    $row->update([
-                        'status' => 'invalid',
-                        'errors' => [
-                            'Database insert failed: ' . $e->getMessage(),
-                        ],
-                    ]);
-
-                    $failed++;
+                /*
+                    Do not delete rows that became invalid because Inventory::create() failed.
+                */
+                if (!empty($failedRowIds)) {
+                    $ignoredInvalidRowsQuery->whereNotIn('id', $failedRowIds);
                 }
-            }
-        });
 
-        return redirect()
-            ->route('inventory')
-            ->with('success', "Import completed. Imported: {$imported}. Failed: {$failed}.");
-    }
+                $ignoredInvalidRowsQuery->delete();
+            });
+
+            if ($failed > 0) {
+                return redirect()
+                    ->route('inventory.import.invalid', $batchId)
+                    ->with('error', "Import completed with database errors. Imported: {$imported}. Failed: {$failed}.");
+            }
+
+            return redirect()
+                ->route('inventory')
+                ->with('success', "Import completed. Imported: {$imported}. Ignored invalid rows were removed.");
+        }
 
     // Cancel process
     public function cancelImport(string $batchId)
@@ -639,13 +721,58 @@ public function update(Request $request, Inventory $inventory)
         InventoryImportRow::where('batch_id', $batchId)
             ->where('created_by', auth()->id())
             ->whereIn('status', ['valid', 'invalid'])
-            ->update([
-                'status' => 'cancelled',
-            ]);
+            ->delete();
 
         return redirect()
             ->route('inventory')
             ->with('success', 'Import cancelled successfully.');
+    }
+
+    // Download print data for a specific inventory item
+    
+    public function downloadPrintData(Inventory $inventory)
+    {
+        /*
+            Read users can download print data because this action
+            does not modify inventory records.
+        */
+
+        $fileName = 'current_asset_label.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ];
+
+        $callback = function () use ($inventory) {
+            $file = fopen('php://output', 'w');
+
+            /*
+                UTF-8 BOM helps Excel and some Windows tools
+                read accents and special characters correctly.
+            */
+            fwrite($file, "\xEF\xBB\xBF");
+
+            fputcsv($file, [
+                'it_internal_number',
+                'serial_number',
+                'asset_number',
+                'plant',
+                'end_user',
+            ]);
+
+            fputcsv($file, [
+                $inventory->it_internal_number ?? '',
+                $inventory->serial_number ?? '',
+                $inventory->asset_number ?? '',
+                $inventory->plant ?? '',
+                $inventory->end_user ?? '',
+            ]);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
 }

@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout :hide-navigation="true">
     <div class="container mt-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -8,10 +8,6 @@
                     Review valid and invalid rows before importing them into inventory.
                 </p>
             </div>
-
-            <a href="{{ route('inventory') }}" class="btn btn-secondary">
-                Back to Inventory
-            </a>
         </div>
 
         @if (session('success'))
@@ -89,13 +85,23 @@
                     You can now import all valid rows into the inventory table.
                 </p>
 
-                <form method="POST" action="{{ route('inventory.import.confirm', $batchId) }}">
-                    @csrf
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="POST" action="{{ route('inventory.import.confirm', $batchId) }}">
+                        @csrf
 
-                    <button type="submit" class="btn btn-success">
-                        Import valid rows
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-success">
+                            Import valid rows
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('inventory.import.cancel', $batchId) }}">
+                        @csrf
+
+                        <button type="submit" class="btn btn-outline-danger">
+                            Cancel whole import process
+                        </button>
+                    </form>
+                </div>
             </div>
         @endif
 
