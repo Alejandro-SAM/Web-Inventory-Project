@@ -74,7 +74,7 @@
                                 <button type="button"
                                         class="dashboard-plant-filter-button primary"
                                         onclick="resetPlantFilter()">
-                                    Reset all plants
+                                    Reset filter
                                 </button>
                             </div>
                         </div>
@@ -1087,6 +1087,30 @@
             }
 
             panel.innerHTML = '';
+
+            /*
+                Reset button.
+
+                This selects all checkboxes again and restores the original chart data.
+            */
+            const actions = document.createElement('div');
+            actions.className = 'dashboard-chart-filter-actions';
+
+            const resetButton = document.createElement('button');
+            resetButton.type = 'button';
+            resetButton.className = 'dashboard-chart-filter-reset-button';
+            resetButton.textContent = 'Reset filter';
+
+            resetButton.addEventListener('click', () => {
+                panel.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+                    checkbox.checked = true;
+                });
+
+                updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId);
+            });
+
+            actions.appendChild(resetButton);
+            panel.appendChild(actions);
 
             const list = document.createElement('div');
             list.className = 'dashboard-chart-filter-list';
