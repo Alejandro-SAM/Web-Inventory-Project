@@ -73,7 +73,7 @@
 
 /* Sticky headers only for the inventory table */
 .inventory-table-responsive {
-    max-height: 75vh;
+    max-height: 85vh;
     overflow: auto;
 }
 
@@ -103,4 +103,14 @@
 /* Small shadow to separate sticky headers from table content */
 #inventoryTable thead tr:nth-child(2) th {
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Checklist filter dropdowns inside sticky inventory headers */
+#inventoryTable .dropdown {
+    position: relative;
+    z-index: 3000;
+}
+
+#inventoryTable .dropdown-menu {
+    z-index: 3000;
 }
