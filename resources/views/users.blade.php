@@ -1,4 +1,8 @@
 <x-app-layout>
+
+    <div class="app-page">
+        <div class="app-page-container">
+
     <div class="container mt-4">
 
         <!-- PAGE TITLE -->
@@ -315,4 +319,8 @@
             });
         });
     </script>
+    
+    </div>
+    </div>
+    
 </x-app-layout>

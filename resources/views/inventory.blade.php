@@ -1,5 +1,8 @@
 <x-app-layout>
 
+    <div class="app-page">
+        <div class="app-page-container">
+            
     <div class="container mt-4">
 
 <!-- PAGE TITLE -->
@@ -1576,4 +1579,6 @@
             </div>
         </div>
     @endif
+    </div>
+    </div>
 </x-app-layout>

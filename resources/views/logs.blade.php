@@ -1,4 +1,8 @@
 <x-app-layout>
+
+    <div class="app-page">
+        <div class="app-page-container">
+
     <div class="container mt-4">
 
         <!-- PAGE TITLE -->
@@ -354,5 +358,7 @@
 </script>
 
     <!-- End of Auto-submit filter form on change -->
+</div>
+</div>
 
 </x-app-layout>
