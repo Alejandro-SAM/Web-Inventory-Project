@@ -1,5 +1,9 @@
 <x-app-layout>
-    <div class="container app-page">
+
+    <div class="app-page">
+        <div class="app-page-container">
+
+    <div class="container mt-4">
 
         <!-- PAGE TITLE -->
         <div class="d-flex justify-content-between align-items-center app-page-title">
@@ -315,4 +319,8 @@
             });
         });
     </script>
+    
+    </div>
+    </div>
+    
 </x-app-layout>
