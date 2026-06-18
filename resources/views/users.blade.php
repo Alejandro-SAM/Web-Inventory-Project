@@ -1,8 +1,8 @@
 <x-app-layout>
-    <div class="container mt-4">
+    <div class="container app-page">
 
         <!-- PAGE TITLE -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center app-page-title">
             <div>
                 <h1 class="mb-0">User Table</h1>
                 <p class="text-muted mb-0">Manage system users and access levels.</p>
@@ -22,13 +22,13 @@
         @endif
 
         <!-- USER TABLE -->
-        <div class="card">
-            <div class="card-header">
+        <div class="card app-card">
+            <div class="card-header app-card-header">
                 <strong>Users List</strong>
             </div>
 
-            <div class="card-body table-responsive">
-                <table class="table table-bordered table-hover align-middle">
+            <div class="card-body app-card-body table-responsive app-table-wrapper p-0">
+                <table class="table table-hover align-middle app-table mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Employee Number</th>
@@ -188,7 +188,7 @@
             </div>
 
             <!-- Pagination -->
-            <div class="card-footer">
+            <div class="card-footer app-card-footer">
                 {{ $users->links() }}
             </div>
         </div>

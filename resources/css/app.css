@@ -1,6 +1,6 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
 @import './custom.css'; /* Custom styles for the website */
 @import './dashboard.css'; /* Dashboard specific styles */
-@import 'bootstrap/dist/css/bootstrap.min.css';
 
 @tailwind base;
 @tailwind components;
