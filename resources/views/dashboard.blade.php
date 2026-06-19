@@ -1,6 +1,13 @@
 <x-app-layout>
     <div class="dashboard-page py-6 scroll-smooth">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+        {{--
+            Main dashboard content container.
+
+            Every dashboard section must remain inside this container
+            so the hero, KPI cards, charts and tables share the same width.
+        --}}
+        <div class="dashboard-content-container">
 
             {{--
                 Dashboard hero.
@@ -41,10 +48,21 @@
                             Filter by Plant
                         </label>
 
-                        <button type="button"
-                                class="dashboard-plant-dropdown-button"
-                                onclick="toggleDropdown('plantFilterDropdown')">
-                            <span>{{ $selectedPlantLabel }}</span>
+                        <!--
+                            Plant filter dropdown toggle.
+
+                            The label has an ID so JavaScript can update the visible
+                            selection count without submitting the form.
+                        -->
+                        <button
+                            type="button"
+                            class="dashboard-plant-dropdown-button"
+                            onclick="toggleDropdown('plantFilterDropdown')"
+                        >
+                            <span id="plantFilterButtonLabel">
+                                {{ $selectedPlantLabel }}
+                            </span>
+
                             <span>▾</span>
                         </button>
 
@@ -56,26 +74,50 @@
                                                 name="plants[]"
                                                 value="{{ $plant }}"
                                                 class="plant-filter-checkbox"
-                                                onchange="submitPlantFilterOnChange()"
                                                 @checked(in_array($plant, $selectedPlantsArray, true))>
-
                                         <span>{{ $plant }}</span>
                                     </label>
                                 @endforeach
                             </div>
 
-                            <div class="dashboard-plant-filter-actions">
-                                {{--
-                                    Reset reloads the dashboard without plants[] parameters.
+                            <!--
+                                Plant filter actions.
 
-                                    The controller interprets an empty filter as:
-                                    "all plants selected".
-                                --}}
-                                <button type="button"
-                                        class="dashboard-plant-filter-button primary"
-                                        onclick="resetPlantFilter()">
+                                Unselect all:
+                                Clears the current checkbox selection without reloading the page.
+
+                                Reset filter:
+                                Selects every available plant again without reloading the page.
+
+                                Apply filter:
+                                Submits the selected plants and refreshes the dashboard data.
+                            -->
+                            <div class="dashboard-plant-filter-actions">
+
+                                <button
+                                    type="button"
+                                    class="dashboard-plant-filter-button"
+                                    onclick="clearPlantFilterSelection()"
+                                >
+                                    Unselect all
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="dashboard-plant-filter-button"
+                                    onclick="selectAllPlantFilterOptions()"
+                                >
                                     Reset filter
                                 </button>
+
+                                <button
+                                    type="button"
+                                    class="dashboard-plant-filter-button primary"
+                                    onclick="applyPlantFilter()"
+                                >
+                                    Apply filter
+                                </button>
+
                             </div>
                         </div>
                     </form>
@@ -1096,20 +1138,104 @@
             const actions = document.createElement('div');
             actions.className = 'dashboard-chart-filter-actions';
 
-            const resetButton = document.createElement('button');
-            resetButton.type = 'button';
-            resetButton.className = 'dashboard-chart-filter-reset-button';
-            resetButton.textContent = 'Reset filter';
+            /*
+            |--------------------------------------------------------------------------
+            | Chart filter action buttons
+            |--------------------------------------------------------------------------
+            |
+            | Adds two actions to each dashboard chart filter:
+            |
+            | Unselect all:
+            | Clears every checkbox and immediately updates the chart.
+            |
+            | Reset filter:
+            | Selects every checkbox and restores the complete chart data.
+            |
+            */
 
-            resetButton.addEventListener('click', () => {
-                panel.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-                    checkbox.checked = true;
-                });
 
-                updateFilteredChart(panelId, chartId, labels, data, datasetLabel, legendId);
+            /*
+                Create the Unselect all button.
+            */
+            const clearButton = document.createElement('button');
+
+            clearButton.type = 'button';
+            clearButton.className =
+                'dashboard-chart-filter-action-button secondary';
+
+            clearButton.textContent = 'Unselect all';
+
+
+            /*
+                Clear every checkbox and update the corresponding chart.
+            */
+            clearButton.addEventListener('click', () => {
+                panel
+                    .querySelectorAll('input[type="checkbox"]')
+                    .forEach((checkbox) => {
+                        checkbox.checked = false;
+                    });
+
+                /*
+                    Update the chart immediately using the new empty selection.
+                */
+                updateFilteredChart(
+                    panelId,
+                    chartId,
+                    labels,
+                    data,
+                    datasetLabel,
+                    legendId
+                );
             });
 
+
+            /*
+                Create the Reset filter button.
+            */
+            const resetButton = document.createElement('button');
+
+            resetButton.type = 'button';
+            resetButton.className =
+                'dashboard-chart-filter-action-button primary';
+
+            resetButton.textContent = 'Reset filter';
+
+
+            /*
+                Select every checkbox and restore all chart information.
+            */
+            resetButton.addEventListener('click', () => {
+                panel
+                    .querySelectorAll('input[type="checkbox"]')
+                    .forEach((checkbox) => {
+                        checkbox.checked = true;
+                    });
+
+                /*
+                    Update the chart immediately with the complete dataset.
+                */
+                updateFilteredChart(
+                    panelId,
+                    chartId,
+                    labels,
+                    data,
+                    datasetLabel,
+                    legendId
+                );
+            });
+
+
+            /*
+                Add both buttons to the filter actions container.
+            */
+            actions.appendChild(clearButton);
             actions.appendChild(resetButton);
+
+
+            /*
+                Add the actions container to the dropdown filter panel.
+            */
             panel.appendChild(actions);
 
             const list = document.createElement('div');
@@ -1252,32 +1378,187 @@
         );
 
         /*
-            Auto-submit plant filter.
-
-            This function is triggered whenever the user checks or unchecks
-            a plant from the global plant checklist.
+        |--------------------------------------------------------------------------
+        | Apply plant filter
+        |--------------------------------------------------------------------------
+        |
+        | Submits the plant filter form only after the user confirms the
+        | prepared checkbox selection.
+        |
+        | This prevents the dashboard from reloading every time a plant
+        | checkbox is selected or unselected.
+        |
         */
-        function submitPlantFilterOnChange() {
+        function applyPlantFilter() {
             const form = document.getElementById('plantFilterForm');
 
+            const checkedPlants = document.querySelectorAll(
+                '.plant-filter-checkbox:checked'
+            );
+
+            /*
+                Stop the function if the plant filter form does not exist.
+            */
             if (!form) {
                 return;
             }
 
+            /*
+                Require at least one selected plant.
+
+                The DashboardController currently interprets an empty plant
+                selection as all plants selected. This validation prevents
+                that behavior from confusing the user.
+            */
+            if (checkedPlants.length === 0) {
+                alert('Please select at least one plant before applying the filter.');
+                return;
+            }
+
+            /*
+                Display the dashboard loading indicator before submitting.
+            */
             showDashboardLoading();
+
+            /*
+                Submit the form and refresh all dashboard information.
+            */
             form.submit();
         }
 
-        /*
-            Reset plant filter.
 
-            Since no plants[] are sent, the controller will automatically
-            select all plants again.
+        /*
+        |--------------------------------------------------------------------------
+        | Select all plant options
+        |--------------------------------------------------------------------------
+        |
+        | Selects every plant checkbox without submitting the form.
+        |
+        | The dashboard data will only change after the user clicks
+        | the Apply filter button.
+        |
         */
-        function resetPlantFilter() {
-            showDashboardLoading();
-            window.location.href = "{{ route('dashboard') }}";
+        function selectAllPlantFilterOptions() {
+            const plantCheckboxes = document.querySelectorAll(
+                '.plant-filter-checkbox'
+            );
+
+            /*
+                Mark every available plant checkbox as selected.
+            */
+            plantCheckboxes.forEach((checkbox) => {
+                checkbox.checked = true;
+            });
+
+            /*
+                Update the visible dropdown button label.
+            */
+            updatePlantFilterButtonLabel();
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Unselect all plant options
+        |--------------------------------------------------------------------------
+        |
+        | Clears every plant checkbox without submitting the form.
+        |
+        | This is useful when the user wants to start with an empty
+        | selection and then choose only specific plants.
+        |
+        */
+        function clearPlantFilterSelection() {
+            const plantCheckboxes = document.querySelectorAll(
+                '.plant-filter-checkbox'
+            );
+
+            /*
+                Uncheck every available plant option.
+            */
+            plantCheckboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+
+            /*
+                Update the visible dropdown button label.
+            */
+            updatePlantFilterButtonLabel();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update plant filter button label
+        |--------------------------------------------------------------------------
+        |
+        | Updates the dropdown button text while the user modifies the
+        | checkbox selection.
+        |
+        | This function only updates the interface.
+        | It does not reload or filter the dashboard.
+        |
+        */
+        function updatePlantFilterButtonLabel() {
+            const label = document.getElementById('plantFilterButtonLabel');
+
+            const plantCheckboxes = document.querySelectorAll(
+                '.plant-filter-checkbox'
+            );
+
+            const checkedPlantCheckboxes = document.querySelectorAll(
+                '.plant-filter-checkbox:checked'
+            );
+
+            /*
+                Stop if the button label element does not exist.
+            */
+            if (!label) {
+                return;
+            }
+
+            /*
+                Display the all-selected message when every plant is checked.
+            */
+            if (
+                plantCheckboxes.length > 0 &&
+                checkedPlantCheckboxes.length === plantCheckboxes.length
+            ) {
+                label.textContent = 'All plants selected';
+                return;
+            }
+
+            /*
+                Display the empty-selection message when no plant is checked.
+            */
+            if (checkedPlantCheckboxes.length === 0) {
+                label.textContent = 'No plants selected';
+                return;
+            }
+
+            /*
+                Display the number of currently selected plants.
+            */
+            label.textContent =
+                checkedPlantCheckboxes.length + ' plant(s) selected';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Plant checkbox change listeners
+        |--------------------------------------------------------------------------
+        |
+        | Updates the visible plant filter label whenever the user manually
+        | checks or unchecks a plant.
+        |
+        | This does not submit the form or reload the dashboard.
+        |
+        */
+        document.querySelectorAll('.plant-filter-checkbox').forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                updatePlantFilterButtonLabel();
+            });
+        });
 
         /*
             Close dropdowns when clicking outside them.
