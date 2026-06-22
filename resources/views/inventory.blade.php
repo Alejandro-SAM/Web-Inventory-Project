@@ -1,9 +1,12 @@
 <x-app-layout>
 
+    <div class="app-page">
+        <div class="app-page-container">
+            
     <div class="container mt-4">
 
 <!-- PAGE TITLE -->
-<div class="mb-4">
+<div class="app-page-title">
     <h1 class="mb-0">
         Inventory
     </h1>
@@ -12,7 +15,7 @@
         Review, filter and manage IT inventory assets.
     </p>
 </div>
-        <div class="card">
+        <div class="card app-card">
 
             <!-- Hidden form for automatic filters -->
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
@@ -69,7 +72,7 @@
                 ];
             @endphp
 
-<div class="card-header d-flex justify-content-between align-items-center">
+<div class="card-header app-card-header">
     <strong>Inventory Assets</strong>
 
     <div class="d-flex gap-2 align-items-center">
@@ -246,11 +249,11 @@
             </div>
         </div>
 
-            <div class="card-body p-0">
-                <div class="table-responsive inventory-table-responsive">
+            <div class="card-body app-card-body p-0">
+                <div class="table-responsive inventory-table-responsive app-table-wrapper">
 
                 <!-- Inventory table -->
-                <table id="inventoryTable" class="table table-bordered table-hover align-middle wide-table mb-0">
+                <table id="inventoryTable" class="table table-hover align-middle wide-table app-table mb-0">
 
                     <thead class="table-light">
                     <tr>
@@ -749,27 +752,27 @@
                                 </div>
                             </th>
 
-                            <!--- Only show Created At filters for Admin users -->
+                            <!-- Only show Created At filters for Admin users -->
                             @if (Auth::user()->user_level === 'Admin')
-                            <th class="col-md-custom" style="min-width: 220px;">
-                                <div class="d-flex gap-2">
-                                    <div class="d-flex gap-1">
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_from"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_from') }}"
-                                        >
+                                <th class="col-md-custom" style="min-width: 220px;">
+                                    <div class="d-flex gap-2">
+                                        <div class="d-flex gap-1">
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_from"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_from') }}"
+                                            >
 
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_to"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_to') }}"
-                                        >
-                                    </div>
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_to"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_to') }}"
+                                            >
+                                        </div>
 
                                     <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-secondary">
                                         Clear
@@ -1110,7 +1113,7 @@
             </div>
         </div>
 
-            <div class="card-footer">
+            <div class="card-footer app-card-footer">
                 {{ $inventoryItems->links() }}
             </div>
         </div>
@@ -1576,4 +1579,6 @@
             </div>
         </div>
     @endif
+    </div>
+    </div>
 </x-app-layout>

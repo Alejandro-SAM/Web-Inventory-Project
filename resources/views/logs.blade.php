@@ -1,8 +1,12 @@
 <x-app-layout>
+
+    <div class="app-page">
+        <div class="app-page-container">
+
     <div class="container mt-4">
 
         <!-- PAGE TITLE -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center app-page-title">
             <div>
                 <h1 class="mb-0">
                     {{ $tab === 'logins' ? 'Login Logs' : 'Activity Logs' }}
@@ -31,7 +35,7 @@
 
         <!-- ACTIVITY LOGS TABLE -->
         @if ($tab !== 'logins')
-            <div class="card">
+            <div class="card app-card">
 
                 <!-- Hidden form for automatic filters -->
                     <form id="activityFiltersForm" method="GET" action="{{ route('logs') }}" class="auto-filter-form">
@@ -39,12 +43,12 @@
                     </form>
                 <!-- Hidden form for automatic filters end -->
 
-                <div class="card-header">
+                <div class="card-header app-card-header">
                     <strong>Activity Logs</strong>
                 </div>
 
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-hover align-middle">
+                <div class="card-body app-card-body table-responsive app-table-wrapper p-0">
+                    <table class="table table-hover align-middle app-table mb-0">
                 <!-- Table Headers with Filters -->
 
 <thead class="table-light">
@@ -313,7 +317,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="card-footer">
+                <div class="card-footer app-card-footer">
                     {{ $loginLogs->links() }}
                 </div>
             </div>
@@ -354,5 +358,7 @@
 </script>
 
     <!-- End of Auto-submit filter form on change -->
+</div>
+</div>
 
 </x-app-layout>
