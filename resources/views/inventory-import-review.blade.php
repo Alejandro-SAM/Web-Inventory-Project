@@ -1,4 +1,8 @@
-<x-app-layout>
+<x-app-layout :hide-navigation="true">
+
+    <div class="app-page">
+        <div class="app-page-container">
+
     <div class="container mt-4">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -8,10 +12,6 @@
                     Review valid and invalid rows before importing them into inventory.
                 </p>
             </div>
-
-            <a href="{{ route('inventory') }}" class="btn btn-secondary">
-                Back to Inventory
-            </a>
         </div>
 
         @if (session('success'))
@@ -89,13 +89,23 @@
                     You can now import all valid rows into the inventory table.
                 </p>
 
-                <form method="POST" action="{{ route('inventory.import.confirm', $batchId) }}">
-                    @csrf
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="POST" action="{{ route('inventory.import.confirm', $batchId) }}">
+                        @csrf
 
-                    <button type="submit" class="btn btn-success">
-                        Import valid rows
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-success">
+                            Import valid rows
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('inventory.import.cancel', $batchId) }}">
+                        @csrf
+
+                        <button type="submit" class="btn btn-outline-danger">
+                            Cancel whole import process
+                        </button>
+                    </form>
+                </div>
             </div>
         @endif
 
@@ -114,6 +124,9 @@
                             <th>Serial Number</th>
                             <th>Asset Number</th>
                             <th>Description</th>
+                            <th>Warranty Start Date</th>
+                            <th>Warranty Expiry Date</th>
+                            <th>Purchase Origin Country</th>
                             <th>Errors</th>
                         </tr>
                     </thead>
@@ -146,6 +159,9 @@
                                 <td>{{ $data['serial_number'] ?? 'N/A' }}</td>
                                 <td>{{ $data['asset_number'] ?? 'N/A' }}</td>
                                 <td>{{ $data['description'] ?? 'N/A' }}</td>
+                                <td>{{ $data['warranty_start_date'] ?? 'N/A' }}</td>
+                                <td>{{ $data['warranty_expiry_date'] ?? 'N/A' }}</td>
+                                <td>{{ $data['purchase_origin_country'] ?? 'N/A' }}</td>
 
                                 <td>
                                     @if (!empty($errors))
@@ -161,7 +177,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">
+                                <td colspan="10" class="text-center text-muted">
                                     No processed rows found.
                                 </td>
                             </tr>
@@ -176,4 +192,8 @@
         </div>
 
     </div>
+
+    </div>
+    </div>
+    
 </x-app-layout>

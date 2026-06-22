@@ -55,6 +55,16 @@ class InventoryImportNormalizer
                 'categoría',
             ])),
 
+            'purchase_origin_country' => $this->cleanText($this->getValue($row, [
+            'purchase_origin_country',
+            'purchase origin country',
+            'purchase country',
+            'origin country',
+            'country of origin',
+            'pais de origen',
+            'país de origen',
+            ])),
+
             'department' => $this->cleanText($this->getValue($row, [
                 'department',
                 'departamento',
@@ -111,21 +121,6 @@ class InventoryImportNormalizer
         ];
 
         /*
-        Normalize asset classification.
-        */
-        $classificationResult = $this->normalizeClassification($this->getValue($row, [
-            'classification',
-            'clasificacion',
-            'clasificación',
-        ]));
-
-        $data['classification'] = $classificationResult['value'];
-
-        if ($classificationResult['error']) {
-        $errors[] = 'Classification is not valid.';
-        }
-
-        /*
             Require at least one main identifier.
             This prevents importing completely untraceable assets.
         */
@@ -167,6 +162,21 @@ class InventoryImportNormalizer
         }
 
         /*
+            Normalize classification value.
+        */
+        $classificationResult = $this->normalizeClassification($this->getValue($row, [
+            'classification',
+            'clasificacion',
+            'clasificación',
+        ]));
+
+        $data['classification'] = $classificationResult['value'];
+
+        if ($classificationResult['error']) {
+            $errors[] = 'Classification value is not valid. Use 1, 2, 3, 4, A, B, C, D, A (TOP SECRET), B (SECRET), C(INTERNAL) or D(GENERAL).';
+        }
+
+        /*
             Normalize next maintenance date.
         */
         $dateResult = $this->normalizeDate($this->getValue($row, [
@@ -182,6 +192,47 @@ class InventoryImportNormalizer
 
         if ($dateResult['error']) {
             $errors[] = 'Next Maintenance date is not valid.';
+        }
+
+        /*
+    Normalize warranty start date.
+        */
+        $warrantyStartDateResult = $this->normalizeDate($this->getValue($row, [
+            'warranty_start_date',
+            'warranty start date',
+            'warranty start',
+            'start warranty',
+            'fecha inicio garantia',
+            'fecha inicio garantía',
+            'inicio garantia',
+            'inicio garantía',
+        ]));
+
+        $data['warranty_start_date'] = $warrantyStartDateResult['value'];
+
+        if ($warrantyStartDateResult['error']) {
+            $errors[] = 'Warranty Start Date is not valid.';
+        }
+
+        /*
+            Normalize warranty expiry date.
+        */
+        $warrantyExpiryDateResult = $this->normalizeDate($this->getValue($row, [
+            'warranty_expiry_date',
+            'warranty expiry date',
+            'warranty expiration date',
+            'warranty end date',
+            'warranty expires',
+            'fecha fin garantia',
+            'fecha fin garantía',
+            'vencimiento garantia',
+            'vencimiento garantía',
+        ]));
+
+        $data['warranty_expiry_date'] = $warrantyExpiryDateResult['value'];
+
+        if ($warrantyExpiryDateResult['error']) {
+            $errors[] = 'Warranty Expiry Date is not valid.';
         }
 
         /*
@@ -524,6 +575,70 @@ class InventoryImportNormalizer
         }
     }
 
+        /**
+         * Convert classification values to tiny integers from 1 to 4.
+         */
+        private function normalizeClassification($value): array
+        {
+            if ($value === null || trim((string) $value) === '') {
+                return [
+                    'value' => null,
+                    'error' => false,
+                ];
+            }
+
+            $value = strtolower(trim((string) $value));
+
+            /*
+                Normalize spaces to make matching more tolerant.
+            */
+            $value = preg_replace('/\s+/', ' ', $value);
+
+            /*
+                Remove spaces before parentheses:
+                "c (internal)" => "c(internal)"
+            */
+            $value = str_replace(' (', '(', $value);
+
+            $map = [
+                '1' => 1,
+                'a' => 1,
+                'a(top secret)' => 1,
+                'a (top secret)' => 1,
+                'top secret' => 1,
+
+                '2' => 2,
+                'b' => 2,
+                'b(secret)' => 2,
+                'b (secret)' => 2,
+                'secret' => 2,
+
+                '3' => 3,
+                'c' => 3,
+                'c(internal)' => 3,
+                'c (internal)' => 3,
+                'internal' => 3,
+
+                '4' => 4,
+                'd' => 4,
+                'd(general)' => 4,
+                'd (general)' => 4,
+                'general' => 4,
+            ];
+
+            if (!array_key_exists($value, $map)) {
+                return [
+                    'value' => null,
+                    'error' => true,
+                ];
+            }
+
+            return [
+                'value' => $map[$value],
+                'error' => false,
+            ];
+        }
+
     /**
      * Normalize state values to inventory enum values.
      */
@@ -565,61 +680,6 @@ class InventoryImportNormalizer
         if (!array_key_exists($value, $map)) {
             return [
                 'value' => 'active',
-                'error' => true,
-            ];
-        }
-
-        return [
-            'value' => $map[$value],
-            'error' => false,
-        ];
-    }
-
-    /**
-     * Normalize classification values to integer codes.
-     */
-    private function normalizeClassification($value): array
-    {
-        if ($value === null || trim((string) $value) === '') {
-            return [
-                'value' => null,
-                'error' => false,
-            ];
-        }
-
-        $value = strtoupper(trim((string) $value));
-
-        /*
-        Normalize spaces to handle values like:
-        D (GENERAL), D(GENERAL), D  (GENERAL)
-        */
-        $value = preg_replace('/\s+/', ' ', $value);
-
-        $map = [
-            '1' => 1,
-            'A' => 1,
-            'A (TOP SECRET)' => 1,
-            'A(TOP SECRET)' => 1,
-
-            '2' => 2,
-            'B' => 2,
-            'B (SECRET)' => 2,
-            'B(SECRET)' => 2,
-
-            '3' => 3,
-            'C' => 3,
-            'C (INTERNAL)' => 3,
-            'C(INTERNAL)' => 3,
-
-            '4' => 4,
-            'D' => 4,
-            'D (GENERAL)' => 4,
-            'D(GENERAL)' => 4,
-        ];
-
-        if (!array_key_exists($value, $map)) {
-            return [
-                'value' => null,
                 'error' => true,
             ];
         }
