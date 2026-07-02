@@ -811,7 +811,12 @@
 
                     <tbody>
                         @forelse ($inventoryItems as $item)
-                            <tr>
+                            @php
+                                // Normalize the state so it can be used safely as a CSS class
+                                $rowState = strtolower(trim($item->state ?? ''));
+                            @endphp
+                            
+                            <tr class="inventory-state-row inventory-state-{{ $rowState }}">
                                 <td>{{ $item->it_internal_number ?? 'N/A' }}</td>
                                 <td>{{ $item->serial_number ?? 'N/A' }}</td>
                                 <td>{{ $item->asset_number ?? 'N/A' }}</td>
