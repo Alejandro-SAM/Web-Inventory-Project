@@ -1,72 +1,102 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="app-navbar">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="app-brand">
+                        <img 
+                            src="{{ asset('images/logo.png') }}" 
+                            alt="{{ config('app.name') }}" 
+                            class="app-brand-logo"
+                        >
+
+                        <span>
+                            <span class="app-brand-text">
+                                {{ config('app.name', 'IT Inventory') }}
+                            </span>
+                            <span class="app-brand-subtitle">
+                                Asset Management
+                            </span>
+                        </span>
                     </a>
                 </div>
 
                 <!-- LINKS DE NAVEGACIÓN PARA DASHBOARD -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
 
-                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="app-nav-link">
                 {{ __('Dashboard') }}
                 </x-nav-link>
 
-                <x-nav-link :href="route('inventory')" :active="request()->routeIs('inventory')">
+                <x-nav-link :href="route('inventory')" :active="request()->routeIs('inventory')" class="app-nav-link">
                 {{ __('Inventory') }}
                 </x-nav-link>
 
             @if (Auth::user()->user_level === 'Admin') <!-- ONLY SHOW BUTTON IF THE USER IS ADMIN LEVEL -->
-                <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')" class="app-nav-link">
                 {{ __('Users') }}
                 </x-nav-link>
             @endif
 
             @if (Auth::user()->user_level !== 'Read') <!-- ONLY SHOW BUTTON IF THE USER IS NOT READ LEVEL -->
-                <x-nav-link :href="route('logs')" :active="request()->routeIs('logs')">
+                <x-nav-link :href="route('logs')" :active="request()->routeIs('logs')" class="app-nav-link">
                 {{ __('Logs') }}
                 </x-nav-link>
             @endif
 
                 </div>
+            </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+            <!-- User actions -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6 app-user-actions">
 
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
+                <!-- Profile button -->
+                <a href="{{ route('profile.edit') }}"
+                class="app-profile-button {{ request()->routeIs('profile.edit') ? 'is-active' : '' }}"
+                title="{{ __('Open profile') }}">
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="app-user-action-icon"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.8"
+                        stroke="currentColor"
+                        aria-hidden="true">
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0" />
+                    </svg>
 
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
+                    <span>{{ Auth::user()->name }}</span>
+                </a>
 
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
+                <!-- Logout button -->
+                <form method="POST"
+                    action="{{ route('logout') }}"
+                    class="app-logout-form">
+                    @csrf
+
+                    <button type="submit"
+                            class="app-logout-button"
+                            title="{{ __('Log Out') }}">
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="app-user-action-icon"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.8"
+                            stroke="currentColor"
+                            aria-hidden="true">
+                            <path stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3H9m9.75 0l-3-3m3 3l-3 3" />
+                        </svg>
+
+                        <span>{{ __('Log Out') }}</span>
+                    </button>
+                </form>
             </div>
 
             <!-- Hamburger -->

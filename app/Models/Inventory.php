@@ -16,6 +16,9 @@ class Inventory extends Model
         'model',
         'brand',
         'category',
+        'warranty_start_date',
+        'warranty_expiry_date',
+        'purchase_origin_country',
         'department',
         'location',
         'business_unit',
@@ -37,6 +40,8 @@ class Inventory extends Model
     protected $casts = [
         'responsive' => 'boolean',
         'next_maintenance' => 'date',
+        'warranty_start_date' => 'date',
+        'warranty_expiry_date' => 'date',
     ];
 
     public function creator()

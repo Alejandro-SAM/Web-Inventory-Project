@@ -24,6 +24,9 @@ return new class extends Migration
             $table->string('model')->nullable();
             $table->string('brand')->nullable();
             $table->string('category')->nullable();
+            $table->date('warranty_start_date')->nullable();
+            $table->date('warranty_expiry_date')->nullable();
+            $table->string('purchase_origin_country')->nullable();
 
             // Ubicación
             $table->string('department')->nullable();

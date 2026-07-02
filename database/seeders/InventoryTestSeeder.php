@@ -20,13 +20,29 @@ class InventoryTestSeeder extends Seeder
         $categories = ['Laptop', 'Desktop', 'Monitor', 'Printer', 'Scanner', 'Tablet'];
         $brands = ['Dell', 'HP', 'Lenovo', 'Epson', 'Zebra'];
         $departments = ['IT', 'HR', 'Finance', 'Production', 'Quality', 'Maintenance'];
-        $locations = ['Office', 'Warehouse', 'Production Line', 'Meeting Room', 'Remote'];
-        $businessUnits = ['BU1', 'BU2', 'BU3'];
-        $plants = ['Plant A', 'Plant B', 'Plant C'];
+        $locations = ['IT Office', 'Warehouse', 'Production Line', 'Administration', 'EHS'];
+        $businessUnits = ['BU1', 'BU2', 'BU3', 'BU4', 'BU5', 'BU6'];
+        $plants = ['B', 'D', 'G', 'H', 'MP', 'MPI', 'MPII'];
         $states = ['active', 'inactive', 'maintenance', 'disposed', 'lost'];
         $systems = ['Windows 10', 'Windows 11', 'Ubuntu', 'N/A'];
 
-        for ($i = 1; $i <= 400; $i++) {
+        $purchaseOriginCountries = [
+            'Mexico',
+            'United States',
+            'China',
+            'Germany',
+            'Japan',
+            'South Korea',
+            'Canada',
+        ];
+
+        for ($i = 1; $i <= 2000; $i++) {
+            $warrantyStartDate = Carbon::now()
+                ->subDays(rand(30, 1095));
+
+            $warrantyExpiryDate = $warrantyStartDate->copy()
+                ->addYears(rand(1, 4));
+            
             DB::table('inventory')->insert([
                 'it_internal_number' => 'IT-TEST-' . str_pad($i, 4, '0', STR_PAD_LEFT),
                 'serial_number' => 'SNTEST' . str_pad($i, 6, '0', STR_PAD_LEFT),
@@ -36,6 +52,10 @@ class InventoryTestSeeder extends Seeder
                 'model' => 'Model-' . rand(100, 999),
                 'brand' => $brands[array_rand($brands)],
                 'category' => $categories[array_rand($categories)],
+
+                'warranty_start_date' => $warrantyStartDate->format('Y-m-d'),
+                'warranty_expiry_date' => $warrantyExpiryDate->format('Y-m-d'),
+                'purchase_origin_country' => $purchaseOriginCountries[array_rand($purchaseOriginCountries)],
 
                 'department' => $departments[array_rand($departments)],
                 'location' => $locations[array_rand($locations)],

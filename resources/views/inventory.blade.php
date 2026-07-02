@@ -1,41 +1,128 @@
 <x-app-layout>
 
+    <div class="app-page">
+        <div class="app-page-container">
+            
     <div class="container mt-4">
 
-        <!-- PAGE TITLE -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="mb-0">
-                    Inventory
-                </h1>
+<!-- PAGE TITLE -->
+<div class="app-page-title">
+    <h1 class="mb-0">
+        Inventory
+    </h1>
 
-                <p class="text-muted mb-0">
-                    Review, filter and manage IT inventory assets.
-                </p>
-            </div>
-
-            <!-- Show Add Asset button only for users with Create or Admin level -->
-            <div>
-                @if (Auth::user()->user_level !== 'Read')
-                    <button 
-                        type="button" 
-                        class="btn btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#addAssetModal"
-                    >
-                    Add Asset
-                    </button>
-                    @endif
-            </div>
-        </div>
-        <div class="card">
+    <p class="text-muted mb-0">
+        Review, filter and manage IT inventory assets.
+    </p>
+</div>
+        <div class="card app-card">
 
             <!-- Hidden form for automatic filters -->
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
             <!-- Hidden form for automatic filters end -->
 
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Inventory Assets</strong>
+            @php
+                $selectedCategories = collect(request()->input('category', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedPlants = collect(request()->input('plant', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedConfidentiality = collect(request()->input('confidentiality', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedIntegrity = collect(request()->input('integrity', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedAvailability = collect(request()->input('availability', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedClassifications = collect(request()->input('classification', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $selectedStates = collect(request()->input('state', []))
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
+                $plantFilterOptions = collect($plantOptions ?? [])
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->values();
+
+                $ciaFilterOptions = ['0', '1', '2', '3'];
+
+                $stateFilterOptions = [
+                    'active' => 'Active',
+                    'inactive' => 'Inactive',
+                    'maintenance' => 'Maintenance',
+                    'disposed' => 'Disposed',
+                    'lost' => 'Lost',
+                    'to_be_deleted' => 'To Be Deleted',
+                ];
+            @endphp
+
+<!-- BUTTONS ON TOP OF TABLE FOR ACTIONS -->
+<div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Inventory Assets</strong>
+
+    <div class="d-flex gap-2 align-items-center">
+        @if (Auth::user()->user_level !== 'Read')
+            <button 
+                type="button" 
+                class="btn btn-sm btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#addAssetModal"
+            >
+                Add Asset
+            </button>
+
+            <!-- Show Delete All Marked button only for Admin users -->
+        @if (Auth::user()->user_level === 'Admin')
+            <form
+                action="{{ route('inventory.destroy-marked') }}"
+                method="POST"
+                class="d-inline"
+                onsubmit="return confirm(
+                    'Are you sure you want to permanently delete all assets marked as To Be Deleted? This action cannot be undone.'
+                );"
+            >
+                @csrf
+                @method('DELETE')
+
+                <button
+                    type="submit"
+                    class="btn btn-sm btn-danger"
+                >
+                    Delete All Marked
+                </button>
+            </form>
+        @endif
+
+            <button
+                type="button"
+                class="btn btn-sm btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#uploadInventoryExcelModal"
+            >
+                Upload Excel
+            </button>
+        @endif
+
+        <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-danger">
+            Reset filters
+        </a>
 
                 <!-- DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
                     <div class="dropdown">
@@ -81,6 +168,21 @@
             <div class="form-check">
                 <input class="form-check-input inventory-column-toggle" type="checkbox" value="category" id="toggle_category" checked>
                 <label class="form-check-label" for="toggle_category">Category</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="warranty_start_date" id="toggle_warranty_start_date" checked>
+                <label class="form-check-label" for="toggle_warranty_start_date">Warranty Start Date</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="warranty_expiry_date" id="toggle_warranty_expiry_date" checked>
+                <label class="form-check-label" for="toggle_warranty_expiry_date">Warranty Expiry Date</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="purchase_origin_country" id="toggle_purchase_origin_country" checked>
+                <label class="form-check-label" for="toggle_purchase_origin_country">Purchase Origin Country</label>
             </div>
 
             <div class="form-check">
@@ -169,12 +271,13 @@
     </div>
             <!-- END OF DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
             </div>
+        </div>
 
-            <div class="card-body p-0">
-                <div class="table-responsive inventory-table-responsive">
+            <div class="card-body app-card-body p-0">
+                <div class="table-responsive inventory-table-responsive app-table-wrapper">
 
                 <!-- Inventory table -->
-                <table id="inventoryTable" class="table table-bordered table-hover align-middle wide-table mb-0">
+                <table id="inventoryTable" class="table table-hover align-middle wide-table app-table mb-0">
 
                     <thead class="table-light">
                     <tr>
@@ -185,6 +288,9 @@
                         <th class="col-md-custom" data-column="model">Model</th>
                         <th class="col-md-custom" data-column="brand">Brand</th>
                         <th class="col-md-custom" data-column="category">Category</th>
+                        <th class="col-md-custom" data-column="warranty_start_date">Warranty Start Date</th>
+                        <th class="col-md-custom" data-column="warranty_expiry_date">Warranty Expiry Date</th>
+                        <th class="col-md-custom" data-column="purchase_origin_country">Purchase Origin Country</th>
                         <th class="col-md-custom" data-column="department">Department</th>
                         <th class="col-md-custom" data-column="location">Location</th>
                         <th class="col-md-custom" data-column="business_unit">BU</th>
@@ -204,9 +310,7 @@
                         <th class="col-date-custom" data-column="created_at">Created At</th>
                         @endif
 
-                        @if (Auth::user()->user_level !== 'Read')
                         <th class="col-actions-custom" data-column="actions">Actions</th>
-                        @endif
                         </tr>
 
                         <tr>
@@ -277,19 +381,89 @@
                             </th>
 
                             <th class="col-md-custom">
-                            <select
-                                form="inventoryFiltersForm"
-                                name="category"
-                                class="form-select form-select-sm auto-filter-select"
-                            >
-                            <option value="">All</option>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedCategories) > 0 ? count($selectedCategories) . ' selected' : 'All' }}
+                                    </button>
 
-                            @foreach ($categoryOptions as $category)
-                            <option value="{{ $category }}" {{ request('category') === $category ? 'selected' : '' }}>
-                            {{ $category }}
-                            </option>
-                            @endforeach
-                            </select>
+                                    <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;">
+                                        @foreach ($categoryOptions as $category)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="category[]"
+                                                    value="{{ $category }}"
+                                                    id="filter_category_{{ $loop->index }}"
+                                                    {{ in_array((string) $category, $selectedCategories, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_category_{{ $loop->index }}">
+                                                    {{ $category }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </th>
+
+                            <th class="col-md-custom" style="min-width: 220px;">
+                                <div class="d-flex gap-2">
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_start_from"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_start_from') }}"
+                                    >
+
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_start_to"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_start_to') }}"
+                                    >
+                                </div>
+                            </th>
+
+                            <th class="col-md-custom" style="min-width: 220px;">
+                                <div class="d-flex gap-2">
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_expiry_from"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_expiry_from') }}"
+                                    >
+
+                                    <input
+                                        form="inventoryFiltersForm"
+                                        type="date"
+                                        name="warranty_expiry_to"
+                                        class="form-control form-control-sm auto-filter-select"
+                                        value="{{ request('warranty_expiry_to') }}"
+                                    >
+                                </div>
+                            </th>
+
+                            <th class="col-md-custom">
+                                <input
+                                    form="inventoryFiltersForm"
+                                    type="text"
+                                    name="purchase_origin_country"
+                                    class="form-control form-control-sm auto-filter-input"
+                                    placeholder="Origin country..."
+                                    value="{{ request('purchase_origin_country') }}"
+                                >
                             </th>
 
                             <th class="col-md-custom">
@@ -326,14 +500,40 @@
                             </th>
 
                             <th class="col-md-custom">
-                                <input
-                                    form="inventoryFiltersForm"
-                                    type="text"
-                                    name="plant"
-                                    class="form-control form-control-sm auto-filter-input"
-                                    placeholder="Plant..."
-                                    value="{{ request('plant') }}"
-                                >
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedPlants) > 0 ? count($selectedPlants) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 180px; max-height: 260px; overflow-y: auto;">
+                                        @forelse ($plantFilterOptions as $plant)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="plant[]"
+                                                    value="{{ $plant }}"
+                                                    id="filter_plant_{{ $loop->index }}"
+                                                    {{ in_array((string) $plant, $selectedPlants, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_plant_{{ $loop->index }}">
+                                                    {{ $plant }}
+                                                </label>
+                                            </div>
+                                        @empty
+                                            <span class="dropdown-item-text text-muted small">No plant options</span>
+                                        @endforelse
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
@@ -402,76 +602,178 @@
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="confidentiality"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('confidentiality') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('confidentiality') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('confidentiality') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('confidentiality') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedConfidentiality) > 0 ? count($selectedConfidentiality) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="confidentiality[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_confidentiality_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedConfidentiality, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_confidentiality_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="integrity"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('integrity') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('integrity') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('integrity') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('integrity') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedIntegrity) > 0 ? count($selectedIntegrity) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="integrity[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_integrity_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedIntegrity, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_integrity_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="availability"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="0" {{ request('availability') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ request('availability') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ request('availability') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ request('availability') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedAvailability) > 0 ? count($selectedAvailability) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 120px;">
+                                        @foreach ($ciaFilterOptions as $value)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="availability[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_availability_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedAvailability, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_availability_{{ $value }}">
+                                                    {{ $value }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                            <select
-                                form="inventoryFiltersForm"
-                                name="classification"
-                                class="form-select form-select-sm auto-filter-select"
-                            >
-                            <option value="">All</option>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedClassifications) > 0 ? count($selectedClassifications) . ' selected' : 'All' }}
+                                    </button>
 
-                            @foreach ($classificationOptions as $value => $label)
-                            <option value="{{ $value }}" {{ request('classification') == $value ? 'selected' : '' }}>
-                            {{ $label }}
-                            </option>
-                            @endforeach
-                            </select>
+                                    <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;">
+                                        @foreach ($classificationOptions as $value => $label)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="classification[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_classification_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedClassifications, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_classification_{{ $value }}">
+                                                    {{ $label }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <th class="col-md-custom">
-                                <select
-                                    form="inventoryFiltersForm"
-                                    name="state"
-                                    class="form-select form-select-sm auto-filter-select"
-                                >
-                                    <option value="">All</option>
-                                    <option value="active" {{ request('state') === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ request('state') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                    <option value="maintenance" {{ request('state') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                    <option value="disposed" {{ request('state') === 'disposed' ? 'selected' : '' }}>Disposed</option>
-                                    <option value="lost" {{ request('state') === 'lost' ? 'selected' : '' }}>Lost</option>
-                                </select>
+                                <div class="dropdown">
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        data-bs-boundary="viewport"
+                                        data-bs-display="static"
+                                        aria-expanded="false"
+                                    >
+                                        {{ count($selectedStates) > 0 ? count($selectedStates) . ' selected' : 'All' }}
+                                    </button>
+
+                                    <div class="dropdown-menu p-2" style="min-width: 180px;">
+                                        @foreach ($stateFilterOptions as $value => $label)
+                                            <div class="form-check">
+                                                <input
+                                                    form="inventoryFiltersForm"
+                                                    class="form-check-input auto-filter-select"
+                                                    type="checkbox"
+                                                    name="state[]"
+                                                    value="{{ $value }}"
+                                                    id="filter_state_{{ $value }}"
+                                                    {{ in_array((string) $value, $selectedStates, true) ? 'checked' : '' }}
+                                                >
+                                                <label class="form-check-label" for="filter_state_{{ $value }}">
+                                                    {{ $label }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
 
                             <!--- Only show Created At filters for Admin users -->
@@ -502,10 +804,8 @@
                                 </div>
                             </th>
                             @endif
-                            <!--- Only show blank (Actions) column for Read/Write users -->
-                            @if (Auth::user()->user_level !== 'Read')
+                            <!--- Blank actions column -->
                                 <th></th>
-                            @endif
                     </tr>
                     </thead>
 
@@ -519,6 +819,9 @@
                                 <td>{{ $item->model ?? 'N/A' }}</td>
                                 <td>{{ $item->brand ?? 'N/A' }}</td>
                                 <td>{{ $item->category ?? 'N/A' }}</td>
+                                <td>{{ $item->warranty_start_date ? $item->warranty_start_date->format('Y-m-d') : 'N/A' }}</td>
+                                <td>{{ $item->warranty_expiry_date ? $item->warranty_expiry_date->format('Y-m-d') : 'N/A' }}</td>
+                                <td>{{ $item->purchase_origin_country ?? 'N/A' }}</td>
                                 <td>{{ $item->department ?? 'N/A' }}</td>
                                 <td>{{ $item->location ?? 'N/A' }}</td>
                                 <td>{{ $item->business_unit ?? 'N/A' }}</td>
@@ -554,12 +857,17 @@
                                             'maintenance' => 'bg-warning text-dark',
                                             'disposed' => 'bg-danger',
                                             'lost' => 'bg-dark',
+                                            'to_be_deleted' => 'bg-danger',
                                             default => 'bg-secondary',
                                         };
                                     @endphp
 
+
                                     <span class="badge {{ $badgeClass }}">
-                                        {{ ucfirst($item->state ?? 'N/A') }}
+                                        {{ $state === 'to_be_deleted'
+                                            ? 'To Be Deleted'
+                                            : ucfirst($item->state ?? 'N/A')
+                                        }}
                                     </span>
                                 </td>
 
@@ -570,9 +878,10 @@
                                 </td>
                                 @endif
 
-                                <!-- Only show Edit button for Read/Write users -->
-                                @if (Auth::user()->user_level !== 'Read')
-                                    <td>
+                                <!-- Actions -->
+                                <td>
+                                    <!-- Hide edit button only for Read users -->
+                                    @if (Auth::user()->user_level !== 'Read')
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-warning"
@@ -581,8 +890,39 @@
                                         >
                                             Edit
                                         </button>
-                                    </td>
-                                @endif
+                                    @endif
+
+                                    <!-- Show Print Data button globally -->
+                                    <a
+                                        hreef="{{ route('inventory.print-data', $item->id) }}"
+                                        class="btn btn-sm btn-info text-white"
+                                    >
+                                        Print Data
+                                    </a>
+
+                                    <!-- Only administrators can see the Delete button -->
+                                     <!-- DELETE BUTTON FORM -->
+                                    @if (Auth::user()->user_level === 'Admin')
+                                        <form
+                                            action="{{ route('inventory.destroy', $item->id) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                            onsubmit="return confirm(
+                                                'Are you sure you want to permanently delete this asset? This action cannot be undone.'
+                                            );"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-danger"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
+                                </td>
                             </tr>
 
                             <!-- Only show Edit modal button for Read/Write users -->
@@ -639,6 +979,37 @@
                                                         <div class="col-md-4">
                                                             <label class="form-label">Category</label>
                                                             <input type="text" name="category" class="form-control" value="{{ old('category', $item->category) }}">
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Warranty Start Date</label>
+                                                            <input
+                                                                type="date"
+                                                                name="warranty_start_date"
+                                                                class="form-control"
+                                                                value="{{ old('warranty_start_date', optional($item->warranty_start_date)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Warranty Expiry Date</label>
+                                                            <input
+                                                                type="date"
+                                                                name="warranty_expiry_date"
+                                                                class="form-control"
+                                                                value="{{ old('warranty_expiry_date', optional($item->warranty_expiry_date)->format('Y-m-d')) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-4">
+                                                            <label class="form-label">Purchase Origin Country</label>
+                                                            <input
+                                                                type="text"
+                                                                name="purchase_origin_country"
+                                                                class="form-control"
+                                                                value="{{ old('purchase_origin_country', $item->purchase_origin_country) }}"
+                                                                placeholder="Example: Mexico"
+                                                            >
                                                         </div>
 
                                                         {{-- Remove this block if these columns are not in your inventory table --}}
@@ -701,6 +1072,7 @@
                                                                 <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                                                                 <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
                                                                 <option value="lost" {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}>Lost</option>
+                                                                <option value="to_be_deleted" {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}>To Be Deleted</option>
                                                             </select>
                                                         </div>
 
@@ -782,7 +1154,7 @@
 @empty
     <tr>
         <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
-        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 23 : (Auth::user()->user_level === 'Read' ? 21 : 22) }}" class="text-center text-muted py-4">
+        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 26 : 25 }}" class="text-center text-muted py-4">
             No inventory records found.
         </td>
     </tr>
@@ -794,7 +1166,7 @@
             </div>
         </div>
 
-            <div class="card-footer">
+            <div class="card-footer app-card-footer">
                 {{ $inventoryItems->links() }}
             </div>
         </div>
@@ -874,6 +1246,37 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Warranty Start Date</label>
+                                <input
+                                    type="date"
+                                    name="warranty_start_date"
+                                    class="form-control"
+                                    value="{{ old('warranty_start_date') }}"
+                                >
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Warranty Expiry Date</label>
+                                <input
+                                    type="date"
+                                    name="warranty_expiry_date"
+                                    class="form-control"
+                                    value="{{ old('warranty_expiry_date') }}"
+                                >
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Origin Country</label>
+                                <input
+                                    type="text"
+                                    name="purchase_origin_country"
+                                    class="form-control"
+                                    value="{{ old('purchase_origin_country') }}"
+                                    placeholder="Example: Mexico"
+                                >
                             </div>
 
                             <div class="col-md-4">
@@ -1178,4 +1581,57 @@
 </script>
     <!-- End of Script for table header height read -->
 
+    @if (Auth::user()->user_level !== 'Read')
+        <div class="modal fade" id="uploadInventoryExcelModal" tabindex="-1" aria-labelledby="uploadInventoryExcelModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <form method="POST" action="{{ route('inventory.import.preview') }}" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadInventoryExcelModalLabel">
+                                Upload Inventory Excel
+                            </h5>
+
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <label class="form-label">Excel file</label>
+
+                            <input
+                                type="file"
+                                name="inventory_file"
+                                class="form-control"
+                                accept=".xlsx,.xls,.csv"
+                                required
+                            >
+
+                            <small class="text-muted d-block mt-2">
+                                The system will process the file first and show a review table before inserting records into inventory.
+                            </small>
+
+                            <div class="alert alert-info mt-3 mb-0">
+                                Compatible headers include: IT Internal Number, Serial Number, Asset Number, Description, Model, Brand, Category, Warranty Start Date, Warranty Expiry Date, Purchase Origin Country, Department, Location, BU, Plant, End User, Responsive, ID Employee, Comments, Next Maintenance preventive, Operation System, Confidentiality, Integrity, Availability, Classification and State.
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+
+                            <button type="submit" class="btn btn-success">
+                                Process File
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    @endif
+    </div>
+    </div>
 </x-app-layout>
