@@ -69,10 +69,12 @@
                     'maintenance' => 'Maintenance',
                     'disposed' => 'Disposed',
                     'lost' => 'Lost',
+                    'to_be_deleted' => 'To Be Deleted',
                 ];
             @endphp
 
-<div class="card-header app-card-header">
+<!-- BUTTONS ON TOP OF TABLE FOR ACTIONS -->
+<div class="card-header d-flex justify-content-between align-items-center">
     <strong>Inventory Assets</strong>
 
     <div class="d-flex gap-2 align-items-center">
@@ -85,6 +87,28 @@
             >
                 Add Asset
             </button>
+
+            <!-- Show Delete All Marked button only for Admin users -->
+        @if (Auth::user()->user_level === 'Admin')
+            <form
+                action="{{ route('inventory.destroy-marked') }}"
+                method="POST"
+                class="d-inline"
+                onsubmit="return confirm(
+                    'Are you sure you want to permanently delete all assets marked as To Be Deleted? This action cannot be undone.'
+                );"
+            >
+                @csrf
+                @method('DELETE')
+
+                <button
+                    type="submit"
+                    class="btn btn-sm btn-danger"
+                >
+                    Delete All Marked
+                </button>
+            </form>
+        @endif
 
             <button
                 type="button"
@@ -833,12 +857,17 @@
                                             'maintenance' => 'bg-warning text-dark',
                                             'disposed' => 'bg-danger',
                                             'lost' => 'bg-dark',
+                                            'to_be_deleted' => 'bg-danger',
                                             default => 'bg-secondary',
                                         };
                                     @endphp
 
+
                                     <span class="badge {{ $badgeClass }}">
-                                        {{ ucfirst($item->state ?? 'N/A') }}
+                                        {{ $state === 'to_be_deleted'
+                                            ? 'To Be Deleted'
+                                            : ucfirst($item->state ?? 'N/A')
+                                        }}
                                     </span>
                                 </td>
 
@@ -865,11 +894,34 @@
 
                                     <!-- Show Print Data button globally -->
                                     <a
-                                        href="{{ route('inventory.print-data', $item->id) }}"
+                                        hreef="{{ route('inventory.print-data', $item->id) }}"
                                         class="btn btn-sm btn-info text-white"
                                     >
                                         Print Data
                                     </a>
+
+                                    <!-- Only administrators can see the Delete button -->
+                                     <!-- DELETE BUTTON FORM -->
+                                    @if (Auth::user()->user_level === 'Admin')
+                                        <form
+                                            action="{{ route('inventory.destroy', $item->id) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                            onsubmit="return confirm(
+                                                'Are you sure you want to permanently delete this asset? This action cannot be undone.'
+                                            );"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-danger"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
 
@@ -1020,6 +1072,7 @@
                                                                 <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                                                                 <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
                                                                 <option value="lost" {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}>Lost</option>
+                                                                <option value="to_be_deleted" {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}>To Be Deleted</option>
                                                             </select>
                                                         </div>
 
