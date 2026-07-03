@@ -82,6 +82,14 @@ Route::middleware(['auth'])->group(function () { /* AUTHENTICATION PROTECTED ROU
         ->middleware(['auth'])
         ->name('dashboard');
 
+    // For deleting all inventory items marked as "to_be_deleted".
+    Route::delete('/inventory/delete-marked', [InventoryController::class, 'destroyMarked'])
+        ->name('inventory.destroy-marked');
+
+    // For deleting and inventory item.
+    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])
+        ->name('inventory.destroy');
+
 });
 
 require __DIR__.'/auth.php';

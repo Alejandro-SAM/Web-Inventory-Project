@@ -281,7 +281,7 @@ private function inventoryLogFields(): array
             'availability' => ['nullable', 'integer', 'between:0,3'],
             'classification' => ['nullable', 'integer', 'between:1,4'],
             'comments' => ['nullable', 'string'],
-            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
+            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost,to_be_deleted'],
         ]);
 
         $validated['responsive'] = $request->has('responsive');
@@ -425,7 +425,7 @@ public function update(Request $request, Inventory $inventory)
         'availability' => ['nullable', 'integer', 'between:0,3'],
         'classification' => ['nullable', 'integer', 'between:1,4'],
         'comments' => ['nullable', 'string'],
-        'state' => ['required', 'in:active,inactive,maintenance,disposed,lost'],
+        'state' => ['required', 'in:active,inactive,maintenance,disposed,lost,to_be_deleted'],
     ]);
 
     $validated['responsive'] = $request->has('responsive');
@@ -774,5 +774,118 @@ public function update(Request $request, Inventory $inventory)
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Permanently delete one inventory record.
+     */
+    public function destroy(Inventory $inventory)
+    {
+        /*
+        * Only Admin users can permanently delete inventory records.
+        */
+        if (auth()->user()->user_level !== 'Admin') {
+            abort(403, 'You do not have permission to delete inventory records.');
+        }
+
+        /*
+        * Save the relevant information before deleting the record,
+        * so the deletion can still be registered in the activity log.
+        */
+        $oldValues = $inventory->only($this->inventoryLogFields());
+
+        $itemIdentifier =
+            $inventory->it_internal_number
+            ?? $inventory->asset_number
+            ?? $inventory->serial_number
+            ?? $inventory->id;
+
+        DB::transaction(function () use (
+            $inventory,
+            $oldValues,
+            $itemIdentifier
+        ) {
+            ActivityLogger::log(
+                module: 'inventory',
+                action: 'deleted',
+                description: 'Item ' . $itemIdentifier . ' was permanently deleted.',
+                targetType: 'inventory',
+                targetId: $inventory->id,
+                oldValues: $oldValues,
+                newValues: null
+            );
+
+            $inventory->delete();
+        });
+
+        return redirect()
+            ->route('inventory')
+            ->with('success', 'Asset deleted successfully.');
+    }
+
+    /**
+     * Permanently delete all inventory records marked as To Be Deleted.
+     */
+    public function destroyMarked()
+    {
+        /*
+        * Only Admin users can permanently delete inventory records.
+        */
+        if (auth()->user()->user_level !== 'Admin') {
+            abort(403, 'You do not have permission to delete inventory records.');
+        }
+
+        /*
+        * Retrieve only the records previously marked for deletion.
+        */
+        $inventoryItems = Inventory::where('state', 'to_be_deleted')->get();
+
+        /*
+        * Stop the process when there are no marked records.
+        */
+        if ($inventoryItems->isEmpty()) {
+            return redirect()
+                ->route('inventory')
+                ->with('warning', 'There are no assets marked as To Be Deleted.');
+        }
+
+        $deletedCount = $inventoryItems->count();
+
+        DB::transaction(function () use ($inventoryItems) {
+            foreach ($inventoryItems as $inventory) {
+                /*
+                * Save the asset information before deleting it.
+                */
+                $oldValues = $inventory->only($this->inventoryLogFields());
+
+                $itemIdentifier =
+                    $inventory->it_internal_number
+                    ?? $inventory->asset_number
+                    ?? $inventory->serial_number
+                    ?? $inventory->id;
+
+                /*
+                * Register each deleted asset individually for traceability.
+                */
+                ActivityLogger::log(
+                    module: 'inventory',
+                    action: 'deleted',
+                    description: 'Item ' . $itemIdentifier . ' was permanently deleted through bulk deletion.',
+                    targetType: 'inventory',
+                    targetId: $inventory->id,
+                    oldValues: $oldValues,
+                    newValues: null
+                );
+
+                $inventory->delete();
+            }
+        });
+
+    return redirect()
+        ->route('inventory')
+        ->with(
+            'success',
+            $deletedCount . ' asset(s) marked as To Be Deleted were deleted successfully.'
+        );
+}
 
 }
