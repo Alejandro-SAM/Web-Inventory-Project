@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\InventoryImport;
 use App\Models\Inventory;
 use App\Models\InventoryImportRow;
+use App\Models\User; //IMPORTAR MODELO USUARIO PARA USARSE EN LA RELACION DE INVENTARIO
 use App\Services\ActivityLogger;
 use App\Services\InventoryImportNormalizer;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
+        
         $user = Auth::user();
 
         /*
@@ -26,8 +28,11 @@ class InventoryController extends Controller
             Admin, User and Read can view inventory.
         */
 
-        $inventoryQuery = Inventory::query()
-            ->with('creator')
+        $inventoryQuery = Inventory::query() //consultar responsables
+            ->with([
+                'creator',
+                'maintenanceResponsible',
+            ])
             ->orderBy('created_at', 'desc');
 
         /*
@@ -157,6 +162,35 @@ class InventoryController extends Controller
             $inventoryQuery->whereDate('next_maintenance', '<=', $request->maintenance_to);
         }
 
+        if ($request->filled('maintenance_responsible_id')) {
+            $inventoryQuery->where('maintenance_responsible_id', $request->maintenance_responsible_id);
+        }
+
+        if ($request->filled('maintenance_status')) {
+            $maintenanceStatus = $request->maintenance_status;
+
+            if ($maintenanceStatus === 'completed') {
+                $inventoryQuery->where('maintenance_status', 'completed');
+            }
+
+            if ($maintenanceStatus === 'pending') {
+                $inventoryQuery
+                    ->where('maintenance_status', 'pending')
+                    ->where(function ($query) {
+                        $query
+                            ->whereNull('next_maintenance')
+                            ->orWhereDate('next_maintenance', '>=', today());
+                    });
+            }
+
+            if ($maintenanceStatus === 'overdue') {
+                $inventoryQuery
+                    ->where('maintenance_status', 'pending')
+                    ->whereNotNull('next_maintenance')
+                    ->whereDate('next_maintenance', '<', today());
+            }
+        }
+
         if ($request->filled('warranty_start_from')) {
             $inventoryQuery->whereDate('warranty_start_date', '>=', $request->warranty_start_from);
         }
@@ -196,6 +230,11 @@ class InventoryController extends Controller
         ->orderBy('plant')
         ->pluck('plant');
 
+        $maintenanceResponsibleOptions = User::query()
+            ->where('is_active', true) //EVITAR ASIGNAR A USUARIOS INACTIVOS COMO RESPONSABLES DE MANTENIMIENTO 
+            ->orderBy('name')
+            ->get(['id', 'name', 'employee_number']);
+
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
                 ->paginate(100)
@@ -204,6 +243,7 @@ class InventoryController extends Controller
             'categoryOptions' => $this->categoryOptions(),
             'classificationOptions' => $this->classificationOptions(),
             'plantOptions' => $plantOptions,
+            'maintenanceResponsibleOptions' => $maintenanceResponsibleOptions,
         ]);
     }
 
@@ -237,6 +277,8 @@ private function inventoryLogFields(): array
         'responsive',
         'employee_id',
         'next_maintenance',
+        'maintenance_responsible_id',
+        'maintenance_status',
         'operating_system',
         'confidentiality',
         'integrity',
@@ -275,13 +317,14 @@ private function inventoryLogFields(): array
             'responsive' => ['nullable', 'boolean'],
             'employee_id' => ['nullable', 'string', 'max:255'],
             'next_maintenance' => ['nullable', 'date'],
+            'maintenance_responsible_id' => ['nullable','integer',Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_active', true)),],
             'operating_system' => ['nullable', 'string', 'max:255'],
             'confidentiality' => ['nullable', 'integer', 'between:0,3'],
             'integrity' => ['nullable', 'integer', 'between:0,3'],
             'availability' => ['nullable', 'integer', 'between:0,3'],
             'classification' => ['nullable', 'integer', 'between:1,4'],
             'comments' => ['nullable', 'string'],
-            'state' => ['required', 'in:active,inactive,maintenance,disposed,lost,to_be_deleted'],
+            'state' => ['required', 'in:active,damaged,degraded,inactive,maintenance,disposed,lost,to_be_deleted',],
         ]);
 
         $validated['responsive'] = $request->has('responsive');
@@ -315,6 +358,8 @@ private function inventoryLogFields(): array
                     'responsive' => $inventory->responsive,
                     'employee_id' => $inventory->employee_id,
                     'next_maintenance' => $inventory->next_maintenance,
+                    'maintenance_responsible_id' => $inventory->maintenance_responsible_id,
+                    'maintenance_status' => $inventory->maintenance_status,
                     'operating_system' => $inventory->operating_system,
                     'confidentiality' => $inventory->confidentiality,
                     'integrity' => $inventory->integrity,
@@ -335,7 +380,9 @@ private function inventoryLogFields(): array
     {
         return [
             'Access Controller',
+            'Bracket',
             'Camera',
+            'CAMERA Mount',
             'Charger',
             'Clock',
             'Desktop',
@@ -395,12 +442,7 @@ public function update(Request $request, Inventory $inventory)
     $oldValues = $inventory->only($this->inventoryLogFields());
 
     $validated = $request->validate([
-        'it_internal_number' => [
-            'nullable',
-            'string',
-            'max:255',
-            Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),
-        ],
+        'it_internal_number' => ['nullable','string','max:255',Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),],
         'serial_number' => ['nullable', 'string', 'max:255'],
         'asset_number' => ['nullable', 'string', 'max:255'],
         'description' => ['nullable', 'string'],
@@ -414,19 +456,34 @@ public function update(Request $request, Inventory $inventory)
         'location' => ['nullable', 'string', 'max:255'],
         'business_unit' => ['nullable', 'string', 'max:255'],
         'plant' => ['nullable', 'string', 'max:255'],
-
         'end_user' => ['nullable', 'string', 'max:255'],
         'responsive' => ['nullable', 'boolean'],
         'employee_id' => ['nullable', 'string', 'max:255'],
         'next_maintenance' => ['nullable', 'date'],
+        'maintenance_responsible_id' => ['nullable','integer',Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_active', true)),],
         'operating_system' => ['nullable', 'string', 'max:255'],
         'confidentiality' => ['nullable', 'integer', 'between:0,3'],
         'integrity' => ['nullable', 'integer', 'between:0,3'],
         'availability' => ['nullable', 'integer', 'between:0,3'],
         'classification' => ['nullable', 'integer', 'between:1,4'],
         'comments' => ['nullable', 'string'],
-        'state' => ['required', 'in:active,inactive,maintenance,disposed,lost,to_be_deleted'],
+        'state' => ['required', 'in:active,damaged,degraded,inactive,maintenance,disposed,lost,to_be_deleted'],
     ]);
+
+    if (auth()->user()->user_level === 'Admin') { //VALIDACIÓN DE ESTADO DE MANTENIMIENTO SOLO MODIFICABLE PARA ADMINISTRADORES
+    $validatedStatus = $request->validate([
+        'maintenance_status' => [
+            'required',
+            Rule::in([
+                'pending',
+                'completed',
+            ]),
+        ],
+    ]);
+
+        $validated['maintenance_status'] =
+            $validatedStatus['maintenance_status'];
+    }
 
     $validated['responsive'] = $request->has('responsive');
 

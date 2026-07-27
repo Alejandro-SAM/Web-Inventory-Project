@@ -65,6 +65,8 @@
 
                 $stateFilterOptions = [
                     'active' => 'Active',
+                    'degraded' => 'Degraded',
+                    'damaged' => 'Damaged',
                     'inactive' => 'Inactive',
                     'maintenance' => 'Maintenance',
                     'disposed' => 'Disposed',
@@ -226,8 +228,26 @@
             </div>
 
             <div class="form-check">
-                <input class="form-check-input inventory-column-toggle" type="checkbox" value="operating_system" id="toggle_operating_system" checked>
-                <label class="form-check-label" for="toggle_operating_system">OS</label>
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="maintenance_responsible" id="toggle_maintenance_responsible" checked>
+                <label class="form-check-label" for="toggle_maintenance_responsible">Maintenance Responsible</label>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input inventory-column-toggle" type="checkbox" value="maintenance_status" id="toggle_maintenance_status" checked>
+                <label class="form-check-label" for="toggle_maintenance_status">Maintenance Status</label>
+            </div>
+
+            <div class="form-check">
+                <input
+                    class="form-check-input inventory-column-toggle"
+                    type="checkbox"
+                    value="operating_system"
+                    id="toggle_operating_system"
+                    checked
+                >
+                <label class="form-check-label" for="toggle_operating_system">
+                    OS
+                </label>
             </div>
 
             <div class="form-check">
@@ -299,6 +319,8 @@
                         <th class="col-md-custom" data-column="employee_id">Employee ID</th>
                         <th class="col-md-custom" data-column="responsive">Responsive</th>
                         <th class="col-md-custom" data-column="next_maintenance">Next Maintenance</th>
+                        <th class="col-md-custom" data-column="maintenance_responsible">Maintenance Responsible</th>
+                        <th class="col-md-custom" data-column="maintenance_status">Maintenance Status</th>
                         <th class="col-md-custom" data-column="operating_system">OS</th>
                         <th class="col-md-custom" data-column="confidentiality">C</th>
                         <th class="col-md-custom" data-column="integrity">I</th>
@@ -590,6 +612,44 @@
                                 </div>
                             </th>
 
+                            <th class="col-md-custom" data-column="maintenance_responsible">
+                                <select
+                                    form="inventoryFiltersForm"
+                                    name="maintenance_responsible_id"
+                                    class="form-select form-select-sm auto-filter-select"
+                                >
+                                    <option value="">All</option>
+
+                                    @foreach ($maintenanceResponsibleOptions as $responsible)
+                                        <option
+                                            value="{{ $responsible->id }}"
+                                            {{ (string) request('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
+                                        >
+                                            {{ $responsible->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </th>
+
+                            <th class="col-md-custom" data-column="maintenance_status">
+                                <select
+                                    form="inventoryFiltersForm"
+                                    name="maintenance_status"
+                                    class="form-select form-select-sm auto-filter-select"
+                                >
+                                    <option value="">All</option>
+                                    <option value="pending" {{ request('maintenance_status') === 'pending' ? 'selected' : '' }}>
+                                        Pending
+                                    </option>
+                                    <option value="overdue" {{ request('maintenance_status') === 'overdue' ? 'selected' : '' }}>
+                                        Overdue
+                                    </option>
+                                    <option value="completed" {{ request('maintenance_status') === 'completed' ? 'selected' : '' }}>
+                                        Completed
+                                    </option>
+                                </select>
+                            </th>
+
                             <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
@@ -811,7 +871,11 @@
 
                     <tbody>
                         @forelse ($inventoryItems as $item)
-                            <tr>
+                            @php
+                                $rowState = strtolower(trim($item->state ?? ''));
+                            @endphp
+
+                            <tr class="inventory-state-row inventory-state-{{ $rowState }}">
                                 <td>{{ $item->it_internal_number ?? 'N/A' }}</td>
                                 <td>{{ $item->serial_number ?? 'N/A' }}</td>
                                 <td>{{ $item->asset_number ?? 'N/A' }}</td>
@@ -837,8 +901,23 @@
                                     @endif
                                 </td>
 
+                                <td>{{ $item->next_maintenance ? $item->next_maintenance->format('Y-m-d') : 'N/A' }}</td>
+                                <td>{{ $item->maintenanceResponsible?->name ?? 'Not assigned' }}</td>
+
                                 <td>
-                                    {{ $item->next_maintenance ? $item->next_maintenance->format('Y-m-d') : 'N/A' }}
+                                    @php
+                                        $maintenanceStatus = $item->effective_maintenance_status;
+
+                                        $maintenanceBadgeClass = match ($maintenanceStatus) {
+                                            'pending' => 'bg-warning text-dark',
+                                            'overdue' => 'bg-danger',
+                                            'completed' => 'bg-success',
+                                            default => 'bg-secondary',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $maintenanceBadgeClass }}">
+                                        {{ ucfirst($maintenanceStatus) }}
+                                    </span>
                                 </td>
 
                                 <td>{{ $item->operating_system ?? 'N/A' }}</td>
@@ -853,6 +932,8 @@
 
                                         $badgeClass = match ($state) {
                                             'active' => 'bg-success',
+                                            'degraded' => 'bg-warning text-dark',
+                                            'damaged' => 'bg-danger',
                                             'inactive' => 'bg-secondary',
                                             'maintenance' => 'bg-warning text-dark',
                                             'disposed' => 'bg-danger',
@@ -894,7 +975,7 @@
 
                                     <!-- Show Print Data button globally -->
                                     <a
-                                        hreef="{{ route('inventory.print-data', $item->id) }}"
+                                        href="{{ route('inventory.print-data', $item->id) }}"
                                         class="btn btn-sm btn-info text-white"
                                     >
                                         Print Data
@@ -978,7 +1059,19 @@
 
                                                         <div class="col-md-4">
                                                             <label class="form-label">Category</label>
-                                                            <input type="text" name="category" class="form-control" value="{{ old('category', $item->category) }}">
+
+                                                            <select name="category" class="form-select">
+                                                                <option value="">Select category</option>
+
+                                                                @foreach ($categoryOptions as $category)
+                                                                    <option
+                                                                        value="{{ $category }}"
+                                                                        {{ old('category', $item->category) === $category ? 'selected' : '' }}
+                                                                    >
+                                                                        {{ $category }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
 
                                                         <div class="col-md-4">
@@ -1028,10 +1121,34 @@
                                                             <input type="text" name="business_unit" class="form-control" value="{{ old('business_unit', $item->business_unit) }}">
                                                         </div>
 
+                                                        @php
+                                                            $validPlantOptions = ['B', 'D', 'G', 'H', 'MP'];
+                                                            $currentPlant = old('plant', $item->plant);
+                                                        @endphp
+
                                                         <div class="col-md-3">
                                                             <label class="form-label">Plant</label>
-                                                            <input type="text" name="plant" class="form-control" value="{{ old('plant', $item->plant) }}">
+
+                                                            <select name="plant" class="form-select">
+                                                                <option value="">Select plant</option>
+
+                                                                @if ($currentPlant && !in_array($currentPlant, $validPlantOptions, true))
+                                                                    <option value="{{ $currentPlant }}" selected>
+                                                                        Invalid value: {{ $currentPlant }}
+                                                                    </option>
+                                                                @endif
+
+                                                                @foreach ($validPlantOptions as $plant)
+                                                                    <option
+                                                                        value="{{ $plant }}"
+                                                                        {{ $currentPlant === $plant ? 'selected' : '' }}
+                                                                    >
+                                                                        Plant {{ $plant }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
+
                                                         {{-- End optional block --}}
 
                                                         <div class="col-md-4">
@@ -1044,30 +1161,121 @@
                                                             <input type="text" name="employee_id" class="form-control" value="{{ old('employee_id', $item->employee_id) }}">
                                                         </div>
 
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Operating System</label>
-                                                            <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system', $item->operating_system) }}">
-                                                        </div>
-
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-3">
                                                             <label class="form-label">Next Maintenance</label>
+
                                                             <input
                                                                 type="date"
                                                                 name="next_maintenance"
                                                                 class="form-control"
-                                                                value="{{ old('next_maintenance', optional($item->next_maintenance)->format('Y-m-d')) }}"
+                                                                value="{{ old(
+                                                                    'next_maintenance',
+                                                                    optional($item->next_maintenance)->format('Y-m-d')
+                                                                ) }}"
+                                                            >
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Maintenance Responsible</label>
+
+                                                            <select
+                                                                name="maintenance_responsible_id"
+                                                                class="form-select"
+                                                            >
+                                                                <option value="">No responsible assigned</option>
+
+                                                                @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                                    <option
+                                                                        value="{{ $responsible->id }}"
+                                                                        {{ (string) old(
+                                                                            'maintenance_responsible_id',
+                                                                            $item->maintenance_responsible_id
+                                                                        ) === (string) $responsible->id ? 'selected' : '' }}
+                                                                    >
+                                                                        {{ $responsible->name }}
+                                                                        @if (!empty($responsible->employee_number))
+                                                                            — {{ $responsible->employee_number }}
+                                                                        @endif
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Maintenance Status</label>
+
+                                                            @if (Auth::user()->user_level === 'Admin')
+                                                                <select
+                                                                    name="maintenance_status"
+                                                                    class="form-select"
+                                                                >
+                                                                    <option
+                                                                        value="pending"
+                                                                        {{ old(
+                                                                            'maintenance_status',
+                                                                            $item->maintenance_status
+                                                                        ) === 'pending' ? 'selected' : '' }}
+                                                                    >
+                                                                        Pending
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="completed"
+                                                                        {{ old(
+                                                                            'maintenance_status',
+                                                                            $item->maintenance_status
+                                                                        ) === 'completed' ? 'selected' : '' }}
+                                                                    >
+                                                                        Completed
+                                                                    </option>
+                                                                </select>
+                                                            @else
+                                                                <input
+                                                                    type="text"
+                                                                    class="form-control"
+                                                                    value="{{ ucfirst($item->effective_maintenance_status) }}"
+                                                                    disabled
+                                                                >
+                                                            @endif
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Operating System</label>
+
+                                                            <input
+                                                                type="text"
+                                                                name="operating_system"
+                                                                class="form-control"
+                                                                value="{{ old(
+                                                                    'operating_system',
+                                                                    $item->operating_system
+                                                                ) }}"
                                                             >
                                                         </div>
 
                                                         <div class="col-md-4">
                                                             <label class="form-label">Classification</label>
-                                                            <input type="text" name="classification" class="form-control" value="{{ old('classification', $item->classification) }}">
+
+                                                            <select name="classification" class="form-select">
+                                                                <option value="">Select classification</option>
+
+                                                                @foreach ($classificationOptions as $value => $label)
+                                                                    <option
+                                                                        value="{{ $value }}"
+                                                                        {{ old('classification', $item->classification) == $value ? 'selected' : '' }}
+                                                                    >
+                                                                        {{ $label }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
 
                                                         <div class="col-md-4">
                                                             <label class="form-label">State</label>
                                                             <select name="state" class="form-select">
                                                                 <option value="active" {{ old('state', $item->state) === 'active' ? 'selected' : '' }}>Active</option>
+                                                                <option value="degraded" {{ old('state', $item->state) === 'degraded' ? 'selected' : '' }}>Degraded</option>                                                                
+                                                                <option value="damaged" {{ old('state', $item->state) === 'damaged' ? 'selected' : '' }}>Damaged</option>
                                                                 <option value="inactive" {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}>Inactive</option>
                                                                 <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                                                                 <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
@@ -1151,14 +1359,14 @@
                                 </div>
                             @endif
 
-@empty
-    <tr>
-        <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
-        <td colspan="{{ Auth::user()->user_level === 'Admin' ? 26 : 25 }}" class="text-center text-muted py-4">
-            No inventory records found.
-        </td>
-    </tr>
-@endforelse
+                        @empty
+                            <tr>
+                                <!-- Show a message when no records are found, spanning all columns, also change the colspan based on user level -->
+                                <td colspan="{{ Auth::user()->user_level === 'Admin' ? 28 : 27 }}" class="text-center text-muted py-4">
+                                    No inventory records found.
+                                </td>
+                            </tr>
+                        @endforelse
 
                     </tbody>
 
@@ -1290,13 +1498,42 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Operating System</label>
-                                <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system') }}">
+                                <label class="form-label">Next Maintenance</label>
+                                <input type="date" name="next_maintenance" class="form-control" value="{{ old('next_maintenance') }}">
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Next Maintenance</label>
-                                <input type="date" name="next_maintenance" class="form-control" value="{{ old('next_maintenance') }}">
+                                <label class="form-label">Maintenance Responsible</label>
+                                <select name="maintenance_responsible_id"class="form-select">
+                                    <option value="">No responsible assigned</option>
+
+                                    @foreach ($maintenanceResponsibleOptions as $responsible)
+                                        <option value="{{ $responsible->id }}" {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}>
+                                            
+                                        {{ $responsible->name }}
+
+                                            @if (!empty($responsible->employee_number))
+                                                — {{ $responsible->employee_number }}
+                                            @endif
+
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Maintenance Status</label>
+
+                                <input type="text" class="form-control" value="Pending" disabled>
+
+                                <small class="text-muted">
+                                    New assets start with pending maintenance status.
+                                </small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Operating System</label>
+                                <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system') }}">
                             </div>
 
                             <div class="col-md-4">

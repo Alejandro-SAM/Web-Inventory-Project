@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Inventory extends Model
 {
@@ -27,6 +29,8 @@ class Inventory extends Model
         'responsive',
         'employee_id',
         'next_maintenance',
+        'maintenance_responsible_id',
+        'maintenance_status',
         'operating_system',
         'confidentiality',
         'integrity',
@@ -44,8 +48,46 @@ class Inventory extends Model
         'warranty_expiry_date' => 'date',
     ];
 
-    public function creator()
+    /**
+     * Usuario que creó el registro de inventario.
+     */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Usuario responsable del mantenimiento.
+     */
+    public function maintenanceResponsible(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'maintenance_responsible_id'
+        );
+    }
+
+    /**
+     * Estado efectivo del mantenimiento.
+     *
+     * Overdue se calcula automáticamente cuando el mantenimiento
+     * sigue pendiente y su fecha es anterior al día actual.
+     */
+    protected function effectiveMaintenanceStatus(): Attribute
+    {
+        return Attribute::get(function (): string {
+            if ($this->maintenance_status === 'completed') {
+                return 'completed';
+            }
+
+            if (
+                $this->next_maintenance !== null
+                && $this->next_maintenance->isBefore(today())
+            ) {
+                return 'overdue';
+            }
+
+            return 'pending';
+        });
     }
 }
