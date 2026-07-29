@@ -324,7 +324,19 @@ private function inventoryLogFields(): array
             'availability' => ['nullable', 'integer', 'between:0,3'],
             'classification' => ['nullable', 'integer', 'between:1,4'],
             'comments' => ['nullable', 'string'],
-            'state' => ['required', 'in:active,damaged,degraded,inactive,maintenance,disposed,lost,to_be_deleted',],
+            // "To Be Deleted" can only be assigned while editing an existing asset.
+            'state' => [
+                'required',
+                Rule::in([
+                    'active',
+                    'damaged',
+                    'degraded',
+                    'inactive',
+                    'maintenance',
+                    'disposed',
+                    'lost',
+                ]),
+            ],
         ]);
 
         $validated['responsive'] = $request->has('responsive');
@@ -467,7 +479,19 @@ public function update(Request $request, Inventory $inventory)
         'availability' => ['nullable', 'integer', 'between:0,3'],
         'classification' => ['nullable', 'integer', 'between:1,4'],
         'comments' => ['nullable', 'string'],
-        'state' => ['required', 'in:active,damaged,degraded,inactive,maintenance,disposed,lost,to_be_deleted'],
+        'state' => [
+            'required',
+            Rule::in([
+                'active',
+                'damaged',
+                'degraded',
+                'inactive',
+                'maintenance',
+                'disposed',
+                'lost',
+                'to_be_deleted',
+            ]),
+        ],
     ]);
 
     if (auth()->user()->user_level === 'Admin') { //VALIDACIÓN DE ESTADO DE MANTENIMIENTO SOLO MODIFICABLE PARA ADMINISTRADORES

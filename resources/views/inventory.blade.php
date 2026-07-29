@@ -110,16 +110,17 @@
                     Delete All Marked
                 </button>
             </form>
-        @endif
 
+            <!-- Show Upload Excel button -->
             <button
                 type="button"
                 class="btn btn-sm btn-success"
                 data-bs-toggle="modal"
-                data-bs-target="#uploadInventoryExcelModal"
+                data-bs-target="#uploadExcelModal"
             >
                 Upload Excel
             </button>
+        @endif     
         @endif
 
         <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-danger">
@@ -1006,9 +1007,15 @@
                                 </td>
                             </tr>
 
-                            <!-- Only show Edit modal button for Read/Write users -->
+                            <!-- Only users with write access can edit assets -->
                             @if (Auth::user()->user_level !== 'Read')
-                                <div class="modal fade" id="editAssetModal{{ $item->id }}" tabindex="-1" aria-labelledby="editAssetModalLabel{{ $item->id }}" aria-hidden="true">
+                                <div
+                                    class="modal fade inventory-form-modal"
+                                    id="editAssetModal{{ $item->id }}"
+                                    tabindex="-1"
+                                    aria-labelledby="editAssetModalLabel{{ $item->id }}"
+                                    aria-hidden="true"
+                                >
                                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                                         <div class="modal-content">
 
@@ -1017,108 +1024,145 @@
                                                 @method('PUT')
 
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title" id="editAssetModalLabel{{ $item->id }}">
-                                                        Edit Asset - {{ $item->it_internal_number ?? 'N/A' }}
-                                                    </h5>
+                                                    <div>
+                                                        <h5
+                                                            class="modal-title"
+                                                            id="editAssetModalLabel{{ $item->id }}"
+                                                        >
+                                                            Edit Asset
+                                                        </h5>
 
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        <small class="text-muted">
+                                                            {{ $item->it_internal_number ?? 'Asset without internal number' }}
+                                                        </small>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Close"
+                                                    ></button>
                                                 </div>
 
-                                                <div class="modal-body">
-                                                    <div class="row g-3">
+                                                <div class="modal-body inventory-modal-body">
 
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">IT Internal Number</label>
-                                                            <input type="text" name="it_internal_number" class="form-control" value="{{ old('it_internal_number', $item->it_internal_number) }}">
+                                                    <!-- Asset identification -->
+                                                    <section class="inventory-form-section">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Asset Identification</h6>
+                                                            <span>Main identification and equipment information.</span>
                                                         </div>
 
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Serial Number</label>
-                                                            <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number', $item->serial_number) }}">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    IT Internal Number
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="it_internal_number"
+                                                                    class="form-control"
+                                                                    value="{{ old('it_internal_number', $item->it_internal_number) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Serial Number
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="serial_number"
+                                                                    class="form-control"
+                                                                    value="{{ old('serial_number', $item->serial_number) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Asset Number
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="asset_number"
+                                                                    class="form-control"
+                                                                    value="{{ old('asset_number', $item->asset_number) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Brand</label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="brand"
+                                                                    class="form-control"
+                                                                    value="{{ old('brand', $item->brand) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Model</label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="model"
+                                                                    class="form-control"
+                                                                    value="{{ old('model', $item->model) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Category</label>
+
+                                                                <select name="category" class="form-select">
+                                                                    <option value="">Select category</option>
+
+                                                                    @foreach ($categoryOptions as $category)
+                                                                        <option
+                                                                            value="{{ $category }}"
+                                                                            {{ old('category', $item->category) === $category ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $category }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Operating System
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="operating_system"
+                                                                    class="form-control"
+                                                                    value="{{ old('operating_system', $item->operating_system) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-8">
+                                                                <label class="form-label">Description</label>
+
+                                                                <textarea
+                                                                    name="description"
+                                                                    class="form-control"
+                                                                    rows="2"
+                                                                >{{ old('description', $item->description) }}</textarea>
+                                                            </div>
                                                         </div>
+                                                    </section>
 
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Asset Number</label>
-                                                            <input type="text" name="asset_number" class="form-control" value="{{ old('asset_number', $item->asset_number) }}">
-                                                        </div>
-
-                                                        <div class="col-md-12">
-                                                            <label class="form-label">Description</label>
-                                                            <textarea name="description" class="form-control" rows="2">{{ old('description', $item->description) }}</textarea>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Model</label>
-                                                            <input type="text" name="model" class="form-control" value="{{ old('model', $item->model) }}">
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Brand</label>
-                                                            <input type="text" name="brand" class="form-control" value="{{ old('brand', $item->brand) }}">
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Category</label>
-
-                                                            <select name="category" class="form-select">
-                                                                <option value="">Select category</option>
-
-                                                                @foreach ($categoryOptions as $category)
-                                                                    <option
-                                                                        value="{{ $category }}"
-                                                                        {{ old('category', $item->category) === $category ? 'selected' : '' }}
-                                                                    >
-                                                                        {{ $category }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Warranty Start Date</label>
-                                                            <input
-                                                                type="date"
-                                                                name="warranty_start_date"
-                                                                class="form-control"
-                                                                value="{{ old('warranty_start_date', optional($item->warranty_start_date)->format('Y-m-d')) }}"
-                                                            >
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Warranty Expiry Date</label>
-                                                            <input
-                                                                type="date"
-                                                                name="warranty_expiry_date"
-                                                                class="form-control"
-                                                                value="{{ old('warranty_expiry_date', optional($item->warranty_expiry_date)->format('Y-m-d')) }}"
-                                                            >
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Purchase Origin Country</label>
-                                                            <input
-                                                                type="text"
-                                                                name="purchase_origin_country"
-                                                                class="form-control"
-                                                                value="{{ old('purchase_origin_country', $item->purchase_origin_country) }}"
-                                                                placeholder="Example: Mexico"
-                                                            >
-                                                        </div>
-
-                                                        {{-- Remove this block if these columns are not in your inventory table --}}
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Department</label>
-                                                            <input type="text" name="department" class="form-control" value="{{ old('department', $item->department) }}">
-                                                        </div>
-
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Location</label>
-                                                            <input type="text" name="location" class="form-control" value="{{ old('location', $item->location) }}">
-                                                        </div>
-
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">BU</label>
-                                                            <input type="text" name="business_unit" class="form-control" value="{{ old('business_unit', $item->business_unit) }}">
+                                                    <!-- Assignment and location -->
+                                                    <section class="inventory-form-section">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Assignment and Location</h6>
+                                                            <span>User, department and physical location of the asset.</span>
                                                         </div>
 
                                                         @php
@@ -1126,224 +1170,451 @@
                                                             $currentPlant = old('plant', $item->plant);
                                                         @endphp
 
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Plant</label>
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">End User</label>
 
-                                                            <select name="plant" class="form-select">
-                                                                <option value="">Select plant</option>
-
-                                                                @if ($currentPlant && !in_array($currentPlant, $validPlantOptions, true))
-                                                                    <option value="{{ $currentPlant }}" selected>
-                                                                        Invalid value: {{ $currentPlant }}
-                                                                    </option>
-                                                                @endif
-
-                                                                @foreach ($validPlantOptions as $plant)
-                                                                    <option
-                                                                        value="{{ $plant }}"
-                                                                        {{ $currentPlant === $plant ? 'selected' : '' }}
-                                                                    >
-                                                                        Plant {{ $plant }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-
-                                                        {{-- End optional block --}}
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">End User</label>
-                                                            <input type="text" name="end_user" class="form-control" value="{{ old('end_user', $item->end_user) }}">
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Employee ID</label>
-                                                            <input type="text" name="employee_id" class="form-control" value="{{ old('employee_id', $item->employee_id) }}">
-                                                        </div>
-
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Next Maintenance</label>
-
-                                                            <input
-                                                                type="date"
-                                                                name="next_maintenance"
-                                                                class="form-control"
-                                                                value="{{ old(
-                                                                    'next_maintenance',
-                                                                    optional($item->next_maintenance)->format('Y-m-d')
-                                                                ) }}"
-                                                            >
-                                                        </div>
-
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Maintenance Responsible</label>
-
-                                                            <select
-                                                                name="maintenance_responsible_id"
-                                                                class="form-select"
-                                                            >
-                                                                <option value="">No responsible assigned</option>
-
-                                                                @foreach ($maintenanceResponsibleOptions as $responsible)
-                                                                    <option
-                                                                        value="{{ $responsible->id }}"
-                                                                        {{ (string) old(
-                                                                            'maintenance_responsible_id',
-                                                                            $item->maintenance_responsible_id
-                                                                        ) === (string) $responsible->id ? 'selected' : '' }}
-                                                                    >
-                                                                        {{ $responsible->name }}
-                                                                        @if (!empty($responsible->employee_number))
-                                                                            — {{ $responsible->employee_number }}
-                                                                        @endif
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Maintenance Status</label>
-
-                                                            @if (Auth::user()->user_level === 'Admin')
-                                                                <select
-                                                                    name="maintenance_status"
-                                                                    class="form-select"
-                                                                >
-                                                                    <option
-                                                                        value="pending"
-                                                                        {{ old(
-                                                                            'maintenance_status',
-                                                                            $item->maintenance_status
-                                                                        ) === 'pending' ? 'selected' : '' }}
-                                                                    >
-                                                                        Pending
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="completed"
-                                                                        {{ old(
-                                                                            'maintenance_status',
-                                                                            $item->maintenance_status
-                                                                        ) === 'completed' ? 'selected' : '' }}
-                                                                    >
-                                                                        Completed
-                                                                    </option>
-                                                                </select>
-                                                            @else
                                                                 <input
                                                                     type="text"
+                                                                    name="end_user"
                                                                     class="form-control"
-                                                                    value="{{ ucfirst($item->effective_maintenance_status) }}"
-                                                                    disabled
+                                                                    value="{{ old('end_user', $item->end_user) }}"
                                                                 >
-                                                            @endif
-                                                        </div>
+                                                            </div>
 
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Operating System</label>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Employee ID</label>
 
-                                                            <input
-                                                                type="text"
-                                                                name="operating_system"
-                                                                class="form-control"
-                                                                value="{{ old(
-                                                                    'operating_system',
-                                                                    $item->operating_system
-                                                                ) }}"
-                                                            >
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Classification</label>
-
-                                                            <select name="classification" class="form-select">
-                                                                <option value="">Select classification</option>
-
-                                                                @foreach ($classificationOptions as $value => $label)
-                                                                    <option
-                                                                        value="{{ $value }}"
-                                                                        {{ old('classification', $item->classification) == $value ? 'selected' : '' }}
-                                                                    >
-                                                                        {{ $label }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">State</label>
-                                                            <select name="state" class="form-select">
-                                                                <option value="active" {{ old('state', $item->state) === 'active' ? 'selected' : '' }}>Active</option>
-                                                                <option value="degraded" {{ old('state', $item->state) === 'degraded' ? 'selected' : '' }}>Degraded</option>
-                                                                <option value="damaged" {{ old('state', $item->state) === 'damaged' ? 'selected' : '' }}>Damaged</option>
-                                                                <option value="inactive" {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                                                <option value="maintenance" {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                                                <option value="disposed" {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}>Disposed</option>
-                                                                <option value="lost" {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}>Lost</option>
-                                                                <option value="to_be_deleted" {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}>To Be Deleted</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Confidentiality</label>
-                                                            <select name="confidentiality" class="form-select">
-                                                                <option value="">N/A</option>
-                                                                <option value="0" {{ old('confidentiality', $item->confidentiality) == '0' ? 'selected' : '' }}>0</option>
-                                                                <option value="1" {{ old('confidentiality', $item->confidentiality) == '1' ? 'selected' : '' }}>1</option>
-                                                                <option value="2" {{ old('confidentiality', $item->confidentiality) == '2' ? 'selected' : '' }}>2</option>
-                                                                <option value="3" {{ old('confidentiality', $item->confidentiality) == '3' ? 'selected' : '' }}>3</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Integrity</label>
-                                                            <select name="integrity" class="form-select">
-                                                                <option value="">N/A</option>
-                                                                <option value="0" {{ old('integrity', $item->integrity) == '0' ? 'selected' : '' }}>0</option>
-                                                                <option value="1" {{ old('integrity', $item->integrity) == '1' ? 'selected' : '' }}>1</option>
-                                                                <option value="2" {{ old('integrity', $item->integrity) == '2' ? 'selected' : '' }}>2</option>
-                                                                <option value="3" {{ old('integrity', $item->integrity) == '3' ? 'selected' : '' }}>3</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Availability</label>
-                                                            <select name="availability" class="form-select">
-                                                                <option value="">N/A</option>
-                                                                <option value="0" {{ old('availability', $item->availability) == '0' ? 'selected' : '' }}>0</option>
-                                                                <option value="1" {{ old('availability', $item->availability) == '1' ? 'selected' : '' }}>1</option>
-                                                                <option value="2" {{ old('availability', $item->availability) == '2' ? 'selected' : '' }}>2</option>
-                                                                <option value="3" {{ old('availability', $item->availability) == '3' ? 'selected' : '' }}>3</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div class="col-md-12">
-                                                            <label class="form-label">Comments</label>
-                                                            <textarea name="comments" class="form-control" rows="3">{{ old('comments', $item->comments) }}</textarea>
-                                                        </div>
-
-                                                        <div class="col-md-12">
-                                                            <div class="form-check">
                                                                 <input
-                                                                    class="form-check-input"
-                                                                    type="checkbox"
-                                                                    name="responsive"
-                                                                    id="responsive{{ $item->id }}"
-                                                                    value="1"
-                                                                    {{ old('responsive', $item->responsive) ? 'checked' : '' }}
+                                                                    type="text"
+                                                                    name="employee_id"
+                                                                    class="form-control"
+                                                                    value="{{ old('employee_id', $item->employee_id) }}"
                                                                 >
+                                                            </div>
 
-                                                                <label class="form-check-label" for="responsive{{ $item->id }}">
-                                                                    Has responsive document
-                                                                </label>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Department</label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="department"
+                                                                    class="form-control"
+                                                                    value="{{ old('department', $item->department) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Location</label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="location"
+                                                                    class="form-control"
+                                                                    value="{{ old('location', $item->location) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Business Unit</label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="business_unit"
+                                                                    class="form-control"
+                                                                    value="{{ old('business_unit', $item->business_unit) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Plant</label>
+
+                                                                <select name="plant" class="form-select">
+                                                                    <option value="">Select plant</option>
+
+                                                                    {{-- Preserve legacy values so they can be corrected manually --}}
+                                                                    @if ($currentPlant && !in_array($currentPlant, $validPlantOptions, true))
+                                                                        <option value="{{ $currentPlant }}" selected>
+                                                                            Invalid value: {{ $currentPlant }}
+                                                                        </option>
+                                                                    @endif
+
+                                                                    @foreach ($validPlantOptions as $plant)
+                                                                        <option
+                                                                            value="{{ $plant }}"
+                                                                            {{ $currentPlant === $plant ? 'selected' : '' }}
+                                                                        >
+                                                                            Plant {{ $plant }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
                                                         </div>
+                                                    </section>
 
-                                                    </div>
+                                                    <!-- Warranty and purchase -->
+                                                    <section class="inventory-form-section">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Warranty and Purchase</h6>
+                                                            <span>Warranty period and purchasing origin.</span>
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Warranty Start Date
+                                                                </label>
+
+                                                                <input
+                                                                    type="date"
+                                                                    name="warranty_start_date"
+                                                                    class="form-control"
+                                                                    value="{{ old(
+                                                                        'warranty_start_date',
+                                                                        optional($item->warranty_start_date)->format('Y-m-d')
+                                                                    ) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Warranty Expiry Date
+                                                                </label>
+
+                                                                <input
+                                                                    type="date"
+                                                                    name="warranty_expiry_date"
+                                                                    class="form-control"
+                                                                    value="{{ old(
+                                                                        'warranty_expiry_date',
+                                                                        optional($item->warranty_expiry_date)->format('Y-m-d')
+                                                                    ) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Purchase Origin Country
+                                                                </label>
+
+                                                                <input
+                                                                    type="text"
+                                                                    name="purchase_origin_country"
+                                                                    class="form-control"
+                                                                    value="{{ old(
+                                                                        'purchase_origin_country',
+                                                                        $item->purchase_origin_country
+                                                                    ) }}"
+                                                                    placeholder="Example: Mexico"
+                                                                >
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
+                                                    <!-- Maintenance -->
+                                                    <section class="inventory-form-section">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Maintenance</h6>
+                                                            <span>Schedule, assignment and current maintenance status.</span>
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Next Maintenance
+                                                                </label>
+
+                                                                <input
+                                                                    type="date"
+                                                                    name="next_maintenance"
+                                                                    class="form-control"
+                                                                    value="{{ old(
+                                                                        'next_maintenance',
+                                                                        optional($item->next_maintenance)->format('Y-m-d')
+                                                                    ) }}"
+                                                                >
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Maintenance Responsible
+                                                                </label>
+
+                                                                <select
+                                                                    name="maintenance_responsible_id"
+                                                                    class="form-select"
+                                                                >
+                                                                    <option value="">
+                                                                        No responsible assigned
+                                                                    </option>
+
+                                                                    @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                                        <option
+                                                                            value="{{ $responsible->id }}"
+                                                                            {{ (string) old(
+                                                                                'maintenance_responsible_id',
+                                                                                $item->maintenance_responsible_id
+                                                                            ) === (string) $responsible->id ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $responsible->name }}
+
+                                                                            @if (!empty($responsible->employee_number))
+                                                                                — {{ $responsible->employee_number }}
+                                                                            @endif
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">
+                                                                    Maintenance Status
+                                                                </label>
+
+                                                                @if (Auth::user()->user_level === 'Admin')
+                                                                    <select
+                                                                        name="maintenance_status"
+                                                                        class="form-select"
+                                                                    >
+                                                                        <option
+                                                                            value="pending"
+                                                                            {{ old(
+                                                                                'maintenance_status',
+                                                                                $item->maintenance_status
+                                                                            ) === 'pending' ? 'selected' : '' }}
+                                                                        >
+                                                                            Pending
+                                                                        </option>
+
+                                                                        <option
+                                                                            value="completed"
+                                                                            {{ old(
+                                                                                'maintenance_status',
+                                                                                $item->maintenance_status
+                                                                            ) === 'completed' ? 'selected' : '' }}
+                                                                        >
+                                                                            Completed
+                                                                        </option>
+                                                                    </select>
+                                                                @else
+                                                                    <input
+                                                                        type="text"
+                                                                        class="form-control"
+                                                                        value="{{ ucfirst($item->effective_maintenance_status) }}"
+                                                                        disabled
+                                                                    >
+
+                                                                    <small class="form-text text-muted">
+                                                                        Only administrators can change this status.
+                                                                    </small>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
+                                                    <!-- Status and classification -->
+                                                    <section class="inventory-form-section">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Status and Classification</h6>
+                                                            <span>Asset status, classification and CIA security values.</span>
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">Classification</label>
+
+                                                                <select name="classification" class="form-select">
+                                                                    <option value="">
+                                                                        Select classification
+                                                                    </option>
+
+                                                                    @foreach ($classificationOptions as $value => $label)
+                                                                        <option
+                                                                            value="{{ $value }}"
+                                                                            {{ old(
+                                                                                'classification',
+                                                                                $item->classification
+                                                                            ) == $value ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $label }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">State</label>
+
+                                                                <select name="state" class="form-select">
+                                                                    <option
+                                                                        value="active"
+                                                                        {{ old('state', $item->state) === 'active' ? 'selected' : '' }}
+                                                                    >
+                                                                        Active
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="inactive"
+                                                                        {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}
+                                                                    >
+                                                                        Inactive
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="maintenance"
+                                                                        {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}
+                                                                    >
+                                                                        Maintenance
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="degraded"
+                                                                        {{ old('state', $item->state) === 'degraded' ? 'selected' : '' }}
+                                                                    >
+                                                                        Degraded
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="damaged"
+                                                                        {{ old('state', $item->state) === 'damaged' ? 'selected' : '' }}
+                                                                    >
+                                                                        Damaged
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="disposed"
+                                                                        {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}
+                                                                    >
+                                                                        Disposed
+                                                                    </option>
+
+                                                                    <option
+                                                                        value="lost"
+                                                                        {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}
+                                                                    >
+                                                                        Lost
+                                                                    </option>
+
+                                                                    {{-- This state can only be assigned while editing --}}
+                                                                    <option
+                                                                        value="to_be_deleted"
+                                                                        {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}
+                                                                    >
+                                                                        To Be Deleted
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Confidentiality</label>
+
+                                                                <select name="confidentiality" class="form-select">
+                                                                    <option value="">N/A</option>
+
+                                                                    @for ($value = 0; $value <= 3; $value++)
+                                                                        <option
+                                                                            value="{{ $value }}"
+                                                                            {{ old(
+                                                                                'confidentiality',
+                                                                                $item->confidentiality
+                                                                            ) == $value ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $value }}
+                                                                        </option>
+                                                                    @endfor
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Integrity</label>
+
+                                                                <select name="integrity" class="form-select">
+                                                                    <option value="">N/A</option>
+
+                                                                    @for ($value = 0; $value <= 3; $value++)
+                                                                        <option
+                                                                            value="{{ $value }}"
+                                                                            {{ old(
+                                                                                'integrity',
+                                                                                $item->integrity
+                                                                            ) == $value ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $value }}
+                                                                        </option>
+                                                                    @endfor
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-4">
+                                                                <label class="form-label">Availability</label>
+
+                                                                <select name="availability" class="form-select">
+                                                                    <option value="">N/A</option>
+
+                                                                    @for ($value = 0; $value <= 3; $value++)
+                                                                        <option
+                                                                            value="{{ $value }}"
+                                                                            {{ old(
+                                                                                'availability',
+                                                                                $item->availability
+                                                                            ) == $value ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $value }}
+                                                                        </option>
+                                                                    @endfor
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
+                                                    <!-- Additional information -->
+                                                    <section class="inventory-form-section mb-0">
+                                                        <div class="inventory-form-section-header">
+                                                            <h6>Additional Information</h6>
+                                                            <span>Comments and responsive document information.</span>
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-12">
+                                                                <label class="form-label">Comments</label>
+
+                                                                <textarea
+                                                                    name="comments"
+                                                                    class="form-control"
+                                                                    rows="3"
+                                                                >{{ old('comments', $item->comments) }}</textarea>
+                                                            </div>
+
+                                                            <div class="col-12">
+                                                                <div class="form-check inventory-responsive-check">
+                                                                    <input
+                                                                        class="form-check-input"
+                                                                        type="checkbox"
+                                                                        name="responsive"
+                                                                        id="responsive{{ $item->id }}"
+                                                                        value="1"
+                                                                        {{ old('responsive', $item->responsive) ? 'checked' : '' }}
+                                                                    >
+
+                                                                    <label
+                                                                        class="form-check-label"
+                                                                        for="responsive{{ $item->id }}"
+                                                                    >
+                                                                        Has responsive document
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
                                                 </div>
 
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
                                                         Cancel
                                                     </button>
 
@@ -1351,7 +1622,6 @@
                                                         Save Changes
                                                     </button>
                                                 </div>
-
                                             </form>
 
                                         </div>
@@ -1375,264 +1645,530 @@
         </div>
 
             <div class="card-footer app-card-footer">
-                {{ $inventoryItems->links() }}
+                <div class="inventory-pagination">
+                    <div class="inventory-pagination-links">
+                        {{ $inventoryItems->onEachSide(1)->links() }}
+                    </div>
+
+                    @if ($inventoryItems->lastPage() > 1)
+                        <form
+                            class="inventory-page-jump"
+                            onsubmit="
+                                event.preventDefault();
+
+                                const pageInput = this.querySelector('[name=page]');
+                                const page = Math.min(
+                                    Math.max(parseInt(pageInput.value, 10) || 1, 1),
+                                    {{ $inventoryItems->lastPage() }}
+                                );
+
+                                const url = new URL(window.location.href);
+                                url.searchParams.set('page', page);
+                                window.location.href = url.toString();
+                            "
+                        >
+                            <label for="inventoryPageJump">
+                                Go to page
+                            </label>
+
+                            <input
+                                id="inventoryPageJump"
+                                name="page"
+                                type="number"
+                                class="form-control form-control-sm"
+                                min="1"
+                                max="{{ $inventoryItems->lastPage() }}"
+                                value="{{ $inventoryItems->currentPage() }}"
+                                aria-label="Page number"
+                            >
+
+                            <span>
+                                of {{ $inventoryItems->lastPage() }}
+                            </span>
+
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-primary"
+                            >
+                                Go
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 
     <!-- MODAL FOR ADDING ASSETS -->
     @if (Auth::user()->user_level !== 'Read')
-    <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
+        <div
+            class="modal fade inventory-form-modal"
+            id="addAssetModal"
+            tabindex="-1"
+            aria-labelledby="addAssetModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
 
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title" id="addAssetModalLabel">Add Asset</h5>
-                        <small class="text-muted">Register a new IT inventory asset.</small>
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title" id="addAssetModalLabel">
+                                Add Asset
+                            </h5>
+
+                            <small class="text-muted">
+                                Register a new IT inventory asset.
+                            </small>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
                     </div>
 
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                    <form method="POST" action="{{ route('inventory.store') }}">
+                        @csrf
 
-                <form method="POST" action="{{ route('inventory.store') }}">
-                    @csrf
+                        <div class="modal-body inventory-modal-body">
 
-                    <div class="modal-body inventory-modal-body">
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <strong>There were some errors:</strong>
 
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <strong>There were some errors:</strong>
-                                <ul class="mb-0 mt-2">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
-                        <div class="row g-3">
-
-                            <div class="col-md-4">
-                                <label class="form-label">IT Internal Number</label>
-                                <input type="text" name="it_internal_number" class="form-control" value="{{ old('it_internal_number') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Serial Number</label>
-                                <input type="text" name="serial_number" class="form-control" value="{{ old('serial_number') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Asset Number</label>
-                                <input type="text" name="asset_number" class="form-control" value="{{ old('asset_number') }}">
-                            </div>
-
-                            <div class="col-md-12">
-                                <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Model</label>
-                                <input type="text" name="model" class="form-control" value="{{ old('model') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Brand</label>
-                                <input type="text" name="brand" class="form-control" value="{{ old('brand') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Category</label>
-                                <select name="category" class="form-select">
-                                    <option value="">Select category</option>
-
-                                    @foreach ($categoryOptions as $category)
-                                        <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>
-                                            {{ $category }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Warranty Start Date</label>
-                                <input
-                                    type="date"
-                                    name="warranty_start_date"
-                                    class="form-control"
-                                    value="{{ old('warranty_start_date') }}"
-                                >
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Warranty Expiry Date</label>
-                                <input
-                                    type="date"
-                                    name="warranty_expiry_date"
-                                    class="form-control"
-                                    value="{{ old('warranty_expiry_date') }}"
-                                >
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Purchase Origin Country</label>
-                                <input
-                                    type="text"
-                                    name="purchase_origin_country"
-                                    class="form-control"
-                                    value="{{ old('purchase_origin_country') }}"
-                                    placeholder="Example: Mexico"
-                                >
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">End User</label>
-                                <input type="text" name="end_user" class="form-control" value="{{ old('end_user') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Employee ID</label>
-                                <input type="text" name="employee_id" class="form-control" value="{{ old('employee_id') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Next Maintenance</label>
-                                <input type="date" name="next_maintenance" class="form-control" value="{{ old('next_maintenance') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Maintenance Responsible</label>
-                                <select name="maintenance_responsible_id"class="form-select">
-                                    <option value="">No responsible assigned</option>
-
-                                    @foreach ($maintenanceResponsibleOptions as $responsible)
-                                        <option value="{{ $responsible->id }}" {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}>
-                                        {{ $responsible->name }}
-
-                                            @if (!empty($responsible->employee_number))
-                                                — {{ $responsible->employee_number }}
-                                            @endif
-
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Maintenance Status</label>
-
-                                <input type="text" class="form-control" value="Pending" disabled>
-
-                                <small class="text-muted">
-                                    New assets start with pending maintenance status.
-                                </small>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Operating System</label>
-                                <input type="text" name="operating_system" class="form-control" value="{{ old('operating_system') }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Classification</label>
-                                <select name="classification" class="form-select">
-                                    <option value="">Select classification</option>
-
-                                    @foreach ($classificationOptions as $value => $label)
-                                        <option value="{{ $value }}" {{ old('classification') == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">State</label>
-                                <select name="state" class="form-select">
-                                    <option value="active" {{ old('state') === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="inactive" {{ old('state') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                    <option value="maintenance" {{ old('state') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                    <option value="disposed" {{ old('state') === 'disposed' ? 'selected' : '' }}>Disposed</option>
-                                    <option value="lost" {{ old('state') === 'lost' ? 'selected' : '' }}>Lost</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Confidentiality</label>
-                                <select name="confidentiality" class="form-select">
-                                    <option value="">N/A</option>
-                                    <option value="0" {{ old('confidentiality') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ old('confidentiality') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ old('confidentiality') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ old('confidentiality') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Integrity</label>
-                                <select name="integrity" class="form-select">
-                                    <option value="">N/A</option>
-                                    <option value="0" {{ old('integrity') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ old('integrity') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ old('integrity') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ old('integrity') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Availability</label>
-                                <select name="availability" class="form-select">
-                                    <option value="">N/A</option>
-                                    <option value="0" {{ old('availability') === '0' ? 'selected' : '' }}>0</option>
-                                    <option value="1" {{ old('availability') === '1' ? 'selected' : '' }}>1</option>
-                                    <option value="2" {{ old('availability') === '2' ? 'selected' : '' }}>2</option>
-                                    <option value="3" {{ old('availability') === '3' ? 'selected' : '' }}>3</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-12">
-                                <label class="form-label">Comments</label>
-                                <textarea name="comments" class="form-control" rows="3">{{ old('comments') }}</textarea>
-                            </div>
-
-                            <div class="col-md-12">
-                                <div class="form-check">
-                                    <input 
-                                        class="form-check-input" 
-                                        type="checkbox" 
-                                        name="responsive" 
-                                        id="responsive" 
-                                        value="1" 
-                                        {{ old('responsive') ? 'checked' : '' }}
-                                    >
-
-                                    <label class="form-check-label" for="responsive">
-                                        Has responsive document
-                                    </label>
+                                    <ul class="mb-0 mt-2">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
                                 </div>
-                            </div>
+                            @endif
+
+                            <!-- Identification -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Asset Identification</h6>
+                                    <span>Main identification and equipment information.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">IT Internal Number</label>
+                                        <input
+                                            type="text"
+                                            name="it_internal_number"
+                                            class="form-control"
+                                            value="{{ old('it_internal_number') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Serial Number</label>
+                                        <input
+                                            type="text"
+                                            name="serial_number"
+                                            class="form-control"
+                                            value="{{ old('serial_number') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Asset Number</label>
+                                        <input
+                                            type="text"
+                                            name="asset_number"
+                                            class="form-control"
+                                            value="{{ old('asset_number') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Brand</label>
+                                        <input
+                                            type="text"
+                                            name="brand"
+                                            class="form-control"
+                                            value="{{ old('brand') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Model</label>
+                                        <input
+                                            type="text"
+                                            name="model"
+                                            class="form-control"
+                                            value="{{ old('model') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Category</label>
+                                        <select name="category" class="form-select">
+                                            <option value="">Select category</option>
+
+                                            @foreach ($categoryOptions as $category)
+                                                <option
+                                                    value="{{ $category }}"
+                                                    {{ old('category') === $category ? 'selected' : '' }}
+                                                >
+                                                    {{ $category }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Operating System</label>
+                                        <input
+                                            type="text"
+                                            name="operating_system"
+                                            class="form-control"
+                                            value="{{ old('operating_system') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-8">
+                                        <label class="form-label">Description</label>
+                                        <textarea
+                                            name="description"
+                                            class="form-control"
+                                            rows="2"
+                                        >{{ old('description') }}</textarea>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Assignment and location -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Assignment and Location</h6>
+                                    <span>User, department and physical location of the asset.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">End User</label>
+                                        <input
+                                            type="text"
+                                            name="end_user"
+                                            class="form-control"
+                                            value="{{ old('end_user') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Employee ID</label>
+                                        <input
+                                            type="text"
+                                            name="employee_id"
+                                            class="form-control"
+                                            value="{{ old('employee_id') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Department</label>
+                                        <input
+                                            type="text"
+                                            name="department"
+                                            class="form-control"
+                                            value="{{ old('department') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Location</label>
+                                        <input
+                                            type="text"
+                                            name="location"
+                                            class="form-control"
+                                            value="{{ old('location') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Business Unit</label>
+                                        <input
+                                            type="text"
+                                            name="business_unit"
+                                            class="form-control"
+                                            value="{{ old('business_unit') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Plant</label>
+                                        <input
+                                            type="text"
+                                            name="plant"
+                                            class="form-control"
+                                            value="{{ old('plant') }}"
+                                        >
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Warranty -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Warranty and Purchase</h6>
+                                    <span>Warranty period and purchasing origin.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Warranty Start Date</label>
+                                        <input
+                                            type="date"
+                                            name="warranty_start_date"
+                                            class="form-control"
+                                            value="{{ old('warranty_start_date') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Warranty Expiry Date</label>
+                                        <input
+                                            type="date"
+                                            name="warranty_expiry_date"
+                                            class="form-control"
+                                            value="{{ old('warranty_expiry_date') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Purchase Origin Country</label>
+                                        <input
+                                            type="text"
+                                            name="purchase_origin_country"
+                                            class="form-control"
+                                            value="{{ old('purchase_origin_country') }}"
+                                            placeholder="Example: Mexico"
+                                        >
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Maintenance -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Maintenance</h6>
+                                    <span>Schedule and assign the next maintenance activity.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Next Maintenance</label>
+                                        <input
+                                            type="date"
+                                            name="next_maintenance"
+                                            class="form-control"
+                                            value="{{ old('next_maintenance') }}"
+                                        >
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Maintenance Responsible</label>
+
+                                        <select
+                                            name="maintenance_responsible_id"
+                                            class="form-select"
+                                        >
+                                            <option value="">No responsible assigned</option>
+
+                                            @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                <option
+                                                    value="{{ $responsible->id }}"
+                                                    {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
+                                                >
+                                                    {{ $responsible->name }}
+
+                                                    @if (!empty($responsible->employee_number))
+                                                        — {{ $responsible->employee_number }}
+                                                    @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Maintenance Status</label>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            value="Pending"
+                                            disabled
+                                        >
+
+                                        <small class="form-text text-muted">
+                                            New assets start with pending maintenance status.
+                                        </small>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Status and classification -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Status and Classification</h6>
+                                    <span>Asset status, classification and CIA security values.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Classification</label>
+
+                                        <select name="classification" class="form-select">
+                                            <option value="">Select classification</option>
+
+                                            @foreach ($classificationOptions as $value => $label)
+                                                <option
+                                                    value="{{ $value }}"
+                                                    {{ old('classification') == $value ? 'selected' : '' }}
+                                                >
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">State</label>
+
+                                        <select name="state" class="form-select">
+                                            <option value="active" {{ old('state', 'active') === 'active' ? 'selected' : '' }}>
+                                                Active
+                                            </option>
+
+                                            <option value="inactive" {{ old('state') === 'inactive' ? 'selected' : '' }}>
+                                                Inactive
+                                            </option>
+
+                                            <option value="maintenance" {{ old('state') === 'maintenance' ? 'selected' : '' }}>
+                                                Maintenance
+                                            </option>
+
+                                            <option value="degraded" {{ old('state') === 'degraded' ? 'selected' : '' }}>
+                                                Degraded
+                                            </option>
+
+                                            <option value="damaged" {{ old('state') === 'damaged' ? 'selected' : '' }}>
+                                                Damaged
+                                            </option>
+
+                                            <option value="disposed" {{ old('state') === 'disposed' ? 'selected' : '' }}>
+                                                Disposed
+                                            </option>
+
+                                            <option value="lost" {{ old('state') === 'lost' ? 'selected' : '' }}>
+                                                Lost
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Confidentiality</label>
+
+                                        <select name="confidentiality" class="form-select">
+                                            <option value="">N/A</option>
+                                            <option value="0" {{ old('confidentiality') === '0' ? 'selected' : '' }}>0</option>
+                                            <option value="1" {{ old('confidentiality') === '1' ? 'selected' : '' }}>1</option>
+                                            <option value="2" {{ old('confidentiality') === '2' ? 'selected' : '' }}>2</option>
+                                            <option value="3" {{ old('confidentiality') === '3' ? 'selected' : '' }}>3</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Integrity</label>
+
+                                        <select name="integrity" class="form-select">
+                                            <option value="">N/A</option>
+                                            <option value="0" {{ old('integrity') === '0' ? 'selected' : '' }}>0</option>
+                                            <option value="1" {{ old('integrity') === '1' ? 'selected' : '' }}>1</option>
+                                            <option value="2" {{ old('integrity') === '2' ? 'selected' : '' }}>2</option>
+                                            <option value="3" {{ old('integrity') === '3' ? 'selected' : '' }}>3</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Availability</label>
+
+                                        <select name="availability" class="form-select">
+                                            <option value="">N/A</option>
+                                            <option value="0" {{ old('availability') === '0' ? 'selected' : '' }}>0</option>
+                                            <option value="1" {{ old('availability') === '1' ? 'selected' : '' }}>1</option>
+                                            <option value="2" {{ old('availability') === '2' ? 'selected' : '' }}>2</option>
+                                            <option value="3" {{ old('availability') === '3' ? 'selected' : '' }}>3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Additional information -->
+                            <section class="inventory-form-section mb-0">
+                                <div class="inventory-form-section-header">
+                                    <h6>Additional Information</h6>
+                                    <span>Comments and responsive document information.</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Comments</label>
+                                        <textarea
+                                            name="comments"
+                                            class="form-control"
+                                            rows="3"
+                                        >{{ old('comments') }}</textarea>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-check inventory-responsive-check">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                name="responsive"
+                                                id="addAssetResponsive"
+                                                value="1"
+                                                {{ old('responsive') ? 'checked' : '' }}
+                                            >
+
+                                            <label
+                                                class="form-check-label"
+                                                for="addAssetResponsive"
+                                            >
+                                                Has responsive document
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
                         </div>
-                    </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            Cancel
-                        </button>
+                        <div class="modal-footer">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                Cancel
+                            </button>
 
-                        <button type="submit" class="btn btn-primary">
-                            Save Asset
-                        </button>
-                    </div>
-                </form>
+                            <button type="submit" class="btn btn-primary">
+                                Save Asset
+                            </button>
+                        </div>
+                    </form>
 
+                </div>
             </div>
         </div>
-    </div>
-    <!-- End Add Asset Modal -->
-@endif
+        <!-- End Add Asset Modal -->
+    @endif
 
     <!-- Auto-submit filter form on change -->
     <script>
