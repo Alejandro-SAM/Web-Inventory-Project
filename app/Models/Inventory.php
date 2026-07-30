@@ -50,7 +50,7 @@ class Inventory extends Model
     ];
 
     /**
-     * Usuario que creó el registro de inventario.
+     * User who created the inventory record.
      */
     public function creator(): BelongsTo
     {
@@ -58,7 +58,7 @@ class Inventory extends Model
     }
 
     /**
-     * Usuario responsable del mantenimiento.
+     * User currently responsible for the asset maintenance.
      */
     public function maintenanceResponsible(): BelongsTo
     {
@@ -69,10 +69,21 @@ class Inventory extends Model
     }
 
     /**
-     * Estado efectivo del mantenimiento.
+     * Maintenance history associated with the asset.
+     */
+    public function maintenanceRecords(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRecord::class,
+            'inventory_id'
+        );
+    }
+
+    /**
+     * Effective maintenance status displayed by the application.
      *
-     * Overdue se calcula automáticamente cuando el mantenimiento
-     * sigue pendiente y su fecha es anterior al día actual.
+     * An incomplete maintenance becomes overdue automatically when
+     * its scheduled date is earlier than the current date.
      */
     protected function effectiveMaintenanceStatus(): Attribute
     {

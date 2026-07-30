@@ -6,6 +6,7 @@ use App\Models\LoginLog;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,5 +38,6 @@ class AppServiceProvider extends ServiceProvider
                 'login_at' => now(),
             ]);
         });
+        Paginator::useBootstrapFive();
     }
 }
