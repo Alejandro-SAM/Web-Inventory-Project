@@ -30,9 +30,18 @@
                 <div class="app-card-header">
                     <strong>Assigned Maintenance</strong>
 
-                    <span class="text-muted small">
-                        {{ $maintenanceItems->total() }} records
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small">
+                            {{ $maintenanceItems->total() }} records
+                        </span>
+
+                        <a
+                            href="{{ route('maintenance.history') }}"
+                            class="btn btn-outline-primary btn-sm"
+                        >
+                            History
+                        </a>
+                    </div>
                 </div>
 
                 <div class="app-card-body">

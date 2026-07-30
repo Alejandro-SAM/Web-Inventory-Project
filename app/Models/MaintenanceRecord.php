@@ -52,7 +52,7 @@ class MaintenanceRecord extends Model
     /**
      * Usuario que solicitó finalizar el mantenimiento.
      */
-    public function completionRequester(): BelongsTo
+    public function completionRequestedBy(): BelongsTo
     {
         return $this->belongsTo(
             User::class,

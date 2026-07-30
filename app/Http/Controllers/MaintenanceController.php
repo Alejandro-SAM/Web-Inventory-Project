@@ -29,7 +29,8 @@ class MaintenanceController extends Controller
 
         $query = Inventory::query()
             ->with('maintenanceResponsible')
-            ->whereNotNull('maintenance_responsible_id');
+            ->whereNotNull('maintenance_responsible_id')
+            ->where('maintenance_status', '!=', 'completed');
 
         /*
          * Admin puede consultar todos los mantenimientos.
@@ -45,6 +46,41 @@ class MaintenanceController extends Controller
             ->paginate(50);
 
         return view('maintenance', compact('maintenanceItems'));
+    }
+
+    public function history(Request $request)
+{
+    $user = $request->user();
+
+    if (!in_array($user->user_level, ['Admin', 'User'], true)) {
+        abort(403);
+    }
+
+    $query = MaintenanceRecord::query()
+        ->with([
+            'inventory',
+            'responsible',
+            'completionRequestedBy',
+            'reviewer',
+        ])
+        ->where('status', 'completed');
+
+    /*
+     * Admin ve todo el historial.
+     * User ve únicamente los mantenimientos asignados a su ID.
+     */
+        if ($user->user_level !== 'Admin') {
+            $query->where('responsible_id', $user->id);
+        }
+
+        $maintenanceRecords = $query
+            ->orderByDesc('completed_at')
+            ->paginate(50);
+
+        return view(
+            'maintenance-history',
+            compact('maintenanceRecords')
+        );
     }
 
     /**

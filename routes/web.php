@@ -148,6 +148,11 @@ Route::middleware(['auth'])->group(function () {
         [MaintenanceController::class, 'index']
     )->name('maintenance.index');
 
+    Route::get(
+    '/maintenance/history',
+    [MaintenanceController::class, 'history']
+    )->name('maintenance.history');
+
     Route::patch(
         '/maintenance/{inventory}/finalize',
         [MaintenanceController::class, 'requestCompletion']
