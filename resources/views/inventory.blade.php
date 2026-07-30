@@ -837,27 +837,27 @@
                                 </div>
                             </th>
 
-                            <!--- Only show Created At filters for Admin users -->
+                            <!-- Only show Created At filters for Admin users -->
                             @if (Auth::user()->user_level === 'Admin')
-                            <th class="col-md-custom" style="min-width: 220px;">
-                                <div class="d-flex gap-2">
-                                    <div class="d-flex gap-1">
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_from"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_from') }}"
-                                        >
+                                <th class="col-md-custom" style="min-width: 220px;">
+                                    <div class="d-flex gap-2">
+                                        <div class="d-flex gap-1">
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_from"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_from') }}"
+                                            >
 
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_to"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_to') }}"
-                                        >
-                                    </div>
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_to"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_to') }}"
+                                            >
+                                        </div>
 
                                     <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-secondary">
                                         Clear

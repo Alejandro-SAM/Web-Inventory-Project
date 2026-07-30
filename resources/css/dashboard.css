@@ -21,6 +21,43 @@
 }
 
 /* ==============================
+   DASHBOARD CONTENT CONTAINER
+================================= */
+
+/*
+    Keeps every dashboard section aligned to the same maximum width.
+
+    The hero, KPI cards, charts and tables must all remain inside
+    this container to preserve consistent horizontal spacing.
+*/
+.dashboard-content-container {
+    width: 100%;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+/*
+    Reduces the horizontal spacing on smaller screens.
+*/
+@media (max-width: 1024px) {
+    .dashboard-content-container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+/*
+    Uses smaller side spacing on mobile devices.
+*/
+@media (max-width: 640px) {
+    .dashboard-content-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* ==============================
    DASHBOARD HERO
 ================================= */
 
@@ -765,3 +802,139 @@
     border-color: #2563eb;
 }
 
+/* ==============================
+   DASHBOARD FILTER ACTION BUTTONS
+================================= */
+
+/*
+    Plant filter action layout.
+
+    The buttons are displayed vertically because the plant filter
+    dropdown has limited horizontal space.
+*/
+.dashboard-plant-filter-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+
+/*
+    Chart filter action layout.
+
+    The Unselect all and Reset filter buttons are displayed
+    side by side inside each chart filter dropdown.
+*/
+.dashboard-chart-filter-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+
+/*
+    Shared appearance for the chart filter action buttons.
+*/
+.dashboard-chart-filter-action-button {
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/*
+    Primary action used by Reset filter.
+*/
+.dashboard-chart-filter-action-button.primary {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+
+/*
+    Secondary action used by Unselect all.
+*/
+.dashboard-chart-filter-action-button.secondary {
+    background: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+
+/*
+    Primary button hover state.
+*/
+.dashboard-chart-filter-action-button.primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+
+/*
+    Secondary button hover state.
+*/
+.dashboard-chart-filter-action-button.secondary:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+
+/*
+    Plant filter button transition.
+*/
+.dashboard-plant-filter-button {
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/*
+    Standard plant filter button hover.
+*/
+.dashboard-plant-filter-button:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+
+/*
+    Primary plant Apply filter button.
+*/
+.dashboard-plant-filter-button.primary {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+
+/*
+    Primary plant Apply filter button hover.
+*/
+.dashboard-plant-filter-button.primary:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+    border-color: #1d4ed8;
+}
