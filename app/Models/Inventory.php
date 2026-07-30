@@ -69,17 +69,6 @@ class Inventory extends Model
     }
 
     /**
-     * Maintenance history associated with the asset.
-     */
-    public function maintenanceRecords(): HasMany
-    {
-        return $this->hasMany(
-            MaintenanceRecord::class,
-            'inventory_id'
-        );
-    }
-
-    /**
      * Effective maintenance status displayed by the application.
      *
      * An incomplete maintenance becomes overdue automatically when
