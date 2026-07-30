@@ -34,6 +34,17 @@
                 {{ __('Inventory') }}
                 </x-nav-link>
 
+                <!-- Solo Admin y User pueden ver Maintenance -->
+                @if (Auth::user()->user_level !== 'Read')
+                    <x-nav-link
+                        :href="route('maintenance.index')"
+                        :active="request()->routeIs('maintenance.*')"
+                        class="app-nav-link"
+                    >
+                        {{ __('Maintenance') }}
+                    </x-nav-link>
+                @endif
+
             @if (Auth::user()->user_level === 'Admin') <!-- ONLY SHOW BUTTON IF THE USER IS ADMIN LEVEL -->
                 <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')" class="app-nav-link">
                 {{ __('Users') }}
@@ -124,6 +135,13 @@
         <x-responsive-nav-link :href="route('inventory')" :active="request()->routeIs('inventory')">
             {{ __('Inventory') }}
         </x-responsive-nav-link>
+
+        <!-- solo Admin y User pueden ver Maintenance -->
+        @if (Auth::user()->user_level !== 'Read')
+            <x-responsive-nav-link :href="route('maintenance.index')" :active="request()->routeIs('maintenance.*')">
+                {{ __('Maintenance') }}
+            </x-responsive-nav-link>
+        @endif
 
         <!-- Solo Admin puede ver Users -->
         @if (Auth::user()->user_level === 'Admin')

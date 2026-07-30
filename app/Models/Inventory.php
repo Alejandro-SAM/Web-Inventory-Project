@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Inventory extends Model
 {
@@ -80,8 +81,13 @@ class Inventory extends Model
                 return 'completed';
             }
 
+            if ($this->maintenance_status === 'awaiting') {
+                return 'awaiting';
+            }
+
             if (
-                $this->next_maintenance !== null
+                $this->maintenance_status === 'pending'
+                && $this->next_maintenance !== null
                 && $this->next_maintenance->isBefore(today())
             ) {
                 return 'overdue';
@@ -89,5 +95,16 @@ class Inventory extends Model
 
             return 'pending';
         });
+    }
+
+    /**
+     * Historial de ciclos de mantenimiento del activo.
+     */
+    public function maintenanceRecords(): HasMany
+    {
+        return $this->hasMany(
+            MaintenanceRecord::class,
+            'inventory_id'
+        );
     }
 }
