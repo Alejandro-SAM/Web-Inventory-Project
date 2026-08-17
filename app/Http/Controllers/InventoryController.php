@@ -322,7 +322,6 @@ private function inventoryLogFields(): array
             'confidentiality' => ['nullable', 'integer', 'between:0,3'],
             'integrity' => ['nullable', 'integer', 'between:0,3'],
             'availability' => ['nullable', 'integer', 'between:0,3'],
-            'classification' => ['nullable', 'integer', 'between:1,4'],
             'comments' => ['nullable', 'string'],
             // "To Be Deleted" can only be assigned while editing an existing asset.
             'state' => [
@@ -340,6 +339,19 @@ private function inventoryLogFields(): array
         ]);
 
         $validated['responsive'] = $request->has('responsive');
+
+        $validated['responsive'] = $request->has('responsive');
+
+        $validated['classification'] = $this->calculateClassification(
+            $validated['confidentiality'] ?? null,
+            $validated['integrity'] ?? null,
+            $validated['availability'] ?? null
+        );
+
+        $validated['created_by'] = auth()->id();
+
+        $inventory = Inventory::create($validated);
+
         $validated['created_by'] = auth()->id();
 
         $inventory = Inventory::create($validated);
@@ -439,6 +451,33 @@ private function inventoryLogFields(): array
             4 => 'D(GENERAL)',
         ];
     }
+    
+    private function calculateClassification(
+        ?int $confidentiality,
+        ?int $integrity,
+        ?int $availability
+    ): ?int {
+        /*
+            Classification can only be calculated when all
+            three CIA values are available.
+        */
+        if (
+            $confidentiality === null ||
+            $integrity === null ||
+            $availability === null
+        ) {
+            return null;
+        }
+
+        $total = $confidentiality + $integrity + $availability;
+
+        return match (true) {
+            $total <= 2 => 4, // D (GENERAL)
+            $total <= 5 => 3, // C (INTERNAL)
+            $total <= 7 => 2, // B (SECRET)
+            default => 1,     // A (TOP SECRET)
+        };
+    }
 
 public function update(Request $request, Inventory $inventory)
 {
@@ -477,7 +516,6 @@ public function update(Request $request, Inventory $inventory)
         'confidentiality' => ['nullable', 'integer', 'between:0,3'],
         'integrity' => ['nullable', 'integer', 'between:0,3'],
         'availability' => ['nullable', 'integer', 'between:0,3'],
-        'classification' => ['nullable', 'integer', 'between:1,4'],
         'comments' => ['nullable', 'string'],
         'state' => [
             'required',
@@ -510,6 +548,12 @@ public function update(Request $request, Inventory $inventory)
     }
 
     $validated['responsive'] = $request->has('responsive');
+
+    $validated['classification'] = $this->calculateClassification(
+        $validated['confidentiality'] ?? null,
+        $validated['integrity'] ?? null,
+        $validated['availability'] ?? null
+    );
 
     $inventory->update($validated);
 

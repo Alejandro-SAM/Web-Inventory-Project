@@ -80,6 +80,15 @@
     <strong>Inventory Assets</strong>
 
     <div class="d-flex gap-2 align-items-center">
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-info"
+            data-bs-toggle="modal"
+            data-bs-target="#securityFormatInfoModal"
+        >
+            Classification information
+        </button>
+
         @if (Auth::user()->user_level !== 'Read')
             <button 
                 type="button" 
@@ -116,7 +125,7 @@
                 type="button"
                 class="btn btn-sm btn-success"
                 data-bs-toggle="modal"
-                data-bs-target="#uploadExcelModal"
+                data-bs-target="#uploadInventoryExcelModal"
             >
                 Upload Excel
             </button>
@@ -837,27 +846,27 @@
                                 </div>
                             </th>
 
-                            <!--- Only show Created At filters for Admin users -->
+                            <!-- Only show Created At filters for Admin users -->
                             @if (Auth::user()->user_level === 'Admin')
-                            <th class="col-md-custom" style="min-width: 220px;">
-                                <div class="d-flex gap-2">
-                                    <div class="d-flex gap-1">
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_from"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_from') }}"
-                                        >
+                                <th class="col-md-custom" style="min-width: 220px;">
+                                    <div class="d-flex gap-2">
+                                        <div class="d-flex gap-1">
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_from"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_from') }}"
+                                            >
 
-                                        <input
-                                            form="inventoryFiltersForm"
-                                            type="date"
-                                            name="created_to"
-                                            class="form-control form-control-sm auto-filter-select"
-                                            value="{{ request('created_to') }}"
-                                        >
-                                    </div>
+                                            <input
+                                                form="inventoryFiltersForm"
+                                                type="date"
+                                                name="created_to"
+                                                class="form-control form-control-sm auto-filter-select"
+                                                value="{{ request('created_to') }}"
+                                            >
+                                        </div>
 
                                     <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-secondary">
                                         Clear
@@ -1423,23 +1432,16 @@
                                                             <div class="col-md-6">
                                                                 <label class="form-label">Classification</label>
 
-                                                                <select name="classification" class="form-select">
-                                                                    <option value="">
-                                                                        Select classification
-                                                                    </option>
+                                                                <input
+                                                                    type="text"
+                                                                    class="form-control"
+                                                                    value="Automatically assigned"
+                                                                    disabled
+                                                                >
 
-                                                                    @foreach ($classificationOptions as $value => $label)
-                                                                        <option
-                                                                            value="{{ $value }}"
-                                                                            {{ old(
-                                                                                'classification',
-                                                                                $item->classification
-                                                                            ) == $value ? 'selected' : '' }}
-                                                                        >
-                                                                            {{ $label }}
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
+                                                                <small class="form-text text-muted">
+                                                                    Classification is automatically assigned based on Confidentiality, Integrity and Availability.
+                                                                </small>
                                                             </div>
 
                                                             <div class="col-md-6">
@@ -2022,18 +2024,16 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Classification</label>
 
-                                        <select name="classification" class="form-select">
-                                            <option value="">Select classification</option>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            value="Automatically assigned"
+                                            disabled
+                                        >
 
-                                            @foreach ($classificationOptions as $value => $label)
-                                                <option
-                                                    value="{{ $value }}"
-                                                    {{ old('classification') == $value ? 'selected' : '' }}
-                                                >
-                                                    {{ $label }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <small class="form-text text-muted">
+                                            Classification is automatically assigned based on Confidentiality, Integrity and Availability.
+                                        </small>
                                     </div>
 
                                     <div class="col-md-6">
@@ -2170,6 +2170,43 @@
         <!-- End Add Asset Modal -->
     @endif
 
+
+    <!-- SECURITY FORMAT INFORMATION MODAL -->
+    <div
+        class="modal fade"
+        id="securityFormatInfoModal"
+        tabindex="-1"
+        aria-labelledby="securityFormatInfoModalLabel"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="securityFormatInfoModalLabel">
+                        Security Classification Information
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+                </div>
+
+                <div class="modal-body text-center p-3 overflow-auto">
+                    <img
+                        src="{{ asset('images/criteriosconfidencialidad.png') }}"
+                        alt="Security classification format"
+                        class="d-block mx-auto"
+                        style="width: 100%; max-width: none; height: auto;"
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END SECURITY FORMAT INFORMATION MODAL -->
+
     <!-- Auto-submit filter form on change -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -2188,7 +2225,7 @@
 
                         typingTimer = setTimeout(function () {
                             form.submit();
-                        }, 600);
+                        }, 1200);
                     });
                 });
 
