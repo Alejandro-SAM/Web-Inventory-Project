@@ -290,6 +290,60 @@ private function inventoryLogFields(): array
 }
 // End of function to store the the inventory log fields for the purpose of registering the edit action
 
+    /**
+     * Retrieve and normalize asset IDs selected in the inventory table TO EASE BULK EDITING.
+     */
+    private function selectedInventoryIds(Request $request): array
+    {
+        $selectedIds = json_decode(
+            $request->input('selected_asset_ids', '[]'),
+            true
+        );
+
+        if (!is_array($selectedIds)) {
+            return [];
+        }
+
+        return collect($selectedIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Fields that can safely be propagated during bulk editing TO AVOID DUPLICATING OR ALTERING UNIQUE FIELDS.
+     */
+    private function bulkEditableInventoryFields(): array
+    {
+        return [
+            'description',
+            'model',
+            'brand',
+            'category',
+            'warranty_start_date',
+            'warranty_expiry_date',
+            'purchase_origin_country',
+            'department',
+            'location',
+            'business_unit',
+            'plant',
+            'end_user',
+            'responsive',
+            'employee_id',
+            'next_maintenance',
+            'maintenance_responsible_id',
+            'maintenance_status',
+            'operating_system',
+            'confidentiality',
+            'integrity',
+            'availability',
+            'comments',
+            'state',
+        ];
+    }
+
     public function store(Request $request)
     {
 
@@ -473,116 +527,589 @@ private function inventoryLogFields(): array
         };
     }
 
-public function update(Request $request, Inventory $inventory)
-{
-    /*
-        Temporary permission rule:
-        Users with Read level cannot edit assets.
-    */
-    if (auth()->user()->user_level === 'Read') {
-        abort(403, 'You do not have permission to edit inventory assets.');
-    }
-    //END OF PERMISSION RULE
-
-    $oldValues = $inventory->only($this->inventoryLogFields());
-
-    $validated = $request->validate([
-        'it_internal_number' => ['nullable','string','max:255',Rule::unique('inventory', 'it_internal_number')->ignore($inventory->id),],
-        'serial_number' => ['nullable', 'string', 'max:255'],
-        'asset_number' => ['nullable', 'string', 'max:255'],
-        'description' => ['nullable', 'string'],
-        'model' => ['nullable', 'string', 'max:255'],
-        'brand' => ['nullable', 'string', 'max:255'],
-        'category' => ['nullable', Rule::in($this->categoryOptions())],
-        'warranty_start_date' => ['nullable', 'date'],
-        'warranty_expiry_date' => ['nullable', 'date', 'after_or_equal:warranty_start_date'],
-        'purchase_origin_country' => ['nullable', 'string', 'max:255'],
-        'department' => ['nullable', 'string', 'max:255'],
-        'location' => ['nullable', 'string', 'max:255'],
-        'business_unit' => ['nullable', 'string', 'max:255'],
-        'plant' => ['nullable', 'string', 'max:255'],
-        'end_user' => ['required', 'string', 'max:255'],
-        'responsive' => ['nullable', 'boolean'],
-        'employee_id' => ['nullable', 'string', 'max:255'],
-        'next_maintenance' => ['nullable', 'date'],
-        'maintenance_responsible_id' => ['nullable','integer',Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_active', true)),],
-        'operating_system' => ['nullable', 'string', 'max:255'],
-        'confidentiality' => ['nullable', 'integer', 'between:0,3'],
-        'integrity' => ['nullable', 'integer', 'between:0,3'],
-        'availability' => ['nullable', 'integer', 'between:0,3'],
-        'comments' => ['nullable', 'string'],
-        'state' => [
-            'required',
-            Rule::in([
-                'active',
-                'damaged',
-                'degraded',
-                'inactive',
-                'maintenance',
-                'disposed',
-                'lost',
-                'to_be_deleted',
-            ]),
-        ],
-    ]);
-
-    if (auth()->user()->user_level === 'Admin') { //VALIDACIÓN DE ESTADO DE MANTENIMIENTO SOLO MODIFICABLE PARA ADMINISTRADORES
-    $validatedStatus = $request->validate([
-        'maintenance_status' => [
-            'required',
-            Rule::in([
-                'pending',
-                'completed',
-            ]),
-        ],
-    ]);
-
-        $validated['maintenance_status'] =
-            $validatedStatus['maintenance_status'];
-    }
-
-    $validated['responsive'] = $request->has('responsive');
-
-    $validated['classification'] = $this->calculateClassification(
-        $validated['confidentiality'] ?? null,
-        $validated['integrity'] ?? null,
-        $validated['availability'] ?? null
-    );
-
-    $inventory->update($validated);
-
-    $inventory->refresh();
-
-    $newValues = $inventory->only($this->inventoryLogFields());
-
-    $changedOldValues = [];
-    $changedNewValues = [];
-
-    foreach ($newValues as $field => $newValue) {
-        $oldValue = $oldValues[$field] ?? null;
-
-        if ($oldValue != $newValue) {
-            $changedOldValues[$field] = $oldValue;
-            $changedNewValues[$field] = $newValue;
+    public function update(Request $request, Inventory $inventory)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Permission validation
+        |--------------------------------------------------------------------------
+        |
+        | Read users cannot edit inventory assets.
+        |
+        */
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to edit inventory assets.');
         }
-    }
 
-    if (!empty($changedNewValues)) {
-        ActivityLogger::log(
-            module: 'inventory',
-            action: 'updated',
-            description: 'Item ' . ($inventory->it_internal_number ?? $inventory->asset_number ?? $inventory->serial_number ?? $inventory->id) . ' was updated.',
-            targetType: 'inventory',
-            targetId: $inventory->id,
-            oldValues: $changedOldValues,
-            newValues: $changedNewValues
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate main asset data
+        |--------------------------------------------------------------------------
+        */
+        $validated = $request->validate([
+            'it_internal_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('inventory', 'it_internal_number')
+                    ->ignore($inventory->id),
+            ],
+
+            'serial_number' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'asset_number' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'model' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'brand' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'category' => [
+                'nullable',
+                Rule::in($this->categoryOptions()),
+            ],
+
+            'warranty_start_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'warranty_expiry_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:warranty_start_date',
+            ],
+
+            'purchase_origin_country' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'department' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'business_unit' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'plant' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'end_user' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'responsive' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'employee_id' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'next_maintenance' => [
+                'nullable',
+                'date',
+            ],
+
+            'maintenance_responsible_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where(
+                    fn ($query) => $query->where('is_active', true)
+                ),
+            ],
+
+            'operating_system' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'confidentiality' => [
+                'nullable',
+                'integer',
+                'between:0,3',
+            ],
+
+            'integrity' => [
+                'nullable',
+                'integer',
+                'between:0,3',
+            ],
+
+            'availability' => [
+                'nullable',
+                'integer',
+                'between:0,3',
+            ],
+
+            'comments' => [
+                'nullable',
+                'string',
+            ],
+
+            'state' => [
+                'required',
+                Rule::in([
+                    'active',
+                    'damaged',
+                    'degraded',
+                    'inactive',
+                    'maintenance',
+                    'disposed',
+                    'lost',
+                    'to_be_deleted',
+                ]),
+            ],
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Maintenance status
+        |--------------------------------------------------------------------------
+        |
+        | Only administrators can manually change this value.
+        |
+        */
+        if (auth()->user()->user_level === 'Admin') {
+            $validatedStatus = $request->validate([
+                'maintenance_status' => [
+                    'required',
+                    Rule::in([
+                        'pending',
+                        'completed',
+                    ]),
+                ],
+            ]);
+
+            $validated['maintenance_status'] =
+                $validatedStatus['maintenance_status'];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normalize checkbox value
+        |--------------------------------------------------------------------------
+        */
+        $validated['responsive'] = $request->has('responsive');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculate classification for the main asset
+        |--------------------------------------------------------------------------
+        */
+        $validated['classification'] = $this->calculateClassification(
+            $validated['confidentiality'] ?? null,
+            $validated['integrity'] ?? null,
+            $validated['availability'] ?? null
         );
-    }
 
-    return redirect()
-        ->route('inventory', $request->query())
-        ->with('success', 'Asset updated successfully.');
-}
+
+        /*
+        |--------------------------------------------------------------------------
+        | Read selected asset IDs
+        |--------------------------------------------------------------------------
+        */
+        $selectedIds = $this->selectedInventoryIds($request);
+
+        /*
+        * Bulk editing is activated ONLY when the asset whose Edit button
+        * was pressed is itself part of the current selection.
+        */
+        $isBulkEdit = in_array(
+            (int) $inventory->id,
+            $selectedIds,
+            true
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Determine exactly which fields were changed
+        |--------------------------------------------------------------------------
+        |
+        | We fill the model without saving it yet.
+        |
+        | Laravel's getDirty() tells us which values differ from the original
+        | database values. This prevents us from propagating every field from
+        | the opened asset to the other selected assets.
+        |
+        */
+        $inventory->fill($validated);
+
+        $dirtyFields = array_keys(
+            $inventory->getDirty()
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Determine which changed fields may be propagated
+        |--------------------------------------------------------------------------
+        */
+        $bulkEditableFields = $this->bulkEditableInventoryFields();
+
+        $bulkChangedFields = array_values(
+            array_intersect(
+                $dirtyFields,
+                $bulkEditableFields
+            )
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Perform update as one transaction
+        |--------------------------------------------------------------------------
+        */
+        $updatedCount = DB::transaction(function () use (
+            $inventory,
+            $validated,
+            $selectedIds,
+            $isBulkEdit,
+            $bulkChangedFields
+        ) {
+
+            $updatedCount = 0;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update the asset whose modal was opened
+            |--------------------------------------------------------------------------
+            */
+            $oldValues = $inventory->only(
+                $this->inventoryLogFields()
+            );
+
+            /*
+            * The model was already filled above while detecting dirty fields.
+            * We fill it again explicitly here so this section remains clear
+            * and independent.
+            */
+            $inventory->fill($validated);
+
+            $inventory->save();
+
+            $inventory->refresh();
+
+            $newValues = $inventory->only(
+                $this->inventoryLogFields()
+            );
+
+            $changedOldValues = [];
+            $changedNewValues = [];
+
+            foreach ($newValues as $field => $newValue) {
+
+                $oldValue = $oldValues[$field] ?? null;
+
+                if ($oldValue != $newValue) {
+                    $changedOldValues[$field] = $oldValue;
+                    $changedNewValues[$field] = $newValue;
+                }
+            }
+
+
+            /*
+            * Log only when an actual change occurred.
+            */
+            if (!empty($changedNewValues)) {
+
+                ActivityLogger::log(
+                    module: 'inventory',
+                    action: 'updated',
+                    description:
+                        'Item '
+                        . (
+                            $inventory->it_internal_number
+                            ?? $inventory->asset_number
+                            ?? $inventory->serial_number
+                            ?? $inventory->id
+                        )
+                        . ' was updated.',
+                    targetType: 'inventory',
+                    targetId: $inventory->id,
+                    oldValues: $changedOldValues,
+                    newValues: $changedNewValues
+                );
+
+                $updatedCount++;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Stop here when this is a normal individual edit
+            |--------------------------------------------------------------------------
+            */
+            if (
+                !$isBulkEdit ||
+                empty($bulkChangedFields)
+            ) {
+                return $updatedCount;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Retrieve the rest of the selected assets
+            |--------------------------------------------------------------------------
+            |
+            | The main asset is excluded because it was already updated above.
+            |
+            */
+            $otherSelectedAssets = Inventory::query()
+                ->whereIn('id', $selectedIds)
+                ->where('id', '<>', $inventory->id)
+                ->get();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Propagate only changed fields
+            |--------------------------------------------------------------------------
+            */
+            foreach ($otherSelectedAssets as $selectedInventory) {
+
+                $selectedOldValues = $selectedInventory->only(
+                    $this->inventoryLogFields()
+                );
+
+
+                /*
+                * Build the update specifically for this asset.
+                */
+                $bulkUpdateData = [];
+
+                foreach ($bulkChangedFields as $field) {
+
+                    /*
+                    * Classification is deliberately never received as a
+                    * propagated field.
+                    */
+                    if ($field === 'classification') {
+                        continue;
+                    }
+
+                    $bulkUpdateData[$field] =
+                        $validated[$field] ?? null;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Recalculate classification independently
+                |--------------------------------------------------------------------------
+                |
+                | If any CIA value changed, use:
+                |
+                | - the propagated value when that CIA field changed;
+                | - the asset's own current value when it did not.
+                |
+                */
+                $ciaFields = [
+                    'confidentiality',
+                    'integrity',
+                    'availability',
+                ];
+
+                $ciaWasChanged = !empty(
+                    array_intersect(
+                        $bulkChangedFields,
+                        $ciaFields
+                    )
+                );
+
+                if ($ciaWasChanged) {
+
+                    $newConfidentiality =
+                        array_key_exists(
+                            'confidentiality',
+                            $bulkUpdateData
+                        )
+                            ? $bulkUpdateData['confidentiality']
+                            : $selectedInventory->confidentiality;
+
+
+                    $newIntegrity =
+                        array_key_exists(
+                            'integrity',
+                            $bulkUpdateData
+                        )
+                            ? $bulkUpdateData['integrity']
+                            : $selectedInventory->integrity;
+
+
+                    $newAvailability =
+                        array_key_exists(
+                            'availability',
+                            $bulkUpdateData
+                        )
+                            ? $bulkUpdateData['availability']
+                            : $selectedInventory->availability;
+
+
+                    $bulkUpdateData['classification'] =
+                        $this->calculateClassification(
+                            $newConfidentiality !== null
+                                ? (int) $newConfidentiality
+                                : null,
+
+                            $newIntegrity !== null
+                                ? (int) $newIntegrity
+                                : null,
+
+                            $newAvailability !== null
+                                ? (int) $newAvailability
+                                : null
+                        );
+                }
+
+
+                /*
+                * Apply changes to this selected asset.
+                */
+                $selectedInventory->update(
+                    $bulkUpdateData
+                );
+
+                $selectedInventory->refresh();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Determine actual changes for Activity Log
+                |--------------------------------------------------------------------------
+                */
+                $selectedNewValues = $selectedInventory->only(
+                    $this->inventoryLogFields()
+                );
+
+                $selectedChangedOldValues = [];
+                $selectedChangedNewValues = [];
+
+                foreach (
+                    $selectedNewValues as $field => $newValue
+                ) {
+
+                    $oldValue =
+                        $selectedOldValues[$field] ?? null;
+
+                    if ($oldValue != $newValue) {
+
+                        $selectedChangedOldValues[$field] =
+                            $oldValue;
+
+                        $selectedChangedNewValues[$field] =
+                            $newValue;
+                    }
+                }
+
+
+                /*
+                * Generate one activity log per modified asset.
+                */
+                if (!empty($selectedChangedNewValues)) {
+
+                    ActivityLogger::log(
+                        module: 'inventory',
+                        action: 'updated',
+                        description:
+                            'Item '
+                            . (
+                                $selectedInventory->it_internal_number
+                                ?? $selectedInventory->asset_number
+                                ?? $selectedInventory->serial_number
+                                ?? $selectedInventory->id
+                            )
+                            . ' was updated through bulk editing.',
+                        targetType: 'inventory',
+                        targetId: $selectedInventory->id,
+                        oldValues: $selectedChangedOldValues,
+                        newValues: $selectedChangedNewValues
+                    );
+
+                    $updatedCount++;
+                }
+            }
+
+
+            return $updatedCount;
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Success response
+        |--------------------------------------------------------------------------
+        */
+        if (
+            $isBulkEdit &&
+            count($selectedIds) > 1 &&
+            !empty($bulkChangedFields)
+        ) {
+            return redirect()
+                ->route('inventory', $request->query())
+                ->with(
+                    'success',
+                    $updatedCount . ' asset(s) updated successfully.'
+                );
+        }
+
+
+        return redirect()
+            ->route('inventory', $request->query())
+            ->with(
+                'success',
+                'Asset updated successfully.'
+            );
+    }
 
     // Process the Excel file and send it for review
     public function importPreview(Request $request)

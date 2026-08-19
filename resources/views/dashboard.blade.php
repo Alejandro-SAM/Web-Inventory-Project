@@ -315,62 +315,102 @@
                     - Details button
                 --}}
                 <div id="warranties-expiring-section" class="dashboard-table-card scroll-mt-32">
-                    <div class="flex items-center justify-between mb-4">
+
+                    <div class="flex items-center justify-between gap-4 mb-4">
+
                         <div>
-                            <h2 class="text-lg font-semibold">Warranties Expiring Soon</h2>
+                            <h2 class="text-lg font-semibold">
+                                Warranties Expiring Soon
+                            </h2>
+
                             <p class="text-xs text-gray-500">
-                                Showing assets expiring within the next 14 days
+                                Next 14 days ·
+                                <strong>{{ $warrantiesExpiringSoonCount }}</strong>
+                                {{ $warrantiesExpiringSoonCount === 1 ? 'asset' : 'assets' }} in total
                             </p>
                         </div>
 
-                        <select id="warrantyRangeFilter"
-                                onchange="handleWarrantyRangeFilter(this.value)"
-                                class="text-xs rounded border-gray-300">
-                            <option value="14">View within 14 days</option>
-                            <option value="3months">View within 1 to 3 months</option>
-                            <option value="all">View all</option>
-                        </select>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#all-warranties-modal"
+                        >
+                            View next 3 months
+                        </button>
+
                     </div>
 
+
                     <div class="overflow-x-auto">
+
                         <table class="min-w-full text-sm">
+
                             <thead>
                                 <tr class="border-b">
-                                    <th class="text-left py-2">IT Number</th>
-                                    <th class="text-left py-2">Time Left</th>
-                                    <th class="text-left py-2">Details</th>
+                                    <th class="text-left py-2">
+                                        IT Number
+                                    </th>
+
+                                    <th class="text-left py-2">
+                                        Time Left
+                                    </th>
+
+                                    <th class="text-left py-2">
+                                        Details
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody id="warrantyRows14Days">
+
+
+                            <tbody>
+
                                 @forelse ($warrantiesExpiringSoon as $asset)
+
                                     @php
-                                        /*
-                                            Calculate how many days remain before the warranty expires.
-                                            If the value is negative, it means the warranty already expired.
-                                        */
                                         $daysLeft = now()
                                             ->startOfDay()
-                                            ->diffInDays(\Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(), false);
+                                            ->diffInDays(
+                                                \Carbon\Carbon::parse(
+                                                    $asset->warranty_expiry_date
+                                                )->startOfDay(),
+                                                false
+                                            );
                                     @endphp
 
+
                                     <tr class="border-b">
+
                                         <td class="py-2 font-medium">
                                             {{ $asset->it_internal_number }}
                                         </td>
 
-                                        <td class="py-2">
-                                            @if ($daysLeft > 1)
-                                                {{ $daysLeft }} days left
-                                            @elseif ($daysLeft === 1)
-                                                1 day left
-                                            @elseif ($daysLeft === 0)
-                                                Expires today
-                                            @else
-                                                Expired
-                                            @endif
-                                        </td>
 
                                         <td class="py-2">
+
+                                            @if ($daysLeft > 1)
+
+                                                {{ $daysLeft }} days left
+
+                                            @elseif ($daysLeft === 1)
+
+                                                1 day left
+
+                                            @elseif ($daysLeft === 0)
+
+                                                Expires today
+
+                                            @else
+
+                                                Expired
+
+                                            @endif
+
+                                        </td>
+
+
+                                        <td class="py-2">
+
                                             <button
                                                 type="button"
                                                 class="btn btn-sm btn-outline-primary"
@@ -380,6 +420,7 @@
                                                 View Details
                                             </button>
 
+
                                             <div
                                                 class="modal fade app-detail-modal"
                                                 id="warranty-details-{{ $asset->id }}"
@@ -387,10 +428,15 @@
                                                 aria-labelledby="warrantyDetailsLabel{{ $asset->id }}"
                                                 aria-hidden="true"
                                             >
+
                                                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+
                                                     <div class="modal-content">
+
                                                         <div class="modal-header">
+
                                                             <div>
+
                                                                 <h5
                                                                     class="modal-title"
                                                                     id="warrantyDetailsLabel{{ $asset->id }}"
@@ -401,7 +447,9 @@
                                                                 <p class="modal-subtitle">
                                                                     Asset identification and warranty information.
                                                                 </p>
+
                                                             </div>
+
 
                                                             <button
                                                                 type="button"
@@ -409,104 +457,189 @@
                                                                 data-bs-dismiss="modal"
                                                                 aria-label="Close"
                                                             ></button>
+
                                                         </div>
 
+
                                                         <div class="modal-body">
+
                                                             <div class="row g-3 app-detail-grid">
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">IT Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->it_internal_number }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Serial Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            IT Number
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->it_internal_number }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Asset Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->asset_number ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Category</span>
-                                                                        <p class="app-detail-value">{{ $asset->category ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            Serial Number
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->serial_number ?? 'N/A' }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Brand</span>
-                                                                        <p class="app-detail-value">{{ $asset->brand ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Model</span>
-                                                                        <p class="app-detail-value">{{ $asset->model ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            Asset Number
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->asset_number ?? 'N/A' }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Plant</span>
-                                                                        <p class="app-detail-value">{{ $asset->plant ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Business Unit</span>
-                                                                        <p class="app-detail-value">{{ $asset->business_unit ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            Category
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->category ?? 'N/A' }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">End User</span>
-                                                                        <p class="app-detail-value">{{ $asset->end_user ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Purchase Origin Country</span>
-                                                                        <p class="app-detail-value">{{ $asset->purchase_origin_country ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            Brand
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->brand ?? 'N/A' }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Warranty Start Date</span>
-                                                                        <p class="app-detail-value">{{ $asset->warranty_start_date ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <div class="col-md-6">
                                                                     <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Warranty Expiry Date</span>
-                                                                        <p class="app-detail-value">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
+                                                                        <span class="app-detail-label">
+                                                                            Model
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->model ?? 'N/A' }}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            Plant
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->plant ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            Business Unit
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->business_unit ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            End User
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->end_user ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            Purchase Origin Country
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->purchase_origin_country ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            Warranty Start Date
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->warranty_start_date ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">
+                                                                            Warranty Expiry Date
+                                                                        </span>
+
+                                                                        <p class="app-detail-value">
+                                                                            {{ $asset->warranty_expiry_date ?? 'N/A' }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
                                                             </div>
 
+
                                                             <div class="app-detail-description">
-                                                                <span class="app-detail-label">Description</span>
+
+                                                                <span class="app-detail-label">
+                                                                    Description
+                                                                </span>
+
                                                                 <p class="app-detail-value">
                                                                     {{ $asset->description ?? 'N/A' }}
                                                                 </p>
+
                                                             </div>
+
                                                         </div>
 
+
                                                         <div class="modal-footer">
+
                                                             <button
                                                                 type="button"
                                                                 class="btn btn-secondary"
@@ -514,265 +647,410 @@
                                                             >
                                                                 Close
                                                             </button>
+
                                                         </div>
+
                                                     </div>
+
                                                 </div>
+
                                             </div>
+
                                         </td>
+
                                     </tr>
+
                                 @empty
+
                                     <tr>
                                         <td colspan="3" class="py-3 text-gray-500">
-                                            No warranties expiring soon.
+                                            No warranties expiring within the next 14 days.
                                         </td>
                                     </tr>
+
                                 @endforelse
+
                             </tbody>
 
-                            <tbody id="warrantyRowsThreeMonths" class="hidden">
-                                @forelse ($warrantiesExpiringThreeMonths as $asset)
-                                    @php
-                                        $daysLeft = now()
-                                            ->startOfDay()
-                                            ->diffInDays(\Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(), false);
-                                    @endphp
+                        </table>
 
-                                    <tr class="border-b">
-                                        <td class="py-2 font-medium">
-                                            {{ $asset->it_internal_number }}
-                                        </td>
+                    </div>
 
-                                        <td class="py-2">
-                                            @if ($daysLeft > 1)
-                                                {{ $daysLeft }} days left
-                                            @elseif ($daysLeft === 1)
-                                                1 day left
-                                            @elseif ($daysLeft === 0)
-                                                Expires today
-                                            @else
-                                                Expired
-                                            @endif
-                                        </td>
+                </div>
 
-                                        <td class="py-2">
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-primary"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#warranty-details-{{ $asset->id }}-three-months"
-                                            >
-                                                View Details
-                                            </button>
+        {{--
+            Upcoming maintenance section.
 
-                                            <div
-                                                class="modal fade app-detail-modal"
-                                                id="warranty-details-{{ $asset->id }}-three-months"
-                                                tabindex="-1"
-                                                aria-labelledby="warrantyDetailsThreeMonthsLabel{{ $asset->id }}"
-                                                aria-hidden="true"
-                                            >
-                                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <div>
-                                                                <h5
-                                                                    class="modal-title"
-                                                                    id="warrantyDetailsThreeMonthsLabel{{ $asset->id }}"
-                                                                >
-                                                                    Asset Warranty Details
-                                                                </h5>
+            This section follows the same structure as the warranty section:
+            - Main table: next 14 days
+            - Maximum 10 visible records
+            - Real total displayed in the subtitle
+            - Full 3-month list available through a modal
+        --}}
+        <div id="upcoming-maintenance-section" class="dashboard-table-card scroll-mt-32">
 
-                                                                <p class="modal-subtitle">
-                                                                    Asset identification and warranty information.
+            <div class="flex items-center justify-between gap-4 mb-4">
+
+                <div>
+                    <h2 class="text-lg font-semibold">
+                        Upcoming Maintenance
+                    </h2>
+
+                    <p class="text-xs text-gray-500">
+                        Next 14 days ·
+                        <strong>{{ $upcomingMaintenanceCount }}</strong>
+                        {{ $upcomingMaintenanceCount === 1 ? 'asset' : 'assets' }} in total
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#all-maintenance-modal"
+                >
+                    View next 3 months
+                </button>
+
+            </div>
+
+
+            <div class="overflow-x-auto">
+
+                <table class="min-w-full text-sm">
+
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2">
+                                IT Number
+                            </th>
+
+                            <th class="text-left py-2">
+                                Time Left
+                            </th>
+
+                            <th class="text-left py-2">
+                                Details
+                            </th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        @forelse ($upcomingMaintenance as $asset)
+
+                            @php
+                                $daysLeft = now()
+                                    ->startOfDay()
+                                    ->diffInDays(
+                                        \Carbon\Carbon::parse(
+                                            $asset->next_maintenance
+                                        )->startOfDay(),
+                                        false
+                                    );
+                            @endphp
+
+
+                            <tr class="border-b">
+
+                                <td class="py-2 font-medium">
+                                    {{ $asset->it_internal_number }}
+                                </td>
+
+
+                                <td class="py-2">
+
+                                    @if ($daysLeft > 1)
+
+                                        {{ $daysLeft }} days left
+
+                                    @elseif ($daysLeft === 1)
+
+                                        1 day left
+
+                                    @elseif ($daysLeft === 0)
+
+                                        Scheduled today
+
+                                    @else
+
+                                        Overdue
+
+                                    @endif
+
+                                </td>
+
+
+                                <td class="py-2">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#maintenance-details-{{ $asset->id }}"
+                                    >
+                                        View Details
+                                    </button>
+
+
+                                    <div
+                                        class="modal fade app-detail-modal"
+                                        id="maintenance-details-{{ $asset->id }}"
+                                        tabindex="-1"
+                                        aria-labelledby="maintenanceDetailsLabel{{ $asset->id }}"
+                                        aria-hidden="true"
+                                    >
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+
+                                            <div class="modal-content">
+
+                                                <div class="modal-header">
+
+                                                    <div>
+
+                                                        <h5
+                                                            class="modal-title"
+                                                            id="maintenanceDetailsLabel{{ $asset->id }}"
+                                                        >
+                                                            Asset Maintenance Details
+                                                        </h5>
+
+                                                        <p class="modal-subtitle">
+                                                            Asset identification and maintenance information.
+                                                        </p>
+
+                                                    </div>
+
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Close"
+                                                    ></button>
+
+                                                </div>
+
+
+                                                <div class="modal-body">
+
+                                                    <div class="row g-3 app-detail-grid">
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    IT Number
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->it_internal_number }}
                                                                 </p>
                                                             </div>
-
-                                                            <button
-                                                                type="button"
-                                                                class="btn-close"
-                                                                data-bs-dismiss="modal"
-                                                                aria-label="Close"
-                                                            ></button>
                                                         </div>
 
-                                                        <div class="modal-body">
-                                                            <div class="row g-3 app-detail-grid">
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">IT Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->it_internal_number }}</p>
-                                                                    </div>
-                                                                </div>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Serial Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->serial_number ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Serial Number
+                                                                </span>
 
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Asset Number</span>
-                                                                        <p class="app-detail-value">{{ $asset->asset_number ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Category</span>
-                                                                        <p class="app-detail-value">{{ $asset->category ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Brand</span>
-                                                                        <p class="app-detail-value">{{ $asset->brand ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Model</span>
-                                                                        <p class="app-detail-value">{{ $asset->model ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Plant</span>
-                                                                        <p class="app-detail-value">{{ $asset->plant ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Business Unit</span>
-                                                                        <p class="app-detail-value">{{ $asset->business_unit ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">End User</span>
-                                                                        <p class="app-detail-value">{{ $asset->end_user ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="col-md-6">
-                                                                    <div class="app-detail-item">
-                                                                        <span class="app-detail-label">Warranty Expiry Date</span>
-                                                                        <p class="app-detail-value">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
-                                                                    </div>
-                                                                </div>
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->serial_number ?? 'N/A' }}
+                                                                </p>
                                                             </div>
                                                         </div>
 
-                                                        <div class="modal-footer">
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-secondary"
-                                                                data-bs-dismiss="modal"
-                                                            >
-                                                                Close
-                                                            </button>
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Asset Number
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->asset_number ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
                                                         </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Category
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->category ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Brand
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->brand ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Model
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->model ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Plant
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->plant ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Business Unit
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->business_unit ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    End User
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->end_user ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Maintenance Responsible
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->maintenanceResponsible?->name ?? 'Not assigned' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Next Maintenance
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->next_maintenance ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="col-md-6">
+                                                            <div class="app-detail-item">
+                                                                <span class="app-detail-label">
+                                                                    Maintenance Status
+                                                                </span>
+
+                                                                <p class="app-detail-value">
+                                                                    {{ ucfirst($asset->effective_maintenance_status ?? 'N/A') }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
+
+
+                                                    <div class="app-detail-description">
+
+                                                        <span class="app-detail-label">
+                                                            Description
+                                                        </span>
+
+                                                        <p class="app-detail-value">
+                                                            {{ $asset->description ?? 'N/A' }}
+                                                        </p>
+
+                                                    </div>
+
                                                 </div>
+
+
+                                                <div class="modal-footer">
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        Close
+                                                    </button>
+
+                                                </div>
+
                                             </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="py-3 text-gray-500">
-                                            No warranties expiring within 1 to 3 months.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
-                {{--
-                    Upcoming maintenance section.
+                                        </div>
+                                    </div>
 
-                    The In Maintenance card redirects the user to this section.
-                --}}
-                <div id="upcoming-maintenance-section" class="dashboard-table-card scroll-mt-32">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-lg font-semibold">Upcoming Maintenance</h2>
-                            <p class="text-xs text-gray-500">
-                                Showing assets scheduled within the next 14 days
-                            </p>
-                        </div>
+                                </td>
 
-                        <select id="maintenanceRangeFilter"
-                                onchange="handleMaintenanceRangeFilter(this.value)"
-                                class="text-xs rounded border-gray-300">
-                            <option value="14">View within 14 days</option>
-                            <option value="3months">View within 1 to 3 months</option>
-                            <option value="all">View all</option>
-                        </select>
-                    </div>
+                            </tr>
 
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead>
-                                <tr class="border-b">
-                                    <th class="text-left py-2">IT Number</th>
-                                    <th class="text-left py-2">Category</th>
-                                    <th class="text-left py-2">End User</th>
-                                    <th class="text-left py-2">Maintenance Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="maintenanceRows14Days">
-                                @forelse ($upcomingMaintenance as $asset)
-                                    <tr class="border-b">
-                                        <td class="py-2">{{ $asset->it_internal_number }}</td>
-                                        <td class="py-2">{{ $asset->category }}</td>
-                                        <td class="py-2">{{ $asset->end_user }}</td>
-                                        <td class="py-2">{{ $asset->next_maintenance }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="py-3 text-gray-500">
-                                            No upcoming maintenance.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
+                        @empty
 
-                            <tbody id="maintenanceRowsThreeMonths" class="hidden">
-                                @forelse ($upcomingMaintenanceThreeMonths as $asset)
-                                    <tr class="border-b">
-                                        <td class="py-2">{{ $asset->it_internal_number }}</td>
-                                        <td class="py-2">{{ $asset->category }}</td>
-                                        <td class="py-2">{{ $asset->end_user }}</td>
-                                        <td class="py-2">{{ $asset->next_maintenance }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="py-3 text-gray-500">
-                                            No upcoming maintenance within 1 to 3 months.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            <tr>
+                                <td colspan="3" class="py-3 text-gray-500">
+                                    No maintenance scheduled within the next 14 days.
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
             </div>
-    
-    {{--
-        Full warranty expiration modal.
 
-        This modal opens from the "View More" button and displays all future
-        warranty expirations ordered from closest to furthest.
-    --}}
-    <div
+        </div>
+    
+{{-- Warranty expirations within the next three months --}}
+<div
     class="modal fade app-table-modal"
     id="all-warranties-modal"
     tabindex="-1"
@@ -780,17 +1058,28 @@
     aria-hidden="true"
 >
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
         <div class="modal-content">
+
             <div class="modal-header">
+
                 <div>
-                    <h5 class="modal-title" id="allWarrantiesModalLabel">
-                        All Warranty Expirations
+
+                    <h5
+                        class="modal-title"
+                        id="allWarrantiesModalLabel"
+                    >
+                        Warranty Expirations - Next 3 Months
                     </h5>
 
                     <p class="modal-subtitle">
-                        Assets ordered from the closest warranty expiration date to the furthest one.
+                        {{ $warrantiesNextThreeMonths->count() }}
+                        {{ $warrantiesNextThreeMonths->count() === 1 ? 'asset' : 'assets' }}
+                        expiring from today through the next 3 months.
                     </p>
+
                 </div>
+
 
                 <button
                     type="button"
@@ -798,11 +1087,16 @@
                     data-bs-dismiss="modal"
                     aria-label="Close"
                 ></button>
+
             </div>
 
+
             <div class="modal-body">
+
                 <div class="table-responsive">
+
                     <table class="table table-hover align-middle app-table mb-0">
+
                         <thead>
                             <tr>
                                 <th>IT Number</th>
@@ -816,50 +1110,97 @@
                             </tr>
                         </thead>
 
+
                         <tbody>
-                            @forelse ($allWarrantiesExpiringSoon as $asset)
+
+                            @forelse ($warrantiesNextThreeMonths as $asset)
+
                                 @php
                                     $daysLeft = now()
                                         ->startOfDay()
                                         ->diffInDays(
-                                            \Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(),
+                                            \Carbon\Carbon::parse(
+                                                $asset->warranty_expiry_date
+                                            )->startOfDay(),
                                             false
                                         );
                                 @endphp
 
+
                                 <tr>
-                                    <td class="fw-semibold">{{ $asset->it_internal_number }}</td>
-                                    <td>{{ $asset->category ?? 'N/A' }}</td>
-                                    <td>{{ $asset->brand ?? 'N/A' }}</td>
-                                    <td>{{ $asset->model ?? 'N/A' }}</td>
-                                    <td>{{ $asset->plant ?? 'N/A' }}</td>
-                                    <td>{{ $asset->warranty_start_date ?? 'N/A' }}</td>
-                                    <td>{{ $asset->warranty_expiry_date ?? 'N/A' }}</td>
+
+                                    <td class="fw-semibold">
+                                        {{ $asset->it_internal_number }}
+                                    </td>
+
                                     <td>
+                                        {{ $asset->category ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $asset->brand ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $asset->model ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $asset->plant ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $asset->warranty_start_date ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $asset->warranty_expiry_date ?? 'N/A' }}
+                                    </td>
+
+                                    <td>
+
                                         @if ($daysLeft > 1)
+
                                             {{ $daysLeft }} days left
+
                                         @elseif ($daysLeft === 1)
+
                                             1 day left
+
                                         @elseif ($daysLeft === 0)
+
                                             Expires today
-                                        @else
-                                            Expired
+
                                         @endif
+
                                     </td>
+
                                 </tr>
+
                             @empty
+
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        No upcoming warranty expirations found.
+                                    <td
+                                        colspan="8"
+                                        class="text-center text-muted py-4"
+                                    >
+                                        No warranties expiring within the next 3 months.
                                     </td>
                                 </tr>
+
                             @endforelse
+
                         </tbody>
+
                     </table>
+
                 </div>
+
             </div>
 
+
             <div class="modal-footer">
+
                 <button
                     type="button"
                     class="btn btn-secondary"
@@ -867,114 +1208,189 @@
                 >
                     Close
                 </button>
+
             </div>
+
         </div>
+
     </div>
+</div>
 
-    {{--
-        Full upcoming maintenance modal.
+        {{--
+            Maintenance scheduled within the next three months.
 
-        This modal opens from the "View More" button and displays all future
-        maintenance records ordered from closest to furthest.
-    --}}
-    <div
-    class="modal fade app-table-modal"
-    id="all-maintenance-modal"
-    tabindex="-1"
-    aria-labelledby="allMaintenanceModalLabel"
-    aria-hidden="true"
->
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h5 class="modal-title" id="allMaintenanceModalLabel">
-                        All Upcoming Maintenance
-                    </h5>
+            This modal shows every maintenance record scheduled from today
+            through the next three months, ordered from closest to furthest.
+        --}}
+        <div
+            class="modal fade app-table-modal"
+            id="all-maintenance-modal"
+            tabindex="-1"
+            aria-labelledby="allMaintenanceModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
 
-                    <p class="modal-subtitle">
-                        Assets ordered from the closest maintenance date to the furthest one.
-                    </p>
+                <div class="modal-content">
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h5
+                                class="modal-title"
+                                id="allMaintenanceModalLabel"
+                            >
+                                Upcoming Maintenance - Next 3 Months
+                            </h5>
+
+                            <p class="modal-subtitle">
+                                {{ $maintenanceNextThreeMonths->count() }}
+                                {{ $maintenanceNextThreeMonths->count() === 1 ? 'asset' : 'assets' }}
+                                scheduled from today through the next 3 months.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div class="table-responsive">
+
+                            <table class="table table-hover align-middle app-table mb-0">
+
+                                <thead>
+                                    <tr>
+                                        <th>IT Number</th>
+                                        <th>Category</th>
+                                        <th>Brand</th>
+                                        <th>Model</th>
+                                        <th>Plant</th>
+                                        <th>End User</th>
+                                        <th>Next Maintenance</th>
+                                        <th>Time Left</th>
+                                    </tr>
+                                </thead>
+
+
+                                <tbody>
+
+                                    @forelse ($maintenanceNextThreeMonths as $asset)
+
+                                        @php
+                                            $daysLeft = now()
+                                                ->startOfDay()
+                                                ->diffInDays(
+                                                    \Carbon\Carbon::parse(
+                                                        $asset->next_maintenance
+                                                    )->startOfDay(),
+                                                    false
+                                                );
+                                        @endphp
+
+
+                                        <tr>
+
+                                            <td class="fw-semibold">
+                                                {{ $asset->it_internal_number }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->category ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->brand ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->model ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->plant ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->end_user ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+                                                {{ $asset->next_maintenance ?? 'N/A' }}
+                                            </td>
+
+                                            <td>
+
+                                                @if ($daysLeft > 1)
+
+                                                    {{ $daysLeft }} days left
+
+                                                @elseif ($daysLeft === 1)
+
+                                                    1 day left
+
+                                                @elseif ($daysLeft === 0)
+
+                                                    Scheduled today
+
+                                                @else
+
+                                                    Overdue
+
+                                                @endif
+
+                                            </td>
+
+                                        </tr>
+
+                                    @empty
+
+                                        <tr>
+                                            <td
+                                                colspan="8"
+                                                class="text-center text-muted py-4"
+                                            >
+                                                No maintenance scheduled within the next 3 months.
+                                            </td>
+                                        </tr>
+
+                                    @endforelse
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Close
+                        </button>
+
+                    </div>
+
                 </div>
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                ></button>
-            </div>
-
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle app-table mb-0">
-                        <thead>
-                            <tr>
-                                <th>IT Number</th>
-                                <th>Category</th>
-                                <th>Brand</th>
-                                <th>Model</th>
-                                <th>Plant</th>
-                                <th>End User</th>
-                                <th>Next Maintenance</th>
-                                <th>Time Left</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @forelse ($allUpcomingMaintenance as $asset)
-                                @php
-                                    $daysLeft = now()
-                                        ->startOfDay()
-                                        ->diffInDays(
-                                            \Carbon\Carbon::parse($asset->next_maintenance)->startOfDay(),
-                                            false
-                                        );
-                                @endphp
-
-                                <tr>
-                                    <td class="fw-semibold">{{ $asset->it_internal_number }}</td>
-                                    <td>{{ $asset->category ?? 'N/A' }}</td>
-                                    <td>{{ $asset->brand ?? 'N/A' }}</td>
-                                    <td>{{ $asset->model ?? 'N/A' }}</td>
-                                    <td>{{ $asset->plant ?? 'N/A' }}</td>
-                                    <td>{{ $asset->end_user ?? 'N/A' }}</td>
-                                    <td>{{ $asset->next_maintenance ?? 'N/A' }}</td>
-                                    <td>
-                                        @if ($daysLeft > 1)
-                                            {{ $daysLeft }} days left
-                                        @elseif ($daysLeft === 1)
-                                            1 day left
-                                        @elseif ($daysLeft === 0)
-                                            Scheduled today
-                                        @else
-                                            Overdue
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        No upcoming maintenance found.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                >
-                    Close
-                </button>
             </div>
         </div>
-    </div>
 
     {{--
         Chart.js library.
@@ -1737,56 +2153,5 @@
             document.getElementById('dashboardLoading').classList.remove('hidden');
         }
     </script>
-
-    <script>
-        function handleWarrantyRangeFilter(value) {
-            const rows14Days = document.getElementById('warrantyRows14Days');
-            const rowsThreeMonths = document.getElementById('warrantyRowsThreeMonths');
-
-            if (value === 'all') {
-                bootstrap.Modal
-                    .getOrCreateInstance(document.getElementById('all-warranties-modal'))
-                    .show();
-
-                document.getElementById('warrantyRangeFilter').value = '14';
-                rows14Days.classList.remove('hidden');
-                rowsThreeMonths.classList.add('hidden');
-                return;
-            }
-
-            if (value === '3months') {
-                rows14Days.classList.add('hidden');
-                rowsThreeMonths.classList.remove('hidden');
-                return;
-            }
-
-            rows14Days.classList.remove('hidden');
-            rowsThreeMonths.classList.add('hidden');
-        }
-
-        function handleMaintenanceRangeFilter(value) {
-            const rows14Days = document.getElementById('maintenanceRows14Days');
-            const rowsThreeMonths = document.getElementById('maintenanceRowsThreeMonths');
-
-            if (value === 'all') {
-                bootstrap.Modal
-                    .getOrCreateInstance(document.getElementById('all-maintenance-modal'))
-                    .show();
-
-                document.getElementById('maintenanceRangeFilter').value = '14';
-                rows14Days.classList.remove('hidden');
-                rowsThreeMonths.classList.add('hidden');
-                return;
-            }
-
-            if (value === '3months') {
-                rows14Days.classList.add('hidden');
-                rowsThreeMonths.classList.remove('hidden');
-                return;
-            }
-
-            rows14Days.classList.remove('hidden');
-            rowsThreeMonths.classList.add('hidden');
-        }
-    </script>
+    
 </x-app-layout>

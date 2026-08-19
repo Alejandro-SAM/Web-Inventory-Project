@@ -347,8 +347,36 @@
                         </tr>
 
                         <tr>
-                            <!--- Blank actions column -->
-                            <th></th>
+                            <!--- Actions Selected column -->
+                        <th class="inventory-selection-counter-cell">
+                            <div class="inventory-selection-controls">
+
+                                <span id="inventorySelectionCounter">
+                                    0 selected
+                                </span>
+
+                                <div class="inventory-selection-buttons">
+                                    <button
+                                        type="button"
+                                        id="selectVisibleAssets"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Select all assets visible on this page"
+                                    >
+                                        Select all
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        id="clearSelectedAssets"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="Clear all selected assets"
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+
+                            </div>
+                        </th>
 
                             <th class="col-md-custom">
                                 <input
@@ -890,49 +918,105 @@
                             <tr class="inventory-state-row inventory-state-{{ $rowState }}">
                                 <!-- Actions -->
                                 <td>
-                                    <!-- Hide edit button only for Read users -->
-                                    @if (Auth::user()->user_level !== 'Read')
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-warning"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editAssetModal{{ $item->id }}"
-                                        >
-                                            Edit
-                                        </button>
-                                    @endif
+                                    <div class="inventory-row-actions">
 
-                                    <!-- Show Print Data button globally -->
-                                    <a
-                                        href="{{ route('inventory.print-data', $item->id) }}"
-                                        class="btn btn-sm btn-info text-white"
-                                    >
-                                        Print Data
-                                    </a>
-
-                                    <!-- Only administrators can see the Delete button -->
-                                     <!-- DELETE BUTTON FORM -->
-                                    @if (Auth::user()->user_level === 'Admin')
-                                        <form
-                                            action="{{ route('inventory.destroy', $item->id) }}"
-                                            method="POST"
-                                            class="d-inline"
-                                            onsubmit="return confirm(
-                                                'Are you sure you want to permanently delete this asset? This action cannot be undone.'
-                                            );"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button
-                                                type="submit"
-                                                class="btn btn-sm btn-danger"
+                                        <!-- Delete -->
+                                        @if (Auth::user()->user_level === 'Admin')
+                                            <form
+                                                action="{{ route('inventory.destroy', $item->id) }}"
+                                                method="POST"
+                                                class="d-inline-flex"
+                                                onsubmit="return confirm(
+                                                    'Are you sure you want to permanently delete this asset? This action cannot be undone.'
+                                                );"
                                             >
-                                                Delete
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn inventory-action-btn inventory-action-delete"
+                                                    title="Delete asset"
+                                                    aria-label="Delete asset"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        width="16"
+                                                        height="16"
+                                                        viewBox="0 0 16 16"
+                                                        fill="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5V1a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h2.5a1 1 0 0 1 1 1zM6 1v1h4V1H6zM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4z"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <!-- Print -->
+                                        <a
+                                            href="{{ route('inventory.print-data', $item->id) }}"
+                                            class="btn inventory-action-btn inventory-action-print"
+                                            title="Print data"
+                                            aria-label="Print data"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 16 16"
+                                                fill="currentColor"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                                                <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zm7 4H4V3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2zM3 11V9h10v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2H3z"/>
+                                            </svg>
+                                        </a>
+
+                                        <!-- Edit -->
+                                        @if (Auth::user()->user_level !== 'Read')
+                                            <button
+                                                type="button"
+                                                class="btn inventory-action-btn inventory-action-edit"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editAssetModal{{ $item->id }}"
+                                                title="Edit asset"
+                                                aria-label="Edit asset"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="17"
+                                                    height="17"
+                                                    viewBox="0 0 16 16"
+                                                    fill="currentColor"
+                                                    aria-hidden="true"
+                                                >
+                                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10A.5.5 0 0 1 5.5 14H2a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .146-.354l10-10zM11.207 2.5 3 10.707V13h2.293L13.5 4.793 11.207 2.5z"/>
+                                                    <path d="M12.5 1.207 14.793 3.5 13.5 4.793 11.207 2.5 12.5 1.207z"/>
+                                                </svg>
                                             </button>
-                                        </form>
-                                    @endif
+                                        @endif
+
+                                        <!-- Select -->
+                                        <label
+                                            class="inventory-row-selection"
+                                            title="Select asset"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                class="form-check-input inventory-asset-checkbox"
+                                                value="{{ $item->id }}"
+                                                aria-label="Select asset {{ $item->it_internal_number }}"
+                                            >
+                                        </label>
+
+                                    </div>
                                 </td>
+
                                 <td>{{ $item->it_internal_number ?? 'N/A' }}</td>
                                 <td>{{ $item->serial_number ?? 'N/A' }}</td>
                                 <td>{{ $item->asset_number ?? 'N/A' }}</td>
@@ -1029,7 +1113,7 @@
                                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                                         <div class="modal-content">
 
-                                            <form method="POST" action="{{ route('inventory.update', $item->id) }}">
+                                            <form method="POST" action="{{ route('inventory.update', $item->id) }}" class="inventory-edit-form" data-asset-id="{{ $item->id }}">
                                                 @csrf
                                                 @method('PUT')
 
@@ -2393,62 +2477,490 @@
 
         applySavedPreferences();
     });
-</script>
-    <!-- End of Column Collapser script -->
+    </script>
+        <!-- End of Column Collapser script -->
 
-    <!-- Script for table header height read -->
-     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const inventoryTable = document.getElementById('inventoryTable');
+        <!-- Script for table header height read -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inventoryTable = document.getElementById('inventoryTable');
 
-        if (!inventoryTable) {
-            return;
-        }
-
-        function updateInventoryStickyHeaderOffset() {
-            const firstHeaderRow = inventoryTable.querySelector('thead tr:first-child');
-
-            if (!firstHeaderRow) {
+            if (!inventoryTable) {
                 return;
             }
 
-            const firstHeaderHeight = firstHeaderRow.offsetHeight;
+            function updateInventoryStickyHeaderOffset() {
+                const firstHeaderRow = inventoryTable.querySelector('thead tr:first-child');
 
-            inventoryTable.style.setProperty(
-                '--inventory-first-header-height',
-                firstHeaderHeight + 'px'
+                if (!firstHeaderRow) {
+                    return;
+                }
+
+                const firstHeaderHeight = firstHeaderRow.offsetHeight;
+
+                inventoryTable.style.setProperty(
+                    '--inventory-first-header-height',
+                    firstHeaderHeight + 'px'
+                );
+            }
+
+            updateInventoryStickyHeaderOffset();
+
+            window.addEventListener('resize', updateInventoryStickyHeaderOffset);
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const addAssetForm = document.getElementById('addAssetForm');
+            const saveAssetButton = document.getElementById('saveAssetButton');
+
+            if (!addAssetForm || !saveAssetButton) {
+                return;
+            }
+
+            addAssetForm.addEventListener('submit', function (event) {
+                if (addAssetForm.dataset.submitting === 'true') {
+                    event.preventDefault();
+                    return;
+                }
+
+                addAssetForm.dataset.submitting = 'true';
+                saveAssetButton.disabled = true;
+                saveAssetButton.textContent = 'Saving...';
+            });
+        });
+    </script>
+    <!-- End of Script for table header height read -->
+
+<!-- Inventory persistent asset selection -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const selectionStorageKey = 'inventory_selected_assets_{{ Auth::id() }}';
+
+        const checkboxes = document.querySelectorAll(
+            '.inventory-asset-checkbox'
+        );
+
+        const selectionCounter = document.getElementById(
+            'inventorySelectionCounter'
+        );
+
+        const selectVisibleButton = document.getElementById(
+            'selectVisibleAssets'
+        );
+
+        const clearSelectedButton = document.getElementById(
+            'clearSelectedAssets'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get selected asset IDs
+        |--------------------------------------------------------------------------
+        */
+        function getSelectedAssets() {
+
+            try {
+
+                const storedSelection = sessionStorage.getItem(
+                    selectionStorageKey
+                );
+
+                if (!storedSelection) {
+                    return [];
+                }
+
+                const parsedSelection = JSON.parse(storedSelection);
+
+                return Array.isArray(parsedSelection)
+                    ? parsedSelection.map(String)
+                    : [];
+
+            } catch (error) {
+
+                console.error(
+                    'Could not read inventory selection:',
+                    error
+                );
+
+                return [];
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save selected asset IDs
+        |--------------------------------------------------------------------------
+        */
+        function saveSelectedAssets(selectedAssets) {
+
+            const uniqueAssets = [
+                ...new Set(selectedAssets.map(String))
+            ];
+
+            sessionStorage.setItem(
+                selectionStorageKey,
+                JSON.stringify(uniqueAssets)
             );
         }
 
-        updateInventoryStickyHeaderOffset();
 
-        window.addEventListener('resize', updateInventoryStickyHeaderOffset);
-    });
-</script>
+        /*
+        |--------------------------------------------------------------------------
+        | Update selection counter
+        |--------------------------------------------------------------------------
+        */
+        function updateSelectionCounter() {
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const addAssetForm = document.getElementById('addAssetForm');
-        const saveAssetButton = document.getElementById('saveAssetButton');
-
-        if (!addAssetForm || !saveAssetButton) {
-            return;
-        }
-
-        addAssetForm.addEventListener('submit', function (event) {
-            if (addAssetForm.dataset.submitting === 'true') {
-                event.preventDefault();
+            if (!selectionCounter) {
                 return;
             }
 
-            addAssetForm.dataset.submitting = 'true';
-            saveAssetButton.disabled = true;
-            saveAssetButton.textContent = 'Saving...';
+            const selectedAssets = getSelectedAssets();
+            const totalSelected = selectedAssets.length;
+
+            selectionCounter.textContent =
+                totalSelected === 1
+                    ? '1 selected'
+                    : `${totalSelected} selected`;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Restore visible checkboxes
+        |--------------------------------------------------------------------------
+        */
+        function restoreVisibleSelection() {
+
+            const selectedAssets = getSelectedAssets();
+
+            checkboxes.forEach(function (checkbox) {
+
+                const assetId = String(checkbox.value);
+
+                checkbox.checked = selectedAssets.includes(
+                    assetId
+                );
+            });
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update "Select all" button state
+        |--------------------------------------------------------------------------
+        */
+        function updateSelectVisibleButton() {
+
+            if (!selectVisibleButton) {
+                return;
+            }
+
+            const visibleCheckboxes = Array.from(checkboxes);
+
+            if (visibleCheckboxes.length === 0) {
+
+                selectVisibleButton.disabled = true;
+
+                return;
+            }
+
+            selectVisibleButton.disabled = false;
+
+            const allVisibleSelected = visibleCheckboxes.every(
+                function (checkbox) {
+                    return checkbox.checked;
+                }
+            );
+
+            if (allVisibleSelected) {
+
+                selectVisibleButton.textContent = 'Page selected';
+
+                selectVisibleButton.classList.remove(
+                    'btn-outline-primary'
+                );
+
+                selectVisibleButton.classList.add(
+                    'btn-primary'
+                );
+
+            } else {
+
+                selectVisibleButton.textContent = 'Select all';
+
+                selectVisibleButton.classList.remove(
+                    'btn-primary'
+                );
+
+                selectVisibleButton.classList.add(
+                    'btn-outline-primary'
+                );
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Individual checkbox change
+        |--------------------------------------------------------------------------
+        */
+        checkboxes.forEach(function (checkbox) {
+
+            checkbox.addEventListener('change', function () {
+
+                let selectedAssets = getSelectedAssets();
+
+                const assetId = String(this.value);
+
+
+                if (this.checked) {
+
+                    if (!selectedAssets.includes(assetId)) {
+                        selectedAssets.push(assetId);
+                    }
+
+                } else {
+
+                    selectedAssets = selectedAssets.filter(
+                        function (selectedId) {
+                            return selectedId !== assetId;
+                        }
+                    );
+                }
+
+
+                saveSelectedAssets(selectedAssets);
+
+                updateSelectionCounter();
+
+                updateSelectVisibleButton();
+            });
         });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Select every asset visible on current page
+        |--------------------------------------------------------------------------
+        */
+        if (selectVisibleButton) {
+
+            selectVisibleButton.addEventListener(
+                'click',
+                function () {
+
+                    let selectedAssets = getSelectedAssets();
+
+                    checkboxes.forEach(function (checkbox) {
+
+                        const assetId = String(
+                            checkbox.value
+                        );
+
+                        checkbox.checked = true;
+
+                        if (
+                            !selectedAssets.includes(assetId)
+                        ) {
+                            selectedAssets.push(assetId);
+                        }
+                    });
+
+
+                    saveSelectedAssets(selectedAssets);
+
+                    updateSelectionCounter();
+
+                    updateSelectVisibleButton();
+                }
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear ALL selected assets
+        |--------------------------------------------------------------------------
+        */
+        if (clearSelectedButton) {
+
+            clearSelectedButton.addEventListener(
+                'click',
+                function () {
+
+                    sessionStorage.removeItem(
+                        selectionStorageKey
+                    );
+
+                    checkboxes.forEach(
+                        function (checkbox) {
+                            checkbox.checked = false;
+                        }
+                    );
+
+                    updateSelectionCounter();
+
+                    updateSelectVisibleButton();
+                }
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Initial state
+        |--------------------------------------------------------------------------
+        */
+        restoreVisibleSelection();
+
+        updateSelectionCounter();
+
+        updateSelectVisibleButton();
+
     });
 </script>
+<!-- End inventory persistent asset selection -->
 
-    <!-- End of Script for table header height read -->
+<!-- Attach selected assets to inventory edit forms -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const selectionStorageKey =
+            'inventory_selected_assets_{{ Auth::id() }}';
+
+        const editForms = document.querySelectorAll(
+            '.inventory-edit-form'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get selected asset IDs
+        |--------------------------------------------------------------------------
+        */
+        function getSelectedAssets() {
+
+            try {
+
+                const storedSelection = sessionStorage.getItem(
+                    selectionStorageKey
+                );
+
+                if (!storedSelection) {
+                    return [];
+                }
+
+                const parsedSelection = JSON.parse(
+                    storedSelection
+                );
+
+                return Array.isArray(parsedSelection)
+                    ? parsedSelection.map(String)
+                    : [];
+
+            } catch (error) {
+
+                console.error(
+                    'Could not read inventory selection:',
+                    error
+                );
+
+                return [];
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Attach selection when editing
+        |--------------------------------------------------------------------------
+        */
+        editForms.forEach(function (form) {
+
+            form.addEventListener('submit', function (event) {
+
+                const assetId = String(
+                    form.dataset.assetId
+                );
+
+                const selectedAssets =
+                    getSelectedAssets();
+
+                /*
+                * Bulk editing only applies if the current asset
+                * is part of the selection.
+                */
+                const idsToSend =
+                    selectedAssets.includes(assetId)
+                        ? selectedAssets
+                        : [];
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Bulk edit confirmation
+                |--------------------------------------------------------------------------
+                |
+                | Show confirmation only when more than one asset
+                | will actually be modified.
+                |
+                */
+                if (idsToSend.length > 1) {
+
+                    const confirmed = window.confirm(
+                        `You are about to apply these changes to ${idsToSend.length} selected assets.\n\n` +
+                        `Only the fields you changed will be applied to the selected assets.\n\n` +
+                        `Do you want to continue?`
+                    );
+
+                    if (!confirmed) {
+                        event.preventDefault();
+                        return;
+                    }
+                }
+
+
+                /*
+                * Remove previous hidden input if present.
+                */
+                const existingInput = form.querySelector(
+                    'input[name="selected_asset_ids"]'
+                );
+
+                if (existingInput) {
+                    existingInput.remove();
+                }
+
+
+                /*
+                * Send selected IDs to Laravel.
+                */
+                const selectedIdsInput =
+                    document.createElement('input');
+
+                selectedIdsInput.type = 'hidden';
+
+                selectedIdsInput.name =
+                    'selected_asset_ids';
+
+                selectedIdsInput.value =
+                    JSON.stringify(idsToSend);
+
+                form.appendChild(
+                    selectedIdsInput
+                );
+            });
+        });
+
+    });
+</script>
+<!-- End attach selected assets to inventory edit forms -->
 
     @if (Auth::user()->user_level !== 'Read')
         <div class="modal fade" id="uploadInventoryExcelModal" tabindex="-1" aria-labelledby="uploadInventoryExcelModalLabel" aria-hidden="true">

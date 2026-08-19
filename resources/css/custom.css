@@ -1390,3 +1390,142 @@ h6 {
     line-height: 1.55;
 }
 
+/* =========================================================
+   INVENTORY TABLE - ROW ACTIONS
+   ========================================================= */
+
+.inventory-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.inventory-row-selection {
+    width: 34px;
+    height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0;
+
+    background-color: #f8f9fa;
+    border: 2px solid #adb5bd;
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.inventory-row-selection:hover {
+    background-color: #e9ecef;
+    border-color: #6c757d;
+}
+
+.inventory-row-selection .form-check-input {
+    width: 30px;
+    height: 30px;
+
+    margin: 0;
+
+    cursor: pointer;
+}
+
+
+/* Square action buttons */
+.inventory-action-btn {
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+}
+
+
+/* Edit */
+.inventory-action-edit {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.inventory-action-edit:hover,
+.inventory-action-edit:focus {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #000;
+}
+
+
+/* Print */
+.inventory-action-print {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.inventory-action-print:hover,
+.inventory-action-print:focus {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    color: #fff;
+}
+
+
+/* Delete */
+.inventory-action-delete {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+.inventory-action-delete:hover,
+.inventory-action-delete:focus {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #fff;
+}
+
+.inventory-selection-counter-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.inventory-selection-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    white-space: nowrap;
+}
+
+#inventorySelectionCounter {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.inventory-selection-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.inventory-selection-buttons .btn {
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+}

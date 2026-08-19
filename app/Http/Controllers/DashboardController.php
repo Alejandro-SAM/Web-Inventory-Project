@@ -131,12 +131,19 @@ class DashboardController extends Controller
             ->count();
 
         /*
-            Count assets whose warranty expires within the next 14 days.
+            Total warranties expiring from today through the next 14 days.
+
+            This value is NOT limited because it is used to show the real
+            number of assets requiring attention.
         */
+        $warrantyToday = today();
+        $warrantyFourteenDaysLimit = today()->copy()->addDays(14);
+        $warrantyThreeMonthsLimit = today()->copy()->addMonths(3);
+
         $warrantiesExpiringSoonCount = $inventoryQuery()
             ->whereBetween('warranty_expiry_date', [
-                now()->toDateString(),
-                now()->addDays(14)->toDateString()
+                $warrantyToday->toDateString(),
+                $warrantyFourteenDaysLimit->toDateString(),
             ])
             ->count();
 
@@ -196,81 +203,109 @@ class DashboardController extends Controller
             ->get();
 
         /*
-            Dashboard table: warranties expiring within the next 14 days.
+            Dashboard table: warranties expiring from today through
+            the next 14 days.
 
-            Only 10 records are shown in the main dashboard to avoid making
-            the page too long.
+            Only the first 10 records are displayed in the compact
+            dashboard table. The real total is stored separately in
+            $warrantiesExpiringSoonCount.
         */
         $warrantiesExpiringSoon = $inventoryQuery()
             ->whereBetween('warranty_expiry_date', [
-                now()->toDateString(),
-                now()->addDays(14)->toDateString()
+                $warrantyToday->toDateString(),
+                $warrantyFourteenDaysLimit->toDateString(),
             ])
             ->orderBy('warranty_expiry_date')
+            ->orderBy('id')
             ->limit(10)
             ->get();
 
         /*
-            Dashboard table: warranties expiring within the next 3 months.
+        |--------------------------------------------------------------------------
+        | Upcoming maintenance
+        |--------------------------------------------------------------------------
+        |
+        | Main dashboard:
+        | - From today through the next 14 days.
+        | - Real total is counted separately.
+        | - Only the first 10 records are displayed.
+        |
+        | Full modal:
+        | - From today through the next 3 months.
+        | - No record limit.
+        |
         */
-        $warrantiesExpiringThreeMonths = $inventoryQuery()
-            ->whereBetween('warranty_expiry_date', [
-                now()->addDays(15)->toDateString(),
-                now()->addMonths(3)->toDateString()
-            ])
-            ->orderBy('warranty_expiry_date')
-            ->limit(10)
-            ->get();
+
+        $maintenanceToday = today();
+
+        $maintenanceFourteenDaysLimit =
+            today()->copy()->addDays(14);
+
+        $maintenanceThreeMonthsLimit =
+            today()->copy()->addMonths(3);
+
 
         /*
-            Dashboard table: maintenance scheduled within the next 14 days.
+            Real total of maintenance records scheduled within
+            the next 14 days.
+        */
+        $upcomingMaintenanceCount = $inventoryQuery()
+            ->whereBetween('next_maintenance', [
+                $maintenanceToday->toDateString(),
+                $maintenanceFourteenDaysLimit->toDateString(),
+            ])
+            ->count();
 
-            Only 10 records are shown in the main dashboard. The full list
-            is available through the "View More" modal.
+
+        /*
+            Compact dashboard table.
+
+            Only 10 records are displayed even when the real
+            number of upcoming maintenance records is higher.
         */
         $upcomingMaintenance = $inventoryQuery()
+            ->with('maintenanceResponsible')
             ->whereBetween('next_maintenance', [
-                now()->toDateString(),
-                now()->addDays(14)->toDateString()
+                $maintenanceToday->toDateString(),
+                $maintenanceFourteenDaysLimit->toDateString(),
             ])
             ->orderBy('next_maintenance')
+            ->orderBy('id')
             ->limit(10)
             ->get();
 
-        /*
-            Dashboard table: maintenance scheduled within the next 3 months.
-        */
-        $upcomingMaintenanceThreeMonths = $inventoryQuery()
-            ->whereBetween('next_maintenance', [
-                now()->addDays(15)->toDateString(),
-                now()->addMonths(3)->toDateString()
-            ])
-            ->orderBy('next_maintenance')
-            ->limit(10)
-            ->get();
 
         /*
-            Full modal list: all future warranty expirations.
+            Complete list for the "View next 3 months" modal.
 
-            This data is used by the "View More" modal. It is not limited to
-            14 days because the purpose is to show the complete upcoming list.
+            No limit is applied here.
         */
-        $allWarrantiesExpiringSoon = $inventoryQuery()
-            ->whereNotNull('warranty_expiry_date')
-            ->whereDate('warranty_expiry_date', '>=', now()->toDateString())
-            ->orderBy('warranty_expiry_date')
-            ->get();
-
-        /*
-            Full modal list: all future maintenance records.
-
-            This data is used by the "View More" modal. It shows all future
-            maintenance dates ordered from closest to furthest.
-        */
-        $allUpcomingMaintenance = $inventoryQuery()
+        $maintenanceNextThreeMonths = $inventoryQuery()
+            ->with('maintenanceResponsible')
             ->whereNotNull('next_maintenance')
-            ->whereDate('next_maintenance', '>=', now()->toDateString())
+            ->whereBetween('next_maintenance', [
+                $maintenanceToday->toDateString(),
+                $maintenanceThreeMonthsLimit->toDateString(),
+            ])
             ->orderBy('next_maintenance')
+            ->orderBy('id')
+            ->get();
+
+        /*
+            Full modal list: warranties expiring from today through
+            the next three months.
+
+            Unlike the compact dashboard table, this query has no record limit.
+            Therefore the modal shows every asset found in the requested period.
+        */
+        $warrantiesNextThreeMonths = $inventoryQuery()
+            ->whereNotNull('warranty_expiry_date')
+            ->whereBetween('warranty_expiry_date', [
+                $warrantyToday->toDateString(),
+                $warrantyThreeMonthsLimit->toDateString(),
+            ])
+            ->orderBy('warranty_expiry_date')
+            ->orderBy('id')
             ->get();
 
         /*
@@ -402,9 +437,10 @@ class DashboardController extends Controller
             'assetsByState',
             'assetsByBusinessUnit',
             'warrantiesExpiringSoon',
-            'warrantiesExpiringThreeMonths',
+            'warrantiesNextThreeMonths',
             'upcomingMaintenance',
-            'upcomingMaintenanceThreeMonths',
+            'upcomingMaintenanceCount',
+            'maintenanceNextThreeMonths',
             'assetsByPlantLabels',
             'assetsByPlantData',
             'assetsByCategoryLabels',
@@ -413,8 +449,6 @@ class DashboardController extends Controller
             'assetsByStateData',
             'assetsByBusinessUnitLabels',
             'assetsByBusinessUnitData',
-            'allWarrantiesExpiringSoon',
-            'allUpcomingMaintenance',
             'plants',
             'selectedPlants',
             'selectedPlantsArray',
