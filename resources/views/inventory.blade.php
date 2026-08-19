@@ -6,16 +6,7 @@
     <div class="container mt-4">
 
 <!-- PAGE TITLE -->
-<div class="app-page-title">
-    <h1 class="mb-0">
-        Inventory
-    </h1>
-
-    <p class="text-muted mb-0">
-        Review, filter and manage IT inventory assets.
-    </p>
-</div>
-        <div class="card app-card">
+        <div class="card app-card inventory-card">
 
             <!-- Hidden form for automatic filters -->
             <form id="inventoryFiltersForm" method="GET" action="{{ route('inventory') }}" class="auto-filter-form"></form>
@@ -147,9 +138,26 @@
             Columns
         </button>
 
-        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
+        <div class="dropdown-menu dropdown-menu-end p-3 inventory-columns-menu">
             <div class="small text-muted mb-2">
                 Show / hide table columns
+            </div>
+            <div class="inventory-columns-controls d-flex gap-2">
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger flex-fill"
+                    id="unselectInventoryColumns"
+                >
+                    Unselect all
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary flex-fill"
+                    id="resetInventoryColumns"
+                >
+                    Reset columns
+                </button>
             </div>
 
             <div class="form-check">
@@ -291,12 +299,6 @@
                     <label class="form-check-label" for="toggle_created_at">Created At</label>
                 </div>
             @endif
-
-            <hr class="my-2">
-
-            <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="resetInventoryColumns">
-                Reset columns
-            </button>
         </div>
     </div>
             <!-- END OF DROPDOWN LIST OF COLLAPSABLE COLUMNS -->
@@ -311,6 +313,7 @@
 
                     <thead class="table-light">
                     <tr>
+                        <th class="col-actions-custom" data-column="actions">Actions</th>
                         <th class="col-md-custom" data-column="it_internal_number">IT Internal Number</th>
                         <th class="col-md-custom" data-column="serial_number">Serial Number</th>
                         <th class="col-md-custom" data-column="asset_number">Asset Number</th>
@@ -341,11 +344,12 @@
                         @if (Auth::user()->user_level === 'Admin')
                         <th class="col-date-custom" data-column="created_at">Created At</th>
                         @endif
-
-                        <th class="col-actions-custom" data-column="actions">Actions</th>
                         </tr>
 
                         <tr>
+                            <!--- Blank actions column -->
+                            <th></th>
+
                             <th class="col-md-custom">
                                 <input
                                     form="inventoryFiltersForm"
@@ -874,8 +878,6 @@
                                 </div>
                             </th>
                             @endif
-                            <!--- Blank actions column -->
-                                <th></th>
                     </tr>
                     </thead>
 
@@ -886,6 +888,51 @@
                                 $rowState = strtolower(trim($item->state ?? ''));
                             @endphp
                             <tr class="inventory-state-row inventory-state-{{ $rowState }}">
+                                <!-- Actions -->
+                                <td>
+                                    <!-- Hide edit button only for Read users -->
+                                    @if (Auth::user()->user_level !== 'Read')
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editAssetModal{{ $item->id }}"
+                                        >
+                                            Edit
+                                        </button>
+                                    @endif
+
+                                    <!-- Show Print Data button globally -->
+                                    <a
+                                        href="{{ route('inventory.print-data', $item->id) }}"
+                                        class="btn btn-sm btn-info text-white"
+                                    >
+                                        Print Data
+                                    </a>
+
+                                    <!-- Only administrators can see the Delete button -->
+                                     <!-- DELETE BUTTON FORM -->
+                                    @if (Auth::user()->user_level === 'Admin')
+                                        <form
+                                            action="{{ route('inventory.destroy', $item->id) }}"
+                                            method="POST"
+                                            class="d-inline"
+                                            onsubmit="return confirm(
+                                                'Are you sure you want to permanently delete this asset? This action cannot be undone.'
+                                            );"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-danger"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
+                                </td>
                                 <td>{{ $item->it_internal_number ?? 'N/A' }}</td>
                                 <td>{{ $item->serial_number ?? 'N/A' }}</td>
                                 <td>{{ $item->asset_number ?? 'N/A' }}</td>
@@ -968,52 +1015,6 @@
                                     {{ $item->created_at ? $item->created_at->format('Y-m-d H:i') : 'N/A' }}
                                 </td>
                                 @endif
-
-                                <!-- Actions -->
-                                <td>
-                                    <!-- Hide edit button only for Read users -->
-                                    @if (Auth::user()->user_level !== 'Read')
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-warning"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editAssetModal{{ $item->id }}"
-                                        >
-                                            Edit
-                                        </button>
-                                    @endif
-
-                                    <!-- Show Print Data button globally -->
-                                    <a
-                                        href="{{ route('inventory.print-data', $item->id) }}"
-                                        class="btn btn-sm btn-info text-white"
-                                    >
-                                        Print Data
-                                    </a>
-
-                                    <!-- Only administrators can see the Delete button -->
-                                     <!-- DELETE BUTTON FORM -->
-                                    @if (Auth::user()->user_level === 'Admin')
-                                        <form
-                                            action="{{ route('inventory.destroy', $item->id) }}"
-                                            method="POST"
-                                            class="d-inline"
-                                            onsubmit="return confirm(
-                                                'Are you sure you want to permanently delete this asset? This action cannot be undone.'
-                                            );"
-                                        >
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button
-                                                type="submit"
-                                                class="btn btn-sm btn-danger"
-                                            >
-                                                Delete
-                                            </button>
-                                        </form>
-                                    @endif
-                                </td>
                             </tr>
 
                             <!-- Only users with write access can edit assets -->
@@ -1181,13 +1182,14 @@
 
                                                         <div class="row g-3">
                                                             <div class="col-md-4">
-                                                                <label class="form-label">End User</label>
+                                                                <label class="form-label">End User <span class="text-danger">*</span></label>
 
                                                                 <input
                                                                     type="text"
                                                                     name="end_user"
                                                                     class="form-control"
                                                                     value="{{ old('end_user', $item->end_user) }}"
+                                                                    required
                                                                 >
                                                             </div>
 
@@ -1654,20 +1656,8 @@
 
                     @if ($inventoryItems->lastPage() > 1)
                         <form
+                            id="inventoryPageJumpForm"
                             class="inventory-page-jump"
-                            onsubmit="
-                                event.preventDefault();
-
-                                const pageInput = this.querySelector('[name=page]');
-                                const page = Math.min(
-                                    Math.max(parseInt(pageInput.value, 10) || 1, 1),
-                                    {{ $inventoryItems->lastPage() }}
-                                );
-
-                                const url = new URL(window.location.href);
-                                url.searchParams.set('page', page);
-                                window.location.href = url.toString();
-                            "
                         >
                             <label for="inventoryPageJump">
                                 Go to page
@@ -1732,7 +1722,7 @@
                         ></button>
                     </div>
 
-                    <form method="POST" action="{{ route('inventory.store') }}">
+                    <form id="addAssetForm" method="POST" action="{{ route('inventory.store') }}">
                         @csrf
 
                         <div class="modal-body inventory-modal-body">
@@ -1859,6 +1849,7 @@
                                             name="end_user"
                                             class="form-control"
                                             value="{{ old('end_user') }}"
+                                            required
                                         >
                                     </div>
 
@@ -2158,7 +2149,11 @@
                                 Cancel
                             </button>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button
+                                id="saveAssetButton"
+                                type="submit"
+                                class="btn btn-primary"
+                            >
                                 Save Asset
                             </button>
                         </div>
@@ -2225,7 +2220,7 @@
 
                         typingTimer = setTimeout(function () {
                             form.submit();
-                        }, 1200);
+                        }, 2000);
                     });
                 });
 
@@ -2238,6 +2233,33 @@
         });
     </script>
     <!-- End of Auto-submit filter form on change -->
+
+    <!-- Page jump handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pageJumpForm = document.getElementById('inventoryPageJumpForm');
+
+            if (!pageJumpForm) {
+                return;
+            }
+
+            pageJumpForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const pageInput = pageJumpForm.querySelector('[name="page"]');
+                const lastPage = {{ $inventoryItems->lastPage() }};
+                const page = Math.min(
+                    Math.max(parseInt(pageInput.value, 10) || 1, 1),
+                    lastPage
+                );
+
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', page);
+                window.location.assign(url.toString());
+            });
+        });
+    </script>
+    <!-- End of page jump handler -->
 
     <!-- Error Handling for Add Asset Modal -->
      @if ($errors->any())
@@ -2266,6 +2288,7 @@
         const storageKey = 'inventory_hidden_columns_{{ Auth::user()->user_level }}';
         const toggles = document.querySelectorAll('.inventory-column-toggle');
         const resetButton = document.getElementById('resetInventoryColumns');
+        const unselectButton = document.getElementById('unselectInventoryColumns');
 
         function getColumnIndex(columnName) {
             const headerCells = table.querySelectorAll('thead tr:first-child th');
@@ -2337,6 +2360,20 @@
             });
         });
 
+        if (unselectButton) {
+            unselectButton.addEventListener('click', function () {
+                const hiddenColumns = [];
+
+                toggles.forEach(function (toggle) {
+                    toggle.checked = false;
+                    hiddenColumns.push(toggle.value);
+                    setColumnVisibility(toggle.value, false);
+                });
+
+                saveHiddenColumns(hiddenColumns);
+            });
+        }
+
         if (resetButton) {
             resetButton.addEventListener('click', function () {
                 localStorage.removeItem(storageKey);
@@ -2388,6 +2425,29 @@
         window.addEventListener('resize', updateInventoryStickyHeaderOffset);
     });
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addAssetForm = document.getElementById('addAssetForm');
+        const saveAssetButton = document.getElementById('saveAssetButton');
+
+        if (!addAssetForm || !saveAssetButton) {
+            return;
+        }
+
+        addAssetForm.addEventListener('submit', function (event) {
+            if (addAssetForm.dataset.submitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            addAssetForm.dataset.submitting = 'true';
+            saveAssetButton.disabled = true;
+            saveAssetButton.textContent = 'Saving...';
+        });
+    });
+</script>
+
     <!-- End of Script for table header height read -->
 
     @if (Auth::user()->user_level !== 'Read')

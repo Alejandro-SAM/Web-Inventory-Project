@@ -313,7 +313,7 @@ private function inventoryLogFields(): array
             'location' => ['nullable', 'string', 'max:255'],
             'business_unit' => ['nullable', 'string', 'max:255'],
             'plant' => ['nullable', 'string', 'max:255'],
-            'end_user' => ['nullable', 'string', 'max:255'],
+            'end_user' => ['required', 'string', 'max:255'],
             'responsive' => ['nullable', 'boolean'],
             'employee_id' => ['nullable', 'string', 'max:255'],
             'next_maintenance' => ['nullable', 'date'],
@@ -340,17 +340,11 @@ private function inventoryLogFields(): array
 
         $validated['responsive'] = $request->has('responsive');
 
-        $validated['responsive'] = $request->has('responsive');
-
         $validated['classification'] = $this->calculateClassification(
             $validated['confidentiality'] ?? null,
             $validated['integrity'] ?? null,
             $validated['availability'] ?? null
         );
-
-        $validated['created_by'] = auth()->id();
-
-        $inventory = Inventory::create($validated);
 
         $validated['created_by'] = auth()->id();
 
@@ -507,7 +501,7 @@ public function update(Request $request, Inventory $inventory)
         'location' => ['nullable', 'string', 'max:255'],
         'business_unit' => ['nullable', 'string', 'max:255'],
         'plant' => ['nullable', 'string', 'max:255'],
-        'end_user' => ['nullable', 'string', 'max:255'],
+        'end_user' => ['required', 'string', 'max:255'],
         'responsive' => ['nullable', 'boolean'],
         'employee_id' => ['nullable', 'string', 'max:255'],
         'next_maintenance' => ['nullable', 'date'],

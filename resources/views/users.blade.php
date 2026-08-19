@@ -7,11 +7,6 @@
 
         <!-- PAGE TITLE -->
         <div class="d-flex justify-content-between align-items-center app-page-title">
-            <div>
-                <h1 class="mb-0">User Table</h1>
-                <p class="text-muted mb-0">Manage system users and access levels.</p>
-            </div>
-
             <!-- Create user button -->
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
                 Create User

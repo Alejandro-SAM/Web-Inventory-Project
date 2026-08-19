@@ -1,15 +1,6 @@
 <x-app-layout>
     <div class="app-page">
         <div class="app-page-container">
-
-            <div class="app-page-title">
-                <h1>Maintenance History</h1>
-
-                <p class="text-muted">
-                    Completed maintenance records ordered by completion date.
-                </p>
-            </div>
-
                 <div class="app-card-header">
                     <strong>Completed Maintenance</strong>
 

@@ -2,18 +2,6 @@
     <div class="app-page">
         <div class="app-page-container">
 
-            <div class="app-page-title">
-                <h1>Maintenance</h1>
-
-                <p class="text-muted">
-                    @if (auth()->user()->user_level === 'Admin')
-                        Review and manage all assigned maintenance activities.
-                    @else
-                        Review the maintenance activities assigned to you.
-                    @endif
-                </p>
-            </div>
-
             @if (session('success'))
                 <div class="alert alert-success">
                     {{ session('success') }}

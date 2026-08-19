@@ -371,110 +371,153 @@
                                         </td>
 
                                         <td class="py-2">
-                                            <button type="button"
-                                                    onclick="document.getElementById('warranty-details-{{ $asset->id }}').showModal()"
-                                                    class="px-3 py-1 bg-gray-800 text-white rounded text-xs hover:bg-gray-700">
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#warranty-details-{{ $asset->id }}"
+                                            >
                                                 View Details
                                             </button>
 
-                                            {{--
-                                                Native HTML modal.
+                                            <div
+                                                class="modal fade app-detail-modal"
+                                                id="warranty-details-{{ $asset->id }}"
+                                                tabindex="-1"
+                                                aria-labelledby="warrantyDetailsLabel{{ $asset->id }}"
+                                                aria-hidden="true"
+                                            >
+                                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <div>
+                                                                <h5
+                                                                    class="modal-title"
+                                                                    id="warrantyDetailsLabel{{ $asset->id }}"
+                                                                >
+                                                                    Asset Warranty Details
+                                                                </h5>
 
-                                                This avoids adding extra JavaScript libraries.
-                                                It shows the most relevant asset and warranty information.
-                                            --}}
-                                            <dialog id="warranty-details-{{ $asset->id }}" class="rounded-lg shadow-xl p-0 w-full max-w-2xl">
-                                                <div class="p-5">
-                                                    <div class="flex justify-between items-center mb-4">
-                                                        <h3 class="text-lg font-semibold">
-                                                            Asset Warranty Details
-                                                        </h3>
+                                                                <p class="modal-subtitle">
+                                                                    Asset identification and warranty information.
+                                                                </p>
+                                                            </div>
 
-                                                        <button type="button"
-                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}').close()"
-                                                                class="text-gray-500 hover:text-gray-800 text-xl">
-                                                            &times;
-                                                        </button>
-                                                    </div>
-
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                        <div>
-                                                            <p class="text-gray-500">IT Number</p>
-                                                            <p class="font-medium">{{ $asset->it_internal_number }}</p>
+                                                            <button
+                                                                type="button"
+                                                                class="btn-close"
+                                                                data-bs-dismiss="modal"
+                                                                aria-label="Close"
+                                                            ></button>
                                                         </div>
 
-                                                        <div>
-                                                            <p class="text-gray-500">Serial Number</p>
-                                                            <p class="font-medium">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                        <div class="modal-body">
+                                                            <div class="row g-3 app-detail-grid">
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">IT Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->it_internal_number }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Serial Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Asset Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Category</span>
+                                                                        <p class="app-detail-value">{{ $asset->category ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Brand</span>
+                                                                        <p class="app-detail-value">{{ $asset->brand ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Model</span>
+                                                                        <p class="app-detail-value">{{ $asset->model ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Plant</span>
+                                                                        <p class="app-detail-value">{{ $asset->plant ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Business Unit</span>
+                                                                        <p class="app-detail-value">{{ $asset->business_unit ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">End User</span>
+                                                                        <p class="app-detail-value">{{ $asset->end_user ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Purchase Origin Country</span>
+                                                                        <p class="app-detail-value">{{ $asset->purchase_origin_country ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Warranty Start Date</span>
+                                                                        <p class="app-detail-value">{{ $asset->warranty_start_date ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Warranty Expiry Date</span>
+                                                                        <p class="app-detail-value">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="app-detail-description">
+                                                                <span class="app-detail-label">Description</span>
+                                                                <p class="app-detail-value">
+                                                                    {{ $asset->description ?? 'N/A' }}
+                                                                </p>
+                                                            </div>
                                                         </div>
 
-                                                        <div>
-                                                            <p class="text-gray-500">Asset Number</p>
-                                                            <p class="font-medium">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                        <div class="modal-footer">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-secondary"
+                                                                data-bs-dismiss="modal"
+                                                            >
+                                                                Close
+                                                            </button>
                                                         </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Category</p>
-                                                            <p class="font-medium">{{ $asset->category ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Brand</p>
-                                                            <p class="font-medium">{{ $asset->brand ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Model</p>
-                                                            <p class="font-medium">{{ $asset->model ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Plant</p>
-                                                            <p class="font-medium">{{ $asset->plant ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Business Unit</p>
-                                                            <p class="font-medium">{{ $asset->business_unit ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">End User</p>
-                                                            <p class="font-medium">{{ $asset->end_user ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Purchase Origin Country</p>
-                                                            <p class="font-medium">{{ $asset->purchase_origin_country ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Warranty Start Date</p>
-                                                            <p class="font-medium">{{ $asset->warranty_start_date ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Warranty Expiry Date</p>
-                                                            <p class="font-medium">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mt-5">
-                                                        <p class="text-gray-500 text-sm">Description</p>
-                                                        <p class="font-medium text-sm">
-                                                            {{ $asset->description ?? 'N/A' }}
-                                                        </p>
-                                                    </div>
-
-                                                    <div class="mt-6 text-right">
-                                                        <button type="button"
-                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}').close()"
-                                                                class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
-                                                            Close
-                                                        </button>
                                                     </div>
                                                 </div>
-                                            </dialog>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -512,87 +555,132 @@
                                         </td>
 
                                         <td class="py-2">
-                                            <button type="button"
-                                                    onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').showModal()"
-                                                    class="px-3 py-1 bg-gray-800 text-white rounded text-xs hover:bg-gray-700">
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#warranty-details-{{ $asset->id }}-three-months"
+                                            >
                                                 View Details
                                             </button>
 
-                                            <dialog id="warranty-details-{{ $asset->id }}-three-months" class="rounded-lg shadow-xl p-0 w-full max-w-2xl">
-                                                <div class="p-5">
-                                                    <div class="flex justify-between items-center mb-4">
-                                                        <h3 class="text-lg font-semibold">
-                                                            Asset Warranty Details
-                                                        </h3>
+                                            <div
+                                                class="modal fade app-detail-modal"
+                                                id="warranty-details-{{ $asset->id }}-three-months"
+                                                tabindex="-1"
+                                                aria-labelledby="warrantyDetailsThreeMonthsLabel{{ $asset->id }}"
+                                                aria-hidden="true"
+                                            >
+                                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <div>
+                                                                <h5
+                                                                    class="modal-title"
+                                                                    id="warrantyDetailsThreeMonthsLabel{{ $asset->id }}"
+                                                                >
+                                                                    Asset Warranty Details
+                                                                </h5>
 
-                                                        <button type="button"
-                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
-                                                                class="text-gray-500 hover:text-gray-800 text-xl">
-                                                            &times;
-                                                        </button>
-                                                    </div>
+                                                                <p class="modal-subtitle">
+                                                                    Asset identification and warranty information.
+                                                                </p>
+                                                            </div>
 
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                        <div>
-                                                            <p class="text-gray-500">IT Number</p>
-                                                            <p class="font-medium">{{ $asset->it_internal_number }}</p>
+                                                            <button
+                                                                type="button"
+                                                                class="btn-close"
+                                                                data-bs-dismiss="modal"
+                                                                aria-label="Close"
+                                                            ></button>
                                                         </div>
 
-                                                        <div>
-                                                            <p class="text-gray-500">Serial Number</p>
-                                                            <p class="font-medium">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                        <div class="modal-body">
+                                                            <div class="row g-3 app-detail-grid">
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">IT Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->it_internal_number }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Serial Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->serial_number ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Asset Number</span>
+                                                                        <p class="app-detail-value">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Category</span>
+                                                                        <p class="app-detail-value">{{ $asset->category ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Brand</span>
+                                                                        <p class="app-detail-value">{{ $asset->brand ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Model</span>
+                                                                        <p class="app-detail-value">{{ $asset->model ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Plant</span>
+                                                                        <p class="app-detail-value">{{ $asset->plant ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Business Unit</span>
+                                                                        <p class="app-detail-value">{{ $asset->business_unit ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">End User</span>
+                                                                        <p class="app-detail-value">{{ $asset->end_user ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-md-6">
+                                                                    <div class="app-detail-item">
+                                                                        <span class="app-detail-label">Warranty Expiry Date</span>
+                                                                        <p class="app-detail-value">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
 
-                                                        <div>
-                                                            <p class="text-gray-500">Asset Number</p>
-                                                            <p class="font-medium">{{ $asset->asset_number ?? 'N/A' }}</p>
+                                                        <div class="modal-footer">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-secondary"
+                                                                data-bs-dismiss="modal"
+                                                            >
+                                                                Close
+                                                            </button>
                                                         </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Category</p>
-                                                            <p class="font-medium">{{ $asset->category ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Brand</p>
-                                                            <p class="font-medium">{{ $asset->brand ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Model</p>
-                                                            <p class="font-medium">{{ $asset->model ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Plant</p>
-                                                            <p class="font-medium">{{ $asset->plant ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Business Unit</p>
-                                                            <p class="font-medium">{{ $asset->business_unit ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">End User</p>
-                                                            <p class="font-medium">{{ $asset->end_user ?? 'N/A' }}</p>
-                                                        </div>
-
-                                                        <div>
-                                                            <p class="text-gray-500">Warranty Expiry Date</p>
-                                                            <p class="font-medium">{{ $asset->warranty_expiry_date ?? 'N/A' }}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mt-6 text-right">
-                                                        <button type="button"
-                                                                onclick="document.getElementById('warranty-details-{{ $asset->id }}-three-months').close()"
-                                                                class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
-                                                            Close
-                                                        </button>
                                                     </div>
                                                 </div>
-                                            </dialog>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -684,91 +772,104 @@
         This modal opens from the "View More" button and displays all future
         warranty expirations ordered from closest to furthest.
     --}}
-    <dialog id="all-warranties-modal" class="rounded-lg shadow-xl p-0 w-full max-w-6xl">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-5">
+    <div
+    class="modal fade app-table-modal"
+    id="all-warranties-modal"
+    tabindex="-1"
+    aria-labelledby="allWarrantiesModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
                 <div>
-                    <h3 class="text-xl font-semibold">
+                    <h5 class="modal-title" id="allWarrantiesModalLabel">
                         All Warranty Expirations
-                    </h3>
-                    <p class="text-sm text-gray-500">
+                    </h5>
+
+                    <p class="modal-subtitle">
                         Assets ordered from the closest warranty expiration date to the furthest one.
                     </p>
                 </div>
 
-                <button type="button"
-                        onclick="document.getElementById('all-warranties-modal').close()"
-                        class="text-gray-500 hover:text-gray-800 text-2xl">
-                    &times;
-                </button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
 
-            <div class="overflow-x-auto max-h-[70vh] overflow-y-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-white sticky top-0">
-                        <tr class="border-b">
-                            <th class="text-left py-2 px-2">IT Number</th>
-                            <th class="text-left py-2 px-2">Category</th>
-                            <th class="text-left py-2 px-2">Brand</th>
-                            <th class="text-left py-2 px-2">Model</th>
-                            <th class="text-left py-2 px-2">Plant</th>
-                            <th class="text-left py-2 px-2">Warranty Start</th>
-                            <th class="text-left py-2 px-2">Warranty Expiry</th>
-                            <th class="text-left py-2 px-2">Time Left</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @forelse ($allWarrantiesExpiringSoon as $asset)
-                            @php
-                                /*
-                                    Calculate remaining warranty days.
-                                */
-                                $daysLeft = now()
-                                    ->startOfDay()
-                                    ->diffInDays(\Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(), false);
-                            @endphp
-
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 px-2 font-medium">{{ $asset->it_internal_number }}</td>
-                                <td class="py-2 px-2">{{ $asset->category ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->brand ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->model ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->plant ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->warranty_start_date ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->warranty_expiry_date ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">
-                                    @if ($daysLeft > 1)
-                                        {{ $daysLeft }} days left
-                                    @elseif ($daysLeft === 1)
-                                        1 day left
-                                    @elseif ($daysLeft === 0)
-                                        Expires today
-                                    @else
-                                        Expired
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle app-table mb-0">
+                        <thead>
                             <tr>
-                                <td colspan="8" class="py-3 text-gray-500">
-                                    No upcoming warranty expirations found.
-                                </td>
+                                <th>IT Number</th>
+                                <th>Category</th>
+                                <th>Brand</th>
+                                <th>Model</th>
+                                <th>Plant</th>
+                                <th>Warranty Start</th>
+                                <th>Warranty Expiry</th>
+                                <th>Time Left</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            @forelse ($allWarrantiesExpiringSoon as $asset)
+                                @php
+                                    $daysLeft = now()
+                                        ->startOfDay()
+                                        ->diffInDays(
+                                            \Carbon\Carbon::parse($asset->warranty_expiry_date)->startOfDay(),
+                                            false
+                                        );
+                                @endphp
+
+                                <tr>
+                                    <td class="fw-semibold">{{ $asset->it_internal_number }}</td>
+                                    <td>{{ $asset->category ?? 'N/A' }}</td>
+                                    <td>{{ $asset->brand ?? 'N/A' }}</td>
+                                    <td>{{ $asset->model ?? 'N/A' }}</td>
+                                    <td>{{ $asset->plant ?? 'N/A' }}</td>
+                                    <td>{{ $asset->warranty_start_date ?? 'N/A' }}</td>
+                                    <td>{{ $asset->warranty_expiry_date ?? 'N/A' }}</td>
+                                    <td>
+                                        @if ($daysLeft > 1)
+                                            {{ $daysLeft }} days left
+                                        @elseif ($daysLeft === 1)
+                                            1 day left
+                                        @elseif ($daysLeft === 0)
+                                            Expires today
+                                        @else
+                                            Expired
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        No upcoming warranty expirations found.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="mt-6 text-right">
-                <button type="button"
-                        onclick="document.getElementById('all-warranties-modal').close()"
-                        class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
                     Close
                 </button>
             </div>
         </div>
-    </dialog>
+    </div>
 
     {{--
         Full upcoming maintenance modal.
@@ -776,91 +877,104 @@
         This modal opens from the "View More" button and displays all future
         maintenance records ordered from closest to furthest.
     --}}
-    <dialog id="all-maintenance-modal" class="rounded-lg shadow-xl p-0 w-full max-w-6xl">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-5">
+    <div
+    class="modal fade app-table-modal"
+    id="all-maintenance-modal"
+    tabindex="-1"
+    aria-labelledby="allMaintenanceModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
                 <div>
-                    <h3 class="text-xl font-semibold">
+                    <h5 class="modal-title" id="allMaintenanceModalLabel">
                         All Upcoming Maintenance
-                    </h3>
-                    <p class="text-sm text-gray-500">
+                    </h5>
+
+                    <p class="modal-subtitle">
                         Assets ordered from the closest maintenance date to the furthest one.
                     </p>
                 </div>
 
-                <button type="button"
-                        onclick="document.getElementById('all-maintenance-modal').close()"
-                        class="text-gray-500 hover:text-gray-800 text-2xl">
-                    &times;
-                </button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
 
-            <div class="overflow-x-auto max-h-[70vh] overflow-y-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-white sticky top-0">
-                        <tr class="border-b">
-                            <th class="text-left py-2 px-2">IT Number</th>
-                            <th class="text-left py-2 px-2">Category</th>
-                            <th class="text-left py-2 px-2">Brand</th>
-                            <th class="text-left py-2 px-2">Model</th>
-                            <th class="text-left py-2 px-2">Plant</th>
-                            <th class="text-left py-2 px-2">End User</th>
-                            <th class="text-left py-2 px-2">Next Maintenance</th>
-                            <th class="text-left py-2 px-2">Time Left</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @forelse ($allUpcomingMaintenance as $asset)
-                            @php
-                                /*
-                                    Calculate remaining days before maintenance.
-                                */
-                                $daysLeft = now()
-                                    ->startOfDay()
-                                    ->diffInDays(\Carbon\Carbon::parse($asset->next_maintenance)->startOfDay(), false);
-                            @endphp
-
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 px-2 font-medium">{{ $asset->it_internal_number }}</td>
-                                <td class="py-2 px-2">{{ $asset->category ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->brand ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->model ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->plant ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->end_user ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">{{ $asset->next_maintenance ?? 'N/A' }}</td>
-                                <td class="py-2 px-2">
-                                    @if ($daysLeft > 1)
-                                        {{ $daysLeft }} days left
-                                    @elseif ($daysLeft === 1)
-                                        1 day left
-                                    @elseif ($daysLeft === 0)
-                                        Scheduled today
-                                    @else
-                                        Overdue
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle app-table mb-0">
+                        <thead>
                             <tr>
-                                <td colspan="8" class="py-3 text-gray-500">
-                                    No upcoming maintenance found.
-                                </td>
+                                <th>IT Number</th>
+                                <th>Category</th>
+                                <th>Brand</th>
+                                <th>Model</th>
+                                <th>Plant</th>
+                                <th>End User</th>
+                                <th>Next Maintenance</th>
+                                <th>Time Left</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            @forelse ($allUpcomingMaintenance as $asset)
+                                @php
+                                    $daysLeft = now()
+                                        ->startOfDay()
+                                        ->diffInDays(
+                                            \Carbon\Carbon::parse($asset->next_maintenance)->startOfDay(),
+                                            false
+                                        );
+                                @endphp
+
+                                <tr>
+                                    <td class="fw-semibold">{{ $asset->it_internal_number }}</td>
+                                    <td>{{ $asset->category ?? 'N/A' }}</td>
+                                    <td>{{ $asset->brand ?? 'N/A' }}</td>
+                                    <td>{{ $asset->model ?? 'N/A' }}</td>
+                                    <td>{{ $asset->plant ?? 'N/A' }}</td>
+                                    <td>{{ $asset->end_user ?? 'N/A' }}</td>
+                                    <td>{{ $asset->next_maintenance ?? 'N/A' }}</td>
+                                    <td>
+                                        @if ($daysLeft > 1)
+                                            {{ $daysLeft }} days left
+                                        @elseif ($daysLeft === 1)
+                                            1 day left
+                                        @elseif ($daysLeft === 0)
+                                            Scheduled today
+                                        @else
+                                            Overdue
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        No upcoming maintenance found.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="mt-6 text-right">
-                <button type="button"
-                        onclick="document.getElementById('all-maintenance-modal').close()"
-                        class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
                     Close
                 </button>
             </div>
         </div>
-    </dialog>
+    </div>
 
     {{--
         Chart.js library.
@@ -1630,7 +1744,10 @@
             const rowsThreeMonths = document.getElementById('warrantyRowsThreeMonths');
 
             if (value === 'all') {
-                document.getElementById('all-warranties-modal').showModal();
+                bootstrap.Modal
+                    .getOrCreateInstance(document.getElementById('all-warranties-modal'))
+                    .show();
+
                 document.getElementById('warrantyRangeFilter').value = '14';
                 rows14Days.classList.remove('hidden');
                 rowsThreeMonths.classList.add('hidden');
@@ -1652,7 +1769,10 @@
             const rowsThreeMonths = document.getElementById('maintenanceRowsThreeMonths');
 
             if (value === 'all') {
-                document.getElementById('all-maintenance-modal').showModal();
+                bootstrap.Modal
+                    .getOrCreateInstance(document.getElementById('all-maintenance-modal'))
+                    .show();
+
                 document.getElementById('maintenanceRangeFilter').value = '14';
                 rows14Days.classList.remove('hidden');
                 rowsThreeMonths.classList.add('hidden');

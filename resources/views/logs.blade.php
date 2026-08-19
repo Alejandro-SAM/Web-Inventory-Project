@@ -7,18 +7,6 @@
 
         <!-- PAGE TITLE -->
         <div class="d-flex justify-content-between align-items-center app-page-title">
-            <div>
-                <h1 class="mb-0">
-                    {{ $tab === 'logins' ? 'Login Logs' : 'Activity Logs' }}
-                </h1>
-
-                <p class="text-muted mb-0">
-                    {{ $tab === 'logins'
-                        ? 'Review user login records and access evidence.'
-                        : 'Review system activity records and user changes.' }}
-                </p>
-            </div>
-
             <!-- Switch table button -->
             <div>
                 @if ($tab === 'logins')
