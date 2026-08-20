@@ -111,6 +111,11 @@ Route::middleware(['auth'])->group(function () {
         [InventoryController::class, 'updateImportRow']
     )->name('inventory.import.row.update');
 
+    Route::delete(
+        '/inventory/import/row/{row}',
+        [InventoryController::class, 'destroyImportRow']
+    )->name('inventory.import.row.destroy');
+
     Route::post(
         '/inventory/import/{batchId}/confirm',
         [InventoryController::class, 'confirmImport']

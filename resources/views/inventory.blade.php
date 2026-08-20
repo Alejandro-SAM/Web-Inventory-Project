@@ -915,7 +915,10 @@
                                 // Normalize the state so it can be used safely as a CSS class
                                 $rowState = strtolower(trim($item->state ?? ''));
                             @endphp
-                            <tr class="inventory-state-row inventory-state-{{ $rowState }}">
+                            <tr
+                                class="inventory-state-row inventory-state-{{ $rowState }}"
+                                data-inventory-row-id="{{ $item->id }}"
+                            >
                                 <!-- Actions -->
                                 <td>
                                     <div class="inventory-row-actions">
@@ -1113,7 +1116,12 @@
                                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                                         <div class="modal-content">
 
-                                            <form method="POST" action="{{ route('inventory.update', $item->id) }}" class="inventory-edit-form" data-asset-id="{{ $item->id }}">
+                                            <form
+                                                method="POST"
+                                                action="{{ route('inventory.update', ['inventory' => $item->id] + request()->query()) }}"
+                                                class="inventory-edit-form"
+                                                data-asset-id="{{ $item->id }}"
+                                            >
                                                 @csrf
                                                 @method('PUT')
 
@@ -1435,30 +1443,39 @@
                                                                     Maintenance Responsible
                                                                 </label>
 
-                                                                <select
-                                                                    name="maintenance_responsible_id"
-                                                                    class="form-select"
-                                                                >
-                                                                    <option value="">
-                                                                        No responsible assigned
-                                                                    </option>
-
-                                                                    @foreach ($maintenanceResponsibleOptions as $responsible)
-                                                                        <option
-                                                                            value="{{ $responsible->id }}"
-                                                                            {{ (string) old(
-                                                                                'maintenance_responsible_id',
-                                                                                $item->maintenance_responsible_id
-                                                                            ) === (string) $responsible->id ? 'selected' : '' }}
-                                                                        >
-                                                                            {{ $responsible->name }}
-
-                                                                            @if (!empty($responsible->employee_number))
-                                                                                — {{ $responsible->employee_number }}
-                                                                            @endif
+                                                                @if (Auth::user()->user_level === 'Admin')
+                                                                    <select
+                                                                        name="maintenance_responsible_id"
+                                                                        class="form-select"
+                                                                    >
+                                                                        <option value="">
+                                                                            No responsible assigned
                                                                         </option>
-                                                                    @endforeach
-                                                                </select>
+
+                                                                        @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                                            <option
+                                                                                value="{{ $responsible->id }}"
+                                                                                {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
+                                                                            >
+                                                                                {{ $responsible->name }}
+
+                                                                                @if (!empty($responsible->employee_number))
+                                                                                    — {{ $responsible->employee_number }}
+                                                                                @endif
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                @else
+                                                                    <input
+                                                                        type="text"
+                                                                        class="form-control"
+                                                                        value="No responsible assigned"
+                                                                        disabled
+                                                                    >
+                                                                    <small class="form-text text-muted">
+                                                                        Only administrators can assign the maintenance responsible.
+                                                                    </small>
+                                                                @endif
                                                             </div>
 
                                                             <div class="col-md-4">
@@ -1498,10 +1515,6 @@
                                                                         value="{{ ucfirst($item->effective_maintenance_status) }}"
                                                                         disabled
                                                                     >
-
-                                                                    <small class="form-text text-muted">
-                                                                        Only administrators can change this status.
-                                                                    </small>
                                                                 @endif
                                                             </div>
                                                         </div>
@@ -1697,7 +1710,7 @@
 
                                                 </div>
 
-                                                <div class="modal-footer">
+                                                <div class="modal-footer justify-content-start">
                                                     <button
                                                         type="button"
                                                         class="btn btn-secondary"
@@ -2224,7 +2237,7 @@
 
                         </div>
 
-                        <div class="modal-footer">
+                        <div class="modal-footer justify-content-start">
                             <button
                                 type="button"
                                 class="btn btn-secondary"
@@ -2883,7 +2896,7 @@
         */
         editForms.forEach(function (form) {
 
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', async function (event) {
 
                 const assetId = String(
                     form.dataset.assetId
@@ -2955,6 +2968,185 @@
                 form.appendChild(
                     selectedIdsInput
                 );
+
+                /*
+                |------------------------------------------------------------------
+                | Keep the traditional submit for bulk editing
+                |------------------------------------------------------------------
+                |
+                | Several rows, including rows on other pages, may change. A full
+                | reload guarantees that filters and calculated values stay exact.
+                |
+                */
+                if (idsToSend.length > 1) {
+                    return;
+                }
+
+                /* Individual edits are saved without reloading the full page. */
+                event.preventDefault();
+
+                if (form.dataset.submitting === 'true') {
+                    return;
+                }
+
+                const submitButton = form.querySelector(
+                    'button[type="submit"]'
+                );
+
+                const originalButtonText = submitButton
+                    ? submitButton.textContent
+                    : '';
+
+                form.dataset.submitting = 'true';
+
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Saving...';
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        if (response.status === 422 && result.errors) {
+                            const validationMessages = Object.values(
+                                result.errors
+                            ).flat();
+
+                            throw new Error(validationMessages.join('\n'));
+                        }
+
+                        throw new Error(
+                            result.message || 'The asset could not be updated.'
+                        );
+                    }
+
+                    /*
+                    * Request the current filtered page and copy only the updated
+                    * row cells. The browser never leaves the current page, scroll
+                    * position, filters or pagination.
+                    */
+                    const refreshedPageResponse = await fetch(
+                        window.location.href,
+                        {
+                            headers: {
+                                'Accept': 'text/html',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }
+                    );
+
+                    if (!refreshedPageResponse.ok) {
+                        throw new Error(
+                            'The asset was saved, but the table row could not be refreshed.'
+                        );
+                    }
+
+                    const refreshedHtml = await refreshedPageResponse.text();
+                    const refreshedDocument = new DOMParser().parseFromString(
+                        refreshedHtml,
+                        'text/html'
+                    );
+
+                    const rowSelector =
+                        `[data-inventory-row-id="${assetId}"]`;
+
+                    const currentRow = document.querySelector(rowSelector);
+                    const refreshedRow = refreshedDocument.querySelector(
+                        rowSelector
+                    );
+
+                    if (currentRow && refreshedRow) {
+                        const currentCells = currentRow.children;
+                        const refreshedCells = refreshedRow.children;
+
+                        currentRow.className = refreshedRow.className;
+
+                        /* Keep the first cell so its buttons and checkbox retain
+                           their already-registered JavaScript listeners. */
+                        for (
+                            let index = 1;
+                            index < currentCells.length;
+                            index++
+                        ) {
+                            if (refreshedCells[index]) {
+                                currentCells[index].innerHTML =
+                                    refreshedCells[index].innerHTML;
+                            }
+                        }
+                    }
+
+                    const modalElement = form.closest('.modal');
+
+                    if (modalElement) {
+                        const modalCloseButton = modalElement.querySelector(
+                            '[data-bs-dismiss="modal"]'
+                        );
+
+                        if (modalCloseButton) {
+                            modalCloseButton.click();
+                        }
+                    }
+
+                    const previousAlert = document.getElementById(
+                        'inventoryAjaxSuccessAlert'
+                    );
+
+                    if (previousAlert) {
+                        previousAlert.remove();
+                    }
+
+                    const successAlert = document.createElement('div');
+                    successAlert.id = 'inventoryAjaxSuccessAlert';
+                    successAlert.className =
+                        'alert alert-success alert-dismissible fade show';
+                    successAlert.setAttribute('role', 'alert');
+                    successAlert.textContent = result.message;
+
+                    const closeButton = document.createElement('button');
+                    closeButton.type = 'button';
+                    closeButton.className = 'btn-close';
+                    closeButton.setAttribute('data-bs-dismiss', 'alert');
+                    closeButton.setAttribute('aria-label', 'Close');
+                    successAlert.appendChild(closeButton);
+
+                    const inventoryTable = document.getElementById(
+                        'inventoryTable'
+                    );
+
+                    if (inventoryTable) {
+                        inventoryTable.parentElement.before(successAlert);
+                    }
+
+                    window.setTimeout(function () {
+                        if (successAlert.isConnected) {
+                            successAlert.classList.remove('show');
+
+                            window.setTimeout(function () {
+                                successAlert.remove();
+                            }, 150);
+                        }
+                    }, 4000);
+
+                } catch (error) {
+                    window.alert(error.message);
+                } finally {
+                    form.dataset.submitting = 'false';
+
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalButtonText;
+                    }
+                }
             });
         });
 

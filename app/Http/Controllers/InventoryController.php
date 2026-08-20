@@ -231,7 +231,8 @@ class InventoryController extends Controller
         ->pluck('plant');
 
         $maintenanceResponsibleOptions = User::query()
-            ->where('is_active', true) //EVITAR ASIGNAR A USUARIOS INACTIVOS COMO RESPONSABLES DE MANTENIMIENTO 
+            ->where('is_active', true) // Evitar asignar usuarios inactivos
+            ->whereIn('user_level', ['Admin', 'User']) // Excluir usuarios Read
             ->orderBy('name')
             ->get(['id', 'name', 'employee_number']);
 
@@ -1083,6 +1084,25 @@ private function inventoryLogFields(): array
             return $updatedCount;
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | AJAX response for an individual edit
+        |--------------------------------------------------------------------------
+        |
+        | The inventory view uses this response to refresh only the edited row.
+        | Bulk edits continue using the normal redirect because they may modify
+        | assets that are not visible on the current page.
+        |
+        */
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Asset updated successfully.',
+                'asset_id' => $inventory->id,
+                'updated_count' => $updatedCount,
+            ]);
+        }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -1270,9 +1290,60 @@ private function inventoryLogFields(): array
             'status' => $result['status'],
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $row->status === 'valid'
+                    ? 'Row corrected successfully and marked as valid.'
+                    : 'Row saved, but it still contains errors.',
+                'row' => [
+                    'id' => $row->id,
+                    'row_number' => $row->row_number,
+                    'status' => $row->status,
+                    'data' => $row->normalized_data ?? [],
+                    'errors' => $row->errors ?? [],
+                ],
+            ]);
+        }
+
         return redirect()
-            ->route('inventory.import.invalid', $row->batch_id)
+            ->route(
+                'inventory.import.invalid',
+                ['batchId' => $row->batch_id] + $request->query()
+            )
             ->with('success', 'Import row updated successfully.');
+    }
+
+    // Discard one temporary row from the current import batch
+    public function destroyImportRow(Request $request, InventoryImportRow $row)
+    {
+        if (auth()->user()->user_level === 'Read') {
+            abort(403, 'You do not have permission to discard import rows.');
+        }
+
+        if ((int) $row->created_by !== (int) auth()->id()) {
+            abort(403, 'This import row does not belong to you.');
+        }
+
+        $batchId = $row->batch_id;
+        $rowId = $row->id;
+
+        $row->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Import row discarded successfully.',
+                'row_id' => $rowId,
+            ]);
+        }
+
+        return redirect()
+            ->route(
+                'inventory.import.invalid',
+                ['batchId' => $batchId] + $request->query()
+            )
+            ->with('success', 'Import row discarded successfully.');
     }
 
         // Confirm import of valid rows
