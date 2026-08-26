@@ -7,6 +7,11 @@ use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+/*Badges imports */
+use App\Models\Badge;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use App\Models\Inventory;
 
 class UserController extends Controller
 {
@@ -23,12 +28,15 @@ class UserController extends Controller
      */
     public function index()
     {
+        $this->authorizeAdmin();
 
-        $this->authorizeAdmin(); /* CALLS FUNCTION TO CHECK IF USER IS ADMIN */
+        $users = User::with('badges')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-        $users = User::orderBy('created_at', 'desc')->paginate(10);
+        $badges = Badge::orderBy('name')->get();
 
-        return view('users', compact('users'));
+        return view('users', compact('users', 'badges'));
     }
 
     /**
@@ -134,20 +142,338 @@ class UserController extends Controller
                 'string',
             'min:6',
             ],
+
+            'badges' => [
+                'nullable',
+                'array',
+            ],
+
+            'badges.*' => [
+                'integer',
+                'exists:badges,id',
+            ],
+
+            'it_room_responsible_plant' => [
+                'nullable',
+                Rule::in(['B', 'D', 'G', 'H', 'MP']),
+            ],
         ]);
 
-    $user->department = $validated['department'] ?? null;
-    $user->user_level = $validated['user_level'];
-    $user->is_active = $validated['is_active'];
-
     $passwordChanged = false;
+    
+    DB::transaction(function () use (
+        $user,
+        $validated,
+        &$passwordChanged
+    ) {
 
-    if (!empty($validated['password'])) {
-        $user->password = Hash::make($validated['password']);
-        $passwordChanged = true;
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | Current IT Room assignment
+        |--------------------------------------------------------------------------
+        |
+        | Save the previous plant before changing any badge assignment.
+        |
+        */
 
-    $user->save();
+        $itRoomBadge = Badge::where(
+            'slug',
+            'it_room_responsible'
+        )->first();
+
+        $previousItRoomPlant = null;
+
+        if ($itRoomBadge) {
+            $previousItRoomPlant = DB::table('user_badges')
+                ->where('user_id', $user->id)
+                ->where('badge_id', $itRoomBadge->id)
+                ->where('is_active', true)
+                ->value('plant');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update main user data
+        |--------------------------------------------------------------------------
+        */
+
+        $user->department = $validated['department'] ?? null;
+        $user->user_level = $validated['user_level'];
+        $user->is_active = $validated['is_active'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+            $passwordChanged = true;
+        }
+
+        $user->save();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update badges
+        |--------------------------------------------------------------------------
+        */
+
+        if ($user->user_level !== 'User') {
+
+            DB::table('user_badges')
+                ->where('user_id', $user->id)
+                ->update([
+                    'is_active' => false,
+                    'updated_at' => now(),
+                ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Remove previous IT Room responsibility
+            |--------------------------------------------------------------------------
+            */
+            if ($previousItRoomPlant) {
+
+                Inventory::query()
+                    ->where('plant', $previousItRoomPlant)
+                    ->whereRaw('UPPER(TRIM(location)) = ?', ['IT ROOM'])
+                    ->update([
+                        'end_user' => null,
+                        'employee_id' => null,
+                    ]);
+            }
+
+            return;
+        }
+
+
+        $selectedBadges = $validated['badges'] ?? [];
+
+        $selectedPlant =
+            $validated['it_room_responsible_plant'] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate IT Room Responsible BEFORE changing anything
+        |--------------------------------------------------------------------------
+        */
+
+        if ($itRoomBadge && $selectedPlant) {
+
+            $existingResponsible = DB::table('user_badges')
+                ->where('badge_id', $itRoomBadge->id)
+                ->where('plant', $selectedPlant)
+                ->where('is_active', true)
+                ->where('user_id', '!=', $user->id)
+                ->first();
+
+            if ($existingResponsible) {
+
+                throw ValidationException::withMessages([
+                    'it_room_responsible_plant' =>
+                        "Plant {$selectedPlant} already has an active IT Room Responsible.",
+                ]);
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Deactivate normal badges
+        |--------------------------------------------------------------------------
+        */
+
+        $normalBadgeQuery = DB::table('user_badges')
+            ->where('user_id', $user->id);
+
+        if ($itRoomBadge) {
+            $normalBadgeQuery->where(
+                'badge_id',
+                '!=',
+                $itRoomBadge->id
+            );
+        }
+
+        $normalBadgeQuery->update([
+            'is_active' => false,
+            'updated_at' => now(),
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reactivate or create normal checkbox badges
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($selectedBadges as $badgeId) {
+
+            $badge = Badge::find($badgeId);
+
+            if (!$badge) {
+                continue;
+            }
+
+            if ($badge->slug === 'it_room_responsible') {
+                continue;
+            }
+
+            $existingBadge = DB::table('user_badges')
+                ->where('user_id', $user->id)
+                ->where('badge_id', $badgeId)
+                ->whereNull('plant')
+                ->first();
+
+            if ($existingBadge) {
+
+                DB::table('user_badges')
+                    ->where('id', $existingBadge->id)
+                    ->update([
+                        'is_active' => true,
+                        'updated_at' => now(),
+                    ]);
+
+            } else {
+
+                DB::table('user_badges')->insert([
+                    'user_id' => $user->id,
+                    'badge_id' => $badgeId,
+                    'plant' => null,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | IT Room Responsible
+        |--------------------------------------------------------------------------
+        */
+
+        if ($itRoomBadge) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Deactivate previous IT Room assignments for this user
+            |--------------------------------------------------------------------------
+            */
+            DB::table('user_badges')
+                ->where('user_id', $user->id)
+                ->where('badge_id', $itRoomBadge->id)
+                ->update([
+                    'is_active' => false,
+                    'updated_at' => now(),
+                ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | No plant selected
+            |--------------------------------------------------------------------------
+            |
+            | The user is no longer responsible for an IT Room.
+            | Clear End User and Employee ID from the previous plant's IT Room assets.
+            |
+            */
+            if (!$selectedPlant) {
+
+                if ($previousItRoomPlant) {
+
+                    Inventory::query()
+                        ->where('plant', $previousItRoomPlant)
+                        ->whereRaw(
+                            'UPPER(TRIM(location)) = ?',
+                            ['IT ROOM']
+                        )
+                        ->update([
+                            'end_user' => null,
+                            'employee_id' => null,
+                        ]);
+                }
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reactivate existing assignment or create it
+            |--------------------------------------------------------------------------
+            */
+
+            $existingUserAssignment = DB::table('user_badges')
+                ->where('user_id', $user->id)
+                ->where('badge_id', $itRoomBadge->id)
+                ->where('plant', $selectedPlant)
+                ->first();
+
+            if ($existingUserAssignment) {
+
+                DB::table('user_badges')
+                    ->where('id', $existingUserAssignment->id)
+                    ->update([
+                        'is_active' => true,
+                        'updated_at' => now(),
+                    ]);
+
+            } else {
+
+                DB::table('user_badges')->insert([
+                    'user_id' => $user->id,
+                    'badge_id' => $itRoomBadge->id,
+                    'plant' => $selectedPlant,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Clear assets from previous plant
+            |--------------------------------------------------------------------------
+            |
+            | Only necessary when the responsible plant actually changed.
+            |
+            */
+
+            if (
+                $previousItRoomPlant &&
+                $previousItRoomPlant !== $selectedPlant
+            ) {
+
+                Inventory::query()
+                    ->where('plant', $previousItRoomPlant)
+                    ->whereRaw(
+                        'UPPER(TRIM(location)) = ?',
+                        ['IT ROOM']
+                    )
+                    ->update([
+                        'end_user' => null,
+                        'employee_id' => null,
+                    ]);
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Synchronize assets in new/current plant
+            |--------------------------------------------------------------------------
+            */
+
+            Inventory::query()
+                ->where('plant', $selectedPlant)
+                ->whereRaw(
+                    'UPPER(TRIM(location)) = ?',
+                    ['IT ROOM']
+                )
+                ->update([
+                    'end_user' => $user->name,
+                    'employee_id' => $user->employee_number,
+                ]);
+        }
+    });
 
         $newValues = [ // STORE NEW VALUES TO COMPARE CHANGES IN THE LOGS */
             'department' => $user->department,

@@ -158,6 +158,143 @@
                                                         </div>
                                                     </div>
 
+                                                <!-- BADGES SECTION -->
+                                                @if ($user->user_level === 'User')
+
+                                                    <div class="col-12 user-badges-section">
+
+                                                        <div class="user-badges-header">
+                                                            <h6>Additional Badges</h6>
+
+                                                            <p>
+                                                                Assign additional permissions or responsibilities to this user.
+                                                            </p>
+                                                        </div>
+
+                                                        <div class="user-badge-list">
+
+                                                            @foreach ($badges as $badge)
+
+                                                                @php
+
+                                                                    $assignedBadge = $user->badges
+                                                                        ->first(function ($userBadge) use ($badge) {
+                                                                            return $userBadge->id === $badge->id
+                                                                                && $userBadge->pivot->is_active;
+                                                                        });
+
+                                                                    $isAssigned = $assignedBadge !== null;
+
+                                                                @endphp
+
+                                                                <div class="user-badge-item">
+
+                                                                    @if ($badge->slug === 'it_room_responsible')
+
+                                                                        @php
+                                                                            $assignedBadge = $user->badges
+                                                                                ->first(function ($userBadge) use ($badge) {
+                                                                                    return $userBadge->id === $badge->id
+                                                                                        && $userBadge->pivot->is_active;
+                                                                                });
+
+                                                                            $currentPlant = $assignedBadge?->pivot->plant;
+                                                                        @endphp
+
+                                                                        <div class="user-badge-main">
+
+                                                                            <span class="user-badge-title">
+                                                                                {{ $badge->name }}
+                                                                            </span>
+
+                                                                            @if ($badge->description)
+                                                                                <span class="user-badge-description">
+                                                                                    {{ $badge->description }}
+                                                                                </span>
+                                                                            @endif
+
+                                                                        </div>
+
+                                                                        <div class="user-badge-options">
+
+                                                                            <label class="form-label">
+                                                                                Responsible Plant
+                                                                            </label>
+
+                                                                            <select
+                                                                                name="it_room_responsible_plant"
+                                                                                class="form-select form-select-sm"
+                                                                            >
+                                                                                <option value="">
+                                                                                    No plant assigned
+                                                                                </option>
+
+                                                                                @foreach (['B', 'D', 'G', 'H', 'MP'] as $plant)
+
+                                                                                    <option
+                                                                                        value="{{ $plant }}"
+                                                                                        {{ $currentPlant === $plant ? 'selected' : '' }}
+                                                                                    >
+                                                                                        Plant {{ $plant }}
+                                                                                    </option>
+
+                                                                                @endforeach
+
+                                                                            </select>
+
+                                                                        </div>
+
+                                                                    @else
+
+                                                                        @php
+                                                                            $assignedBadge = $user->badges
+                                                                                ->first(function ($userBadge) use ($badge) {
+                                                                                    return $userBadge->id === $badge->id
+                                                                                        && $userBadge->pivot->is_active;
+                                                                                });
+
+                                                                            $isAssigned = $assignedBadge !== null;
+                                                                        @endphp
+
+                                                                        <div class="form-check user-badge-main">
+
+                                                                            <input
+                                                                                class="form-check-input badge-checkbox"
+                                                                                type="checkbox"
+                                                                                name="badges[]"
+                                                                                value="{{ $badge->id }}"
+                                                                                id="badge{{ $user->id }}_{{ $badge->id }}"
+                                                                                data-badge="{{ $badge->slug }}"
+                                                                                data-user="{{ $user->id }}"
+                                                                                {{ $isAssigned ? 'checked' : '' }}
+                                                                            >
+
+                                                                            <label
+                                                                                class="form-check-label user-badge-title"
+                                                                                for="badge{{ $user->id }}_{{ $badge->id }}"
+                                                                            >
+                                                                                {{ $badge->name }}
+                                                                            </label>
+
+                                                                            @if ($badge->description)
+                                                                                <span class="user-badge-description">
+                                                                                    {{ $badge->description }}
+                                                                                </span>
+                                                                            @endif
+
+                                                                        </div>
+
+                                                                    @endif
+
+                                                                </div>
+
+                                                            @endforeach
+
+                                                        </div>
+
+                                                    </div>
+
+                                                @endif
                                                 </div>
                                             </div>
 

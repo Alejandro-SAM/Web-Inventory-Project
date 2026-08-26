@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,66 @@ class User extends Authenticatable
         'password',
     ];
 
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot([
+                'id',
+                'plant',
+                'is_active',
+            ])
+            ->withTimestamps();
+    }
+
+    public function hasBadge(string $slug): bool
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Administrators automatically have access to all badge permissions
+        |--------------------------------------------------------------------------
+        */
+        if ($this->user_level === 'Admin') {
+            return true;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Only User-level accounts can currently use badges
+        |--------------------------------------------------------------------------
+        */
+        if ($this->user_level !== 'User') {
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check active badge assignment
+        |--------------------------------------------------------------------------
+        */
+        return $this->badges()
+            ->where('badges.slug', $slug)
+            ->wherePivot('is_active', true)
+            ->exists();
+    }
+
+
+    public function hasBadgeForPlant(string $slug, string $plant): bool
+    {
+        if ($this->user_level === 'Admin') {
+            return true;
+        }
+
+        if ($this->user_level !== 'User') {
+            return false;
+        }
+
+        return $this->badges()
+            ->where('badges.slug', $slug)
+            ->wherePivot('plant', $plant)
+            ->wherePivot('is_active', true)
+            ->exists();
+    }
+    
     protected $hidden = [
         'password',
         'remember_token',

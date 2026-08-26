@@ -1529,3 +1529,77 @@ h6 {
     font-size: 0.72rem;
     line-height: 1.2;
 }
+
+/* =========================================================
+   USER BADGES
+   ========================================================= */
+
+.user-badges-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dbe3ec;
+}
+
+.user-badges-header {
+    margin-bottom: 1rem;
+}
+
+.user-badges-header h6 {
+    margin-bottom: 0.25rem;
+    color: #245487;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.user-badges-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
+.user-badge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-badge-item {
+    padding: 1rem;
+    background-color: #f8fafc;
+    border: 1px solid #dbe3ec;
+    border-radius: 0.65rem;
+}
+
+.user-badge-item:hover {
+    background-color: #f1f5f9;
+}
+
+.user-badge-title {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.user-badge-main {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+}
+
+.user-badge-title {
+    flex-shrink: 0;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.user-badge-description {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 400;
+}
+
+.user-badge-options {
+    margin-top: 0.85rem;
+    margin-left: 1.5rem;
+    max-width: 260px;
+}

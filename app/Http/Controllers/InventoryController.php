@@ -245,8 +245,42 @@ class InventoryController extends Controller
             'classificationOptions' => $this->classificationOptions(),
             'plantOptions' => $plantOptions,
             'maintenanceResponsibleOptions' => $maintenanceResponsibleOptions,
+            'canManageMaintenance' => $this->canManageMaintenance(),
         ]);
     }
+private function applyItRoomResponsible(array $data): array
+{
+    $location = strtoupper(trim($data['location'] ?? ''));
+
+    if ($location !== 'IT ROOM') {
+        return $data;
+    }
+
+    $plant = $data['plant'] ?? null;
+
+    if (!$plant) {
+        return $data;
+    }
+
+    $responsible = User::query()
+        ->whereHas('badges', function ($query) use ($plant) {
+            $query
+                ->where('badges.slug', 'it_room_responsible')
+                ->where('user_badges.plant', $plant)
+                ->where('user_badges.is_active', true);
+        })
+        ->first();
+
+    if ($responsible) {
+        $data['end_user'] = $responsible->name;
+        $data['employee_id'] = $responsible->employee_number;
+    } else {
+        $data['end_user'] = null;
+        $data['employee_id'] = null;
+    }
+
+    return $data;
+}
 
 public function create()
 {
@@ -345,6 +379,26 @@ private function inventoryLogFields(): array
         ];
     }
 
+    /**
+     * Determine whether the current user can manage
+     * inventory maintenance information.
+     */
+    private function canManageMaintenance(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->user_level === 'Admin') {
+            return true;
+        }
+
+        return $user->user_level === 'User'
+            && $user->hasBadge('maintenance_management');
+    }
+
     public function store(Request $request)
     {
 
@@ -352,6 +406,8 @@ private function inventoryLogFields(): array
     if (auth()->user()->user_level === 'Read') {
     abort(403, 'You do not have permission to create inventory records.');
     }
+
+    $canManageMaintenance = $this->canManageMaintenance();
 
         $validated = $request->validate([
             'it_internal_number' => ['nullable', 'string', 'max:255', 'unique:inventory,it_internal_number'],
@@ -371,8 +427,8 @@ private function inventoryLogFields(): array
             'end_user' => ['required', 'string', 'max:255'],
             'responsive' => ['nullable', 'boolean'],
             'employee_id' => ['nullable', 'string', 'max:255'],
-            'next_maintenance' => ['nullable', 'date'],
-            'maintenance_responsible_id' => ['nullable','integer',Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_active', true)),],
+            'next_maintenance' => [Rule::prohibitedIf(!$canManageMaintenance), 'nullable', 'date', ],
+            'maintenance_responsible_id' => [Rule::prohibitedIf(!$canManageMaintenance), 'nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query->where('is_active', true)), ],
             'operating_system' => ['nullable', 'string', 'max:255'],
             'confidentiality' => ['nullable', 'integer', 'between:0,3'],
             'integrity' => ['nullable', 'integer', 'between:0,3'],
@@ -402,6 +458,17 @@ private function inventoryLogFields(): array
         );
 
         $validated['created_by'] = auth()->id();
+
+        /*
+        |--------------------------------------------------------------------------
+        | IT Room Responsible
+        |--------------------------------------------------------------------------
+        |
+        | If the asset is located in an IT Room, automatically assign
+        | the responsible user of that plant as End User.
+        |
+        */
+        $validated = $this->applyItRoomResponsible($validated);
 
         $inventory = Inventory::create($validated);
 
@@ -542,6 +609,8 @@ private function inventoryLogFields(): array
             abort(403, 'You do not have permission to edit inventory assets.');
         }
 
+        $canManageMaintenance = $this->canManageMaintenance();
+
 
         /*
         |--------------------------------------------------------------------------
@@ -650,11 +719,13 @@ private function inventoryLogFields(): array
             ],
 
             'next_maintenance' => [
+                Rule::prohibitedIf(!$canManageMaintenance),
                 'nullable',
                 'date',
             ],
 
             'maintenance_responsible_id' => [
+                Rule::prohibitedIf(!$canManageMaintenance),
                 'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where(
@@ -704,32 +775,22 @@ private function inventoryLogFields(): array
                     'to_be_deleted',
                 ]),
             ],
+
+            'badges' => [
+                'nullable',
+                'array',
+            ],
+
+            'badges.*' => [
+                'integer',
+                'exists:badges,id',
+            ],
+
+            'it_room_responsible_plant' => [
+                'nullable',
+                Rule::in(['B', 'D', 'G', 'H', 'MP']),
+            ],
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Maintenance status
-        |--------------------------------------------------------------------------
-        |
-        | Only administrators can manually change this value.
-        |
-        */
-        if (auth()->user()->user_level === 'Admin') {
-            $validatedStatus = $request->validate([
-                'maintenance_status' => [
-                    'required',
-                    Rule::in([
-                        'pending',
-                        'completed',
-                    ]),
-                ],
-            ]);
-
-            $validated['maintenance_status'] =
-                $validatedStatus['maintenance_status'];
-        }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -768,6 +829,16 @@ private function inventoryLogFields(): array
             true
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | IT Room Responsible
+        |--------------------------------------------------------------------------
+        |
+        | Recalculate End User and Employee ID whenever the resulting
+        | asset location is IT Room.
+        |
+        */
+        $validated = $this->applyItRoomResponsible($validated);
 
         /*
         |--------------------------------------------------------------------------
@@ -940,6 +1011,43 @@ private function inventoryLogFields(): array
 
                     $bulkUpdateData[$field] =
                         $validated[$field] ?? null;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Recalculate IT Room Responsible per selected asset
+                |--------------------------------------------------------------------------
+                |
+                | Each selected asset may belong to a different plant.
+                | Therefore, End User and Employee ID must be calculated
+                | individually instead of copied from the main edited asset.
+                |
+                */
+
+                $finalLocation = array_key_exists('location', $bulkUpdateData)
+                    ? $bulkUpdateData['location']
+                    : $selectedInventory->location;
+
+                $finalPlant = array_key_exists('plant', $bulkUpdateData)
+                    ? $bulkUpdateData['plant']
+                    : $selectedInventory->plant;
+
+                $itRoomData = [
+                    'location' => $finalLocation,
+                    'plant' => $finalPlant,
+                    'end_user' => array_key_exists('end_user', $bulkUpdateData)
+                        ? $bulkUpdateData['end_user']
+                        : $selectedInventory->end_user,
+                    'employee_id' => array_key_exists('employee_id', $bulkUpdateData)
+                        ? $bulkUpdateData['employee_id']
+                        : $selectedInventory->employee_id,
+                ];
+
+                $itRoomData = $this->applyItRoomResponsible($itRoomData);
+
+                if (strtoupper(trim($finalLocation ?? '')) === 'IT ROOM') {
+                    $bulkUpdateData['end_user'] = $itRoomData['end_user'] ?? null;
+                    $bulkUpdateData['employee_id'] = $itRoomData['employee_id'] ?? null;
                 }
 
 

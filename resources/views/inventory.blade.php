@@ -1418,10 +1418,21 @@
                                                     <section class="inventory-form-section">
                                                         <div class="inventory-form-section-header">
                                                             <h6>Maintenance</h6>
-                                                            <span>Schedule, assignment and current maintenance status.</span>
+
+                                                            @if ($canManageMaintenance)
+                                                                <span>
+                                                                    Schedule and assign the next maintenance activity.
+                                                                </span>
+                                                            @else
+                                                                <span>
+                                                                    Maintenance information is managed by authorized users.
+                                                                </span>
+                                                            @endif
                                                         </div>
 
                                                         <div class="row g-3">
+
+                                                            <!-- Next Maintenance -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Next Maintenance
@@ -1431,19 +1442,20 @@
                                                                     type="date"
                                                                     name="next_maintenance"
                                                                     class="form-control"
-                                                                    value="{{ old(
-                                                                        'next_maintenance',
-                                                                        optional($item->next_maintenance)->format('Y-m-d')
-                                                                    ) }}"
+                                                                    value="{{ old('next_maintenance') }}"
+                                                                    {{ !$canManageMaintenance ? 'disabled' : '' }}
                                                                 >
                                                             </div>
 
+
+                                                            <!-- Maintenance Responsible -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Maintenance Responsible
                                                                 </label>
 
-                                                                @if (Auth::user()->user_level === 'Admin')
+                                                                @if ($canManageMaintenance)
+
                                                                     <select
                                                                         name="maintenance_responsible_id"
                                                                         class="form-select"
@@ -1455,7 +1467,12 @@
                                                                         @foreach ($maintenanceResponsibleOptions as $responsible)
                                                                             <option
                                                                                 value="{{ $responsible->id }}"
-                                                                                {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
+                                                                                {{
+                                                                                    (string) old('maintenance_responsible_id')
+                                                                                    === (string) $responsible->id
+                                                                                        ? 'selected'
+                                                                                        : ''
+                                                                                }}
                                                                             >
                                                                                 {{ $responsible->name }}
 
@@ -1465,59 +1482,45 @@
                                                                             </option>
                                                                         @endforeach
                                                                     </select>
+
                                                                 @else
+
                                                                     <input
                                                                         type="text"
                                                                         class="form-control"
-                                                                        value="No responsible assigned"
+                                                                        value="Not assigned"
                                                                         disabled
                                                                     >
-                                                                    <small class="form-text text-muted">
-                                                                        Only administrators can assign the maintenance responsible.
-                                                                    </small>
+
                                                                 @endif
                                                             </div>
 
+
+                                                            <!-- Maintenance Status -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Maintenance Status
                                                                 </label>
 
-                                                                @if (Auth::user()->user_level === 'Admin')
-                                                                    <select
-                                                                        name="maintenance_status"
-                                                                        class="form-select"
-                                                                    >
-                                                                        <option
-                                                                            value="pending"
-                                                                            {{ old(
-                                                                                'maintenance_status',
-                                                                                $item->maintenance_status
-                                                                            ) === 'pending' ? 'selected' : '' }}
-                                                                        >
-                                                                            Pending
-                                                                        </option>
+                                                                <input
+                                                                    type="text"
+                                                                    class="form-control"
+                                                                    value="Pending"
+                                                                    disabled
+                                                                >
 
-                                                                        <option
-                                                                            value="completed"
-                                                                            {{ old(
-                                                                                'maintenance_status',
-                                                                                $item->maintenance_status
-                                                                            ) === 'completed' ? 'selected' : '' }}
-                                                                        >
-                                                                            Completed
-                                                                        </option>
-                                                                    </select>
-                                                                @else
-                                                                    <input
-                                                                        type="text"
-                                                                        class="form-control"
-                                                                        value="{{ ucfirst($item->effective_maintenance_status) }}"
-                                                                        disabled
-                                                                    >
-                                                                @endif
+                                                                <small class="form-text text-muted">
+                                                                    New assets start with pending maintenance status.
+                                                                </small>
                                                             </div>
+
                                                         </div>
+
+                                                        @if (!$canManageMaintenance)
+                                                            <small class="form-text text-muted d-block mt-3">
+                                                                The Maintenance Management badge is required to modify this section.
+                                                            </small>
+                                                        @endif
                                                     </section>
 
                                                     <!-- Status and classification -->
@@ -2047,46 +2050,90 @@
                             <section class="inventory-form-section">
                                 <div class="inventory-form-section-header">
                                     <h6>Maintenance</h6>
-                                    <span>Schedule and assign the next maintenance activity.</span>
+
+                                    @if ($canManageMaintenance)
+                                        <span>
+                                            Schedule and assign the next maintenance activity.
+                                        </span>
+                                    @else
+                                        <span>
+                                            Maintenance information is managed by authorized users.
+                                        </span>
+                                    @endif
                                 </div>
 
                                 <div class="row g-3">
+
+                                    <!-- Next Maintenance -->
                                     <div class="col-md-4">
-                                        <label class="form-label">Next Maintenance</label>
+                                        <label class="form-label">
+                                            Next Maintenance
+                                        </label>
+
                                         <input
                                             type="date"
                                             name="next_maintenance"
                                             class="form-control"
                                             value="{{ old('next_maintenance') }}"
+                                            {{ !$canManageMaintenance ? 'disabled' : '' }}
                                         >
                                     </div>
 
+
+                                    <!-- Maintenance Responsible -->
                                     <div class="col-md-4">
-                                        <label class="form-label">Maintenance Responsible</label>
+                                        <label class="form-label">
+                                            Maintenance Responsible
+                                        </label>
 
-                                        <select
-                                            name="maintenance_responsible_id"
-                                            class="form-select"
-                                        >
-                                            <option value="">No responsible assigned</option>
+                                        @if ($canManageMaintenance)
 
-                                            @foreach ($maintenanceResponsibleOptions as $responsible)
-                                                <option
-                                                    value="{{ $responsible->id }}"
-                                                    {{ (string) old('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
-                                                >
-                                                    {{ $responsible->name }}
-
-                                                    @if (!empty($responsible->employee_number))
-                                                        — {{ $responsible->employee_number }}
-                                                    @endif
+                                            <select
+                                                name="maintenance_responsible_id"
+                                                class="form-select"
+                                            >
+                                                <option value="">
+                                                    No responsible assigned
                                                 </option>
-                                            @endforeach
-                                        </select>
+
+                                                @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                    <option
+                                                        value="{{ $responsible->id }}"
+                                                        {{
+                                                            (string) old('maintenance_responsible_id')
+                                                            === (string) $responsible->id
+                                                                ? 'selected'
+                                                                : ''
+                                                        }}
+                                                    >
+                                                        {{ $responsible->name }}
+
+                                                        @if (!empty($responsible->employee_number))
+                                                            — {{ $responsible->employee_number }}
+                                                        @endif
+                                                    </option>
+                                                @endforeach
+                                            </select>
+
+                                        @else
+
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                value="Not assigned"
+                                                disabled
+                                            >
+
+                                        @endif
                                     </div>
 
+
+                                    <!-- Maintenance Status -->
                                     <div class="col-md-4">
-                                        <label class="form-label">Maintenance Status</label>
+                                        <label class="form-label">
+                                            Maintenance Status
+                                        </label>
+
                                         <input
                                             type="text"
                                             class="form-control"
@@ -2098,7 +2145,14 @@
                                             New assets start with pending maintenance status.
                                         </small>
                                     </div>
+
                                 </div>
+
+                                @if (!$canManageMaintenance)
+                                    <small class="form-text text-muted d-block mt-3">
+                                        The Maintenance Management badge is required to modify this section.
+                                    </small>
+                                @endif
                             </section>
 
                             <!-- Status and classification -->
