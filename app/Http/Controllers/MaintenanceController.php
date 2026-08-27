@@ -417,6 +417,100 @@ class MaintenanceController extends Controller
         }
 
     /**
+     * Quickly assign an active maintenance cycle to an eligible User account.
+     *
+     * Any authenticated user can perform this action for now.
+     */
+    public function assign(
+        Request $request,
+        Inventory $inventory
+    ) {
+        /*
+            A maintenance awaiting approval or already completed
+            must not be reassigned.
+        */
+        if ($inventory->maintenance_status !== 'pending') {
+            return redirect()
+                ->back()
+                ->with(
+                    'warning',
+                    'Only pending maintenance activities can be assigned.'
+                );
+        }
+
+        $validated = $request->validate([
+            'maintenance_responsible_id' => [
+                'required',
+                'integer',
+
+                /*
+                    The selected account must be active and belong
+                    specifically to the User level.
+                */
+                Rule::exists('users', 'id')->where(
+                    fn ($query) => $query
+                        ->where('is_active', true)
+                        ->where('user_level', 'User')
+                ),
+            ],
+        ]);
+
+        $oldResponsibleId = $inventory->maintenance_responsible_id;
+
+        DB::transaction(function () use (
+            $inventory,
+            $validated,
+            $oldResponsibleId
+        ) {
+            /*
+                Update the responsible person shown in Inventory
+                and used by the Maintenance module.
+            */
+            $inventory->update([
+                'maintenance_responsible_id' =>
+                    $validated['maintenance_responsible_id'],
+            ]);
+
+            /*
+                Keep the current maintenance record aligned with
+                the responsible person stored in Inventory.
+            */
+            $record = $this->getCurrentMaintenanceRecord($inventory);
+
+            $record->update([
+                'responsible_id' =>
+                    $validated['maintenance_responsible_id'],
+            ]);
+
+            ActivityLogger::log(
+                module: 'maintenance',
+                action: 'assigned',
+                description:
+                    'Maintenance responsible was assigned for item '
+                    . $this->inventoryIdentifier($inventory)
+                    . '.',
+                targetType: 'inventory',
+                targetId: $inventory->id,
+                oldValues: [
+                    'maintenance_responsible_id' =>
+                        $oldResponsibleId,
+                ],
+                newValues: [
+                    'maintenance_responsible_id' =>
+                        $validated['maintenance_responsible_id'],
+                ]
+            );
+        });
+
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'Maintenance responsible assigned successfully.'
+            );
+    }
+
+    /**
      * Obtiene el ciclo correspondiente al mantenimiento actual.
      *
      * Si hubo un rechazo previo, reutiliza ese mismo ciclo.

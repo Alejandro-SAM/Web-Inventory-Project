@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inventory;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -292,6 +293,22 @@ class DashboardController extends Controller
             ->get();
 
         /*
+            Users eligible to receive maintenance assignments.
+
+            Only active User accounts are selectable.
+            Admin and Read accounts are intentionally excluded.
+        */
+        $maintenanceAssignees = User::query()
+            ->where('is_active', true)
+            ->where('user_level', 'User')
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'employee_number',
+            ]);
+
+        /*
             Full modal list: warranties expiring from today through
             the next three months.
 
@@ -441,6 +458,7 @@ class DashboardController extends Controller
             'upcomingMaintenance',
             'upcomingMaintenanceCount',
             'maintenanceNextThreeMonths',
+            'maintenanceAssignees',
             'assetsByPlantLabels',
             'assetsByPlantData',
             'assetsByCategoryLabels',
