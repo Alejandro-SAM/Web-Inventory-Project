@@ -178,6 +178,11 @@ Route::middleware(['auth'])->group(function () {
         [MaintenanceController::class, 'scheduleNext']
     )->name('maintenance.schedule-next');
 
+    Route::patch(
+        '/maintenance/{inventory}/assign',
+        [MaintenanceController::class, 'assign']
+    )->name('maintenance.assign');
+
 });
 
 require __DIR__.'/auth.php';
