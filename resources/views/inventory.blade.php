@@ -1261,7 +1261,10 @@
                                                     </section>
 
                                                     <!-- Assignment and location -->
-                                                    <section class="inventory-form-section">
+                                                    <section
+                                                        class="inventory-form-section"
+                                                        data-it-room-container
+                                                    >
                                                         <div class="inventory-form-section-header">
                                                             <h6>Assignment and Location</h6>
                                                             <span>User, department and physical location of the asset.</span>
@@ -1270,7 +1273,30 @@
                                                         @php
                                                             $validPlantOptions = ['B', 'D', 'G', 'H', 'MP'];
                                                             $currentPlant = old('plant', $item->plant);
+                                                            $isCurrentItRoom = strtoupper(trim(old('location', $item->location) ?? '')) === 'IT ROOM';
                                                         @endphp
+
+                                                        <div class="mb-3">
+                                                            <div class="form-check">
+                                                                <input
+                                                                    class="form-check-input inventory-it-room-toggle"
+                                                                    type="checkbox"
+                                                                    id="editAssetItRoom{{ $item->id }}"
+                                                                    {{ $isCurrentItRoom ? 'checked' : '' }}
+                                                                >
+
+                                                                <label
+                                                                    class="form-check-label fw-semibold"
+                                                                    for="editAssetItRoom{{ $item->id }}"
+                                                                >
+                                                                    Asset is in IT ROOM
+                                                                </label>
+                                                            </div>
+
+                                                            <small class="text-muted">
+                                                                Assignment information will be automatically configured according to the selected plant.
+                                                            </small>
+                                                        </div>
 
                                                         <div class="row g-3">
                                                             <div class="col-md-4">
@@ -1281,6 +1307,7 @@
                                                                     name="end_user"
                                                                     class="form-control"
                                                                     value="{{ old('end_user', $item->end_user) }}"
+                                                                    data-it-room-field="end_user"
                                                                     required
                                                                 >
                                                             </div>
@@ -1293,6 +1320,7 @@
                                                                     name="employee_id"
                                                                     class="form-control"
                                                                     value="{{ old('employee_id', $item->employee_id) }}"
+                                                                    data-it-room-field="employee_id"
                                                                 >
                                                             </div>
 
@@ -1304,6 +1332,7 @@
                                                                     name="department"
                                                                     class="form-control"
                                                                     value="{{ old('department', $item->department) }}"
+                                                                    data-it-room-field="department"
                                                                 >
                                                             </div>
 
@@ -1315,6 +1344,7 @@
                                                                     name="location"
                                                                     class="form-control"
                                                                     value="{{ old('location', $item->location) }}"
+                                                                    data-it-room-field="location"
                                                                 >
                                                             </div>
 
@@ -1326,13 +1356,17 @@
                                                                     name="business_unit"
                                                                     class="form-control"
                                                                     value="{{ old('business_unit', $item->business_unit) }}"
+                                                                    data-it-room-field="business_unit"
                                                                 >
                                                             </div>
 
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Plant</label>
 
-                                                                <select name="plant" class="form-select">
+                                                                <select
+                                                                    name="plant"
+                                                                    class="form-select inventory-it-room-plant"
+                                                                >
                                                                     <option value="">Select plant</option>
 
                                                                     {{-- Preserve legacy values so they can be corrected manually --}}
@@ -1935,10 +1969,34 @@
                             </section>
 
                             <!-- Assignment and location -->
-                            <section class="inventory-form-section">
+                            <section
+                                class="inventory-form-section"
+                                data-it-room-container
+                            >
                                 <div class="inventory-form-section-header">
                                     <h6>Assignment and Location</h6>
                                     <span>User, department and physical location of the asset.</span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input
+                                            class="form-check-input inventory-it-room-toggle"
+                                            type="checkbox"
+                                            id="addAssetItRoom"
+                                        >
+
+                                        <label
+                                            class="form-check-label fw-semibold"
+                                            for="addAssetItRoom"
+                                        >
+                                            Asset is in IT ROOM
+                                        </label>
+                                    </div>
+
+                                    <small class="text-muted">
+                                        Assignment information will be automatically configured according to the selected plant.
+                                    </small>
                                 </div>
 
                                 <div class="row g-3">
@@ -1949,6 +2007,7 @@
                                             name="end_user"
                                             class="form-control"
                                             value="{{ old('end_user') }}"
+                                            data-it-room-field="end_user"
                                             required
                                         >
                                     </div>
@@ -1960,6 +2019,7 @@
                                             name="employee_id"
                                             class="form-control"
                                             value="{{ old('employee_id') }}"
+                                            data-it-room-field="employee_id"
                                         >
                                     </div>
 
@@ -1970,6 +2030,7 @@
                                             name="department"
                                             class="form-control"
                                             value="{{ old('department') }}"
+                                            data-it-room-field="department"
                                         >
                                     </div>
 
@@ -1980,6 +2041,7 @@
                                             name="location"
                                             class="form-control"
                                             value="{{ old('location') }}"
+                                            data-it-room-field="location"
                                         >
                                     </div>
 
@@ -1990,17 +2052,28 @@
                                             name="business_unit"
                                             class="form-control"
                                             value="{{ old('business_unit') }}"
+                                            data-it-room-field="business_unit"
                                         >
                                     </div>
 
                                     <div class="col-md-4">
                                         <label class="form-label">Plant</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="plant"
-                                            class="form-control"
-                                            value="{{ old('plant') }}"
+                                            class="form-select inventory-it-room-plant"
+                                            id="addAssetPlant"
                                         >
+                                            <option value="">Select plant</option>
+
+                                            @foreach (['B', 'D', 'G', 'H', 'MP'] as $plant)
+                                                <option
+                                                    value="{{ $plant }}"
+                                                    {{ old('plant') === $plant ? 'selected' : '' }}
+                                                >
+                                                    Plant {{ $plant }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
                             </section>
@@ -3261,4 +3334,136 @@
     @endif
     </div>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const responsibleUsers =
+            @json($itRoomResponsibleOptions ?? []);
+
+        const containers = document.querySelectorAll(
+            '[data-it-room-container]'
+        );
+
+        containers.forEach(function (container) {
+
+            const checkbox = container.querySelector(
+                '.inventory-it-room-toggle'
+            );
+
+            const plantSelect = container.querySelector(
+                '.inventory-it-room-plant'
+            );
+
+            const fields = {
+                end_user: container.querySelector(
+                    '[data-it-room-field="end_user"]'
+                ),
+
+                employee_id: container.querySelector(
+                    '[data-it-room-field="employee_id"]'
+                ),
+
+                department: container.querySelector(
+                    '[data-it-room-field="department"]'
+                ),
+
+                location: container.querySelector(
+                    '[data-it-room-field="location"]'
+                ),
+
+                business_unit: container.querySelector(
+                    '[data-it-room-field="business_unit"]'
+                ),
+            };
+
+            if (!checkbox || !plantSelect) {
+                return;
+            }
+
+
+            function updateResponsible() {
+
+                if (!checkbox.checked) {
+                    return;
+                }
+
+                const responsible =
+                    responsibleUsers[plantSelect.value];
+
+                if (responsible) {
+
+                    fields.end_user.value =
+                        responsible.name;
+
+                    fields.employee_id.value =
+                        responsible.employee_number;
+
+                } else {
+
+                    fields.end_user.value = '';
+                    fields.employee_id.value = '';
+                }
+            }
+
+
+            function updateItRoomMode() {
+
+                const enabled = checkbox.checked;
+
+                if (enabled) {
+
+                    fields.department.value = 'IT';
+                    fields.location.value = 'IT ROOM';
+                    fields.business_unit.value =
+                        'Functional Department';
+
+                    Object.values(fields).forEach(
+                        function (field) {
+
+                            if (field) {
+                                field.readOnly = true;
+                                field.classList.add('bg-light');
+                            }
+                        }
+                    );
+
+                    updateResponsible();
+
+                } else {
+
+                    Object.values(fields).forEach(
+                        function (field) {
+
+                            if (field) {
+                                field.readOnly = false;
+                                field.classList.remove('bg-light');
+                            }
+                        }
+                    );
+                }
+            }
+
+
+            checkbox.addEventListener(
+                'change',
+                updateItRoomMode
+            );
+
+            plantSelect.addEventListener(
+                'change',
+                updateResponsible
+            );
+
+            /*
+            | Apply the correct visual state when opening
+            | an asset that is already assigned to IT ROOM.
+            */
+            updateItRoomMode();
+
+        });
+
+    });
+    </script>
+
 </x-app-layout>

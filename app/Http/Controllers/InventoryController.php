@@ -230,11 +230,42 @@ class InventoryController extends Controller
         ->orderBy('plant')
         ->pluck('plant');
 
-        $maintenanceResponsibleOptions = User::query()
+            $maintenanceResponsibleOptions = User::query()
             ->where('is_active', true) // Evitar asignar usuarios inactivos
             ->whereIn('user_level', ['Admin', 'User']) // Excluir usuarios Read
             ->orderBy('name')
             ->get(['id', 'name', 'employee_number']);
+
+            $itRoomResponsibleOptions = User::query()
+                ->where('is_active', true)
+                ->whereHas('badges', function ($query) {
+                    $query
+                        ->where('badges.slug', 'it_room_responsible')
+                        ->where('user_badges.is_active', true);
+                })
+                ->with([
+                    'badges' => function ($query) {
+                        $query
+                            ->where('badges.slug', 'it_room_responsible')
+                            ->wherePivot('is_active', true);
+                    },
+                ])
+                ->get()
+                ->mapWithKeys(function ($user) {
+
+                    $badge = $user->badges->first();
+
+                    if (!$badge || !$badge->pivot->plant) {
+                        return [];
+                    }
+
+                    return [
+                        $badge->pivot->plant => [
+                            'name' => $user->name,
+                            'employee_number' => $user->employee_number,
+                        ],
+                    ];
+                });
 
         return view('inventory', [
             'inventoryItems' => $inventoryQuery
@@ -245,6 +276,7 @@ class InventoryController extends Controller
             'classificationOptions' => $this->classificationOptions(),
             'plantOptions' => $plantOptions,
             'maintenanceResponsibleOptions' => $maintenanceResponsibleOptions,
+            'itRoomResponsibleOptions' => $itRoomResponsibleOptions,
             'canManageMaintenance' => $this->canManageMaintenance(),
         ]);
     }
@@ -256,11 +288,35 @@ private function applyItRoomResponsible(array $data): array
         return $data;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fixed IT Room values
+    |--------------------------------------------------------------------------
+    */
+
+    $data['department'] = 'IT';
+    $data['location'] = 'IT ROOM';
+    $data['business_unit'] = 'Functional Department';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Detect plant
+    |--------------------------------------------------------------------------
+    */
+
     $plant = $data['plant'] ?? null;
 
     if (!$plant) {
         return $data;
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Find active IT Room Responsible
+    |--------------------------------------------------------------------------
+    */
 
     $responsible = User::query()
         ->whereHas('badges', function ($query) use ($plant) {
@@ -271,10 +327,20 @@ private function applyItRoomResponsible(array $data): array
         })
         ->first();
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Apply responsible user
+    |--------------------------------------------------------------------------
+    */
+
     if ($responsible) {
+
         $data['end_user'] = $responsible->name;
         $data['employee_id'] = $responsible->employee_number;
+
     } else {
+
         $data['end_user'] = null;
         $data['employee_id'] = null;
     }
@@ -774,21 +840,6 @@ private function inventoryLogFields(): array
                     'lost',
                     'to_be_deleted',
                 ]),
-            ],
-
-            'badges' => [
-                'nullable',
-                'array',
-            ],
-
-            'badges.*' => [
-                'integer',
-                'exists:badges,id',
-            ],
-
-            'it_room_responsible_plant' => [
-                'nullable',
-                Rule::in(['B', 'D', 'G', 'H', 'MP']),
             ],
         ]);
 
