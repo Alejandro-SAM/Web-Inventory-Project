@@ -14,6 +14,12 @@
                 </div>
             @endif
 
+            <form
+                id="maintenanceFiltersForm"
+                method="GET"
+                action="{{ route('maintenance.index') }}"
+            ></form>
+
             <div class="app-card">
                 <div class="app-card-header">
                     <strong>Assigned Maintenance</strong>
@@ -46,6 +52,132 @@
                                     <th>Maintenance Date</th>
                                     <th>Maintenance Status</th>
                                     <th>Actions</th>
+                                </tr>
+
+                                <tr>
+                                    <th>
+                                        <input
+                                            form="maintenanceFiltersForm"
+                                            type="text"
+                                            name="it_internal_number"
+                                            value="{{ request('it_internal_number') }}"
+                                            class="form-control form-control-sm maintenance-text-filter"
+                                            placeholder="Search..."
+                                            autocomplete="off"
+                                        >
+                                    </th>
+
+                                    <th>
+                                        <input
+                                            form="maintenanceFiltersForm"
+                                            type="text"
+                                            name="serial_number"
+                                            value="{{ request('serial_number') }}"
+                                            class="form-control form-control-sm maintenance-text-filter"
+                                            placeholder="Search..."
+                                            autocomplete="off"
+                                        >
+                                    </th>
+
+                                    <th>
+                                        <input
+                                            form="maintenanceFiltersForm"
+                                            type="text"
+                                            name="description"
+                                            value="{{ request('description') }}"
+                                            class="form-control form-control-sm maintenance-text-filter"
+                                            placeholder="Search..."
+                                            autocomplete="off"
+                                        >
+                                    </th>
+
+                                    <th class="col-md-custom">
+                                        <select
+                                            form="maintenanceFiltersForm"
+                                            name="category"
+                                            class="form-select form-select-sm maintenance-auto-filter"
+                                        >
+                                            <option value="">All</option>
+
+                                            @foreach ($categoryOptions as $category)
+                                                <option
+                                                    value="{{ $category }}"
+                                                    {{ request('category') === $category ? 'selected' : '' }}
+                                                >
+                                                    {{ $category }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </th>
+
+                                    <th class="col-md-custom">
+                                        <select
+                                            form="maintenanceFiltersForm"
+                                            name="location"
+                                            class="form-select form-select-sm maintenance-auto-filter"
+                                        >
+                                            <option value="">All</option>
+
+                                            @foreach ($locationOptions as $location)
+                                                <option
+                                                    value="{{ $location }}"
+                                                    {{ request('location') === $location ? 'selected' : '' }}
+                                                >
+                                                    {{ $location }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </th>
+
+                                    <th class="col-md-custom">
+                                        <select
+                                            form="maintenanceFiltersForm"
+                                            name="maintenance_responsible_id"
+                                            class="form-select form-select-sm maintenance-auto-filter"
+                                        >
+                                            <option value="">All</option>
+
+                                            @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                <option
+                                                    value="{{ $responsible->id }}"
+                                                    {{ (string) request('maintenance_responsible_id') === (string) $responsible->id ? 'selected' : '' }}
+                                                >
+                                                    {{ $responsible->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </th>
+
+                                    <th>
+                                        <input
+                                            form="maintenanceFiltersForm"
+                                            type="date"
+                                            name="maintenance_date"
+                                            value="{{ request('maintenance_date') }}"
+                                            class="form-control form-control-sm maintenance-auto-filter"
+                                        >
+                                    </th>
+
+                                    <th class="col-md-custom">
+                                        <select
+                                            form="maintenanceFiltersForm"
+                                            name="maintenance_status"
+                                            class="form-select form-select-sm maintenance-auto-filter"
+                                        >
+                                            <option value="">All</option>
+                                            <option value="pending" {{ request('maintenance_status') === 'pending' ? 'selected' : '' }}>
+                                                Pending
+                                            </option>
+                                            <option value="overdue" {{ request('maintenance_status') === 'overdue' ? 'selected' : '' }}>
+                                                Overdue
+                                            </option>
+                                            <option value="awaiting" {{ request('maintenance_status') === 'awaiting' ? 'selected' : '' }}>
+                                                Awaiting Approval
+                                            </option>
+                                        </select>
+                                    </th>
+
+                                    <th></th>
                                 </tr>
                             </thead>
 
@@ -565,4 +697,44 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('maintenanceFiltersForm');
+
+            if (!form) {
+                return;
+            }
+
+            /*
+             * Dropdowns y fecha se aplican inmediatamente.
+             */
+            document
+                .querySelectorAll('.maintenance-auto-filter')
+                .forEach(function (filter) {
+                    filter.addEventListener('change', function () {
+                        form.submit();
+                    });
+                });
+
+            /*
+             * Los filtros de escritura esperan 1 segundo después
+             * de que el usuario deja de escribir para evitar recargas
+             * innecesarias en cada tecla.
+             */
+            let textFilterTimer;
+
+            document
+                .querySelectorAll('.maintenance-text-filter')
+                .forEach(function (filter) {
+                    filter.addEventListener('input', function () {
+                        clearTimeout(textFilterTimer);
+
+                        textFilterTimer = setTimeout(function () {
+                            form.submit();
+                        }, 1000);
+                    });
+                });
+        });
+    </script>
 </x-app-layout>

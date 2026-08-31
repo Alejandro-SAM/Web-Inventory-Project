@@ -27,7 +27,12 @@ class MaintenanceController extends Controller
             abort(403);
         }
 
-        $query = Inventory::query()
+        /*
+         * Consulta base del módulo.
+         * Se reutiliza para construir la tabla y las opciones dinámicas
+         * de Category y Location.
+         */
+        $baseQuery = Inventory::query()
             ->with('maintenanceResponsible')
             ->whereNotNull('maintenance_responsible_id')
             ->where('maintenance_status', '!=', 'completed');
@@ -37,15 +42,138 @@ class MaintenanceController extends Controller
          * User solamente puede consultar los asignados a su propia cuenta.
          */
         if ($user->user_level !== 'Admin') {
-            $query->where('maintenance_responsible_id', $user->id);
+            $baseQuery->where('maintenance_responsible_id', $user->id);
         }
+
+        $query = clone $baseQuery;
+
+        /*
+         * Filtros de escritura.
+         * Se usa LIKE para permitir búsquedas parciales.
+         */
+        if ($request->filled('it_internal_number')) {
+            $query->where(
+                'it_internal_number',
+                'like',
+                '%' . trim((string) $request->input('it_internal_number')) . '%'
+            );
+        }
+
+        if ($request->filled('serial_number')) {
+            $query->where(
+                'serial_number',
+                'like',
+                '%' . trim((string) $request->input('serial_number')) . '%'
+            );
+        }
+
+        if ($request->filled('description')) {
+            $query->where(
+                'description',
+                'like',
+                '%' . trim((string) $request->input('description')) . '%'
+            );
+        }
+
+        /*
+         * Dropdowns dinámicos de Category y Location.
+         */
+        if ($request->filled('category')) {
+            $query->where('category', $request->input('category'));
+        }
+
+        if ($request->filled('location')) {
+            $query->where('location', $request->input('location'));
+        }
+
+        /*
+         * Filtro por responsable.
+         */
+        if ($request->filled('maintenance_responsible_id')) {
+            $query->where(
+                'maintenance_responsible_id',
+                $request->maintenance_responsible_id
+            );
+        }
+
+        /*
+         * Filtro exacto por fecha programada de mantenimiento.
+         */
+        if ($request->filled('maintenance_date')) {
+            $query->whereDate(
+                'next_maintenance',
+                $request->input('maintenance_date')
+            );
+        }
+
+        /*
+         * Filtro por estado efectivo de mantenimiento.
+         * Overdue se calcula a partir de pending + fecha vencida.
+         */
+        if ($request->filled('maintenance_status')) {
+            $maintenanceStatus = $request->maintenance_status;
+
+            if ($maintenanceStatus === 'pending') {
+                $query
+                    ->where('maintenance_status', 'pending')
+                    ->where(function ($statusQuery) {
+                        $statusQuery
+                            ->whereNull('next_maintenance')
+                            ->orWhereDate('next_maintenance', '>=', today());
+                    });
+            }
+
+            if ($maintenanceStatus === 'overdue') {
+                $query
+                    ->where('maintenance_status', 'pending')
+                    ->whereNotNull('next_maintenance')
+                    ->whereDate('next_maintenance', '<', today());
+            }
+
+            if ($maintenanceStatus === 'awaiting') {
+                $query->where('maintenance_status', 'awaiting');
+            }
+        }
+
+        /*
+         * Responsible sigue siendo dinámico desde users.
+         * Cualquier cuenta activa aparecerá automáticamente.
+         */
+        $maintenanceResponsibleOptions = User::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'employee_number']);
+
+        /*
+         * Category y Location se generan desde los valores realmente
+         * presentes en los mantenimientos accesibles para el usuario.
+         */
+        $categoryOptions = (clone $baseQuery)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        $locationOptions = (clone $baseQuery)
+            ->whereNotNull('location')
+            ->where('location', '!=', '')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location');
 
         $maintenanceItems = $query
             ->orderByRaw('next_maintenance IS NULL')
             ->orderBy('next_maintenance')
-            ->paginate(50);
+            ->paginate(50)
+            ->appends($request->query());
 
-        return view('maintenance', compact('maintenanceItems'));
+        return view('maintenance', [
+            'maintenanceItems' => $maintenanceItems,
+            'maintenanceResponsibleOptions' => $maintenanceResponsibleOptions,
+            'categoryOptions' => $categoryOptions,
+            'locationOptions' => $locationOptions,
+        ]);
     }
 
     public function history(Request $request)
