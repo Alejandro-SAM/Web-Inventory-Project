@@ -70,7 +70,7 @@
                 id="user_level"
                 type="text"
                 class="mt-1 block w-full bg-gray-100 cursor-not-allowed"
-                :value="$user->user_level"
+                :value="$user->user_level === 'User'? 'Operator': ($user->user_level === 'Read' ? 'Guest' : $user->user_level)"
                 readonly
             />
         </div>
