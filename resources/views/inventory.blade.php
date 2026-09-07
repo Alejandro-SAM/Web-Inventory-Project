@@ -270,12 +270,12 @@
 
             <div class="form-check">
                 <input class="form-check-input inventory-column-toggle" type="checkbox" value="confidentiality" id="toggle_confidentiality" checked>
-                <label class="form-check-label" for="toggle_confidentiality">C</label>
+                <label class="form-check-label" for="toggle_confidentiality">Confidentiality</label>
             </div>
 
             <div class="form-check">
                 <input class="form-check-input inventory-column-toggle" type="checkbox" value="integrity" id="toggle_integrity" checked>
-                <label class="form-check-label" for="toggle_integrity">I</label>
+                <label class="form-check-label" for="toggle_integrity">Integrity</label>
             </div>
 
             <div class="form-check">
@@ -335,9 +335,9 @@
                         <th class="col-md-custom" data-column="maintenance_responsible">Maintenance Responsible</th>
                         <th class="col-md-custom" data-column="maintenance_status">Maintenance Status</th>
                         <th class="col-md-custom" data-column="operating_system">OS</th>
-                        <th class="col-md-custom" data-column="confidentiality">C</th>
-                        <th class="col-md-custom" data-column="integrity">I</th>
-                        <th class="col-md-custom" data-column="availability">A</th>
+                        <th class="col-md-custom" data-column="confidentiality">Confidentiality</th>
+                        <th class="col-md-custom" data-column="integrity">Integrity</th>
+                        <th class="col-md-custom" data-column="availability">Availability</th>
                         <th class="col-md-custom" data-column="classification">Classification</th>
                         <th class="col-md-custom" data-column="state">State</th>
 

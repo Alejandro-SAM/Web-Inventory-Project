@@ -9,7 +9,7 @@
         <div class="d-flex justify-content-between align-items-center app-page-title">
             <!-- Create user button -->
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                Create User
+                Create Account
             </button>
         </div>
 
@@ -23,7 +23,7 @@
         <!-- USER TABLE -->
         <div class="card app-card">
             <div class="card-header app-card-header">
-                <strong>Users List</strong>
+                <strong>Accounts List</strong>
             </div>
 
             <div class="card-body app-card-body table-responsive app-table-wrapper p-0">
@@ -33,7 +33,7 @@
                             <th>Employee Number</th>
                             <th>Name</th>
                             <th>Department/Area</th>
-                            <th>User Level</th>
+                            <th>Account Level</th>
                             <th>Status</th>
                             <th>Created At</th>
                             <th class="text-center">Actions</th>
@@ -46,7 +46,8 @@
                                 <td>{{ $user->employee_number }}</td>
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->department ?? 'N/A' }}</td>
-                                <td>{{ $user->user_level }}</td>
+                                <!-- Display 'Operator' instead of 'User' for user_level and 'Guest' instead of 'Read' for user_level -->
+                                <td>{{ $user->user_level === 'User'? 'Operator': ($user->user_level === 'Read' ? 'Guest' : $user->user_level) }}</td>
                                 <td>
                                     @if ($user->is_active)
                                         <span class="badge bg-success">Active</span>
@@ -80,7 +81,7 @@
 
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="editUserModalLabel{{ $user->id }}">
-                                                    Edit User
+                                                    Edit Account
                                                 </h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -120,11 +121,11 @@
                                                     </div>
 
                                                     <div class="col-md-6 mb-3">
-                                                        <label class="form-label">User Level</label>
+                                                        <label class="form-label">Account Level</label>
                                                         <select name="user_level" class="form-select" required>
                                                             <option value="Admin" {{ $user->user_level === 'Admin' ? 'selected' : '' }}>Admin</option>
-                                                            <option value="User" {{ $user->user_level === 'User' ? 'selected' : '' }}>User</option>
-                                                            <option value="Read" {{ $user->user_level === 'Read' ? 'selected' : '' }}>Read</option>
+                                                            <option value="User" {{ $user->user_level === 'User' ? 'selected' : '' }}>Operator</option>
+                                                            <option value="Read" {{ $user->user_level === 'Read' ? 'selected' : '' }}>Guest</option>
                                                         </select>
                                                     </div>
 
@@ -167,7 +168,7 @@
                                                             <h6>Additional Badges</h6>
 
                                                             <p>
-                                                                Assign additional permissions or responsibilities to this user.
+                                                                Assign additional permissions or responsibilities to this account.
                                                             </p>
                                                         </div>
 
@@ -340,7 +341,7 @@
 
                     <div class="modal-header">
                         <h5 class="modal-title" id="createUserModalLabel">
-                            Create User
+                            Create Account
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -379,10 +380,10 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">User Level</label>
+                                <label class="form-label">Account Level</label>
                                 <select name="user_level" class="form-select" required>
-                                    <option value="Read" selected>Read</option>
-                                    <option value="User">User</option>
+                                    <option value="Read" selected>Guest</option>
+                                    <option value="User">Operator</option>
                                     <option value="Admin">Admin</option>
                                 </select>
                             </div>
@@ -425,7 +426,7 @@
                             Cancel
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            Create User
+                            Create Account
                         </button>
                     </div>
 
