@@ -90,37 +90,45 @@
                 Add Asset
             </button>
 
-            <!-- Show Delete All Marked button only for Admin users -->
-        @if (Auth::user()->user_level === 'Admin')
-            <form
-                action="{{ route('inventory.destroy-marked') }}"
-                method="POST"
-                class="d-inline"
-                onsubmit="return confirm(
-                    'Are you sure you want to permanently delete all assets marked as To Be Deleted? This action cannot be undone.'
-                );"
-            >
-                @csrf
-                @method('DELETE')
+            <!-- Show Delete All Marked button if user has permission -->
+            @if ($canDeleteInventory)
 
+                    <form
+                        id="deleteAllMarkedForm"
+                        action="{{ route('inventory.destroy-marked') }}"
+                        method="POST"
+                        class="d-inline"
+                        onsubmit="return confirm(
+                            'Are you sure you want to permanently delete all assets marked as To Be Deleted? This action cannot be undone.'
+                        );"
+                    >
+                    @csrf
+                    @method('DELETE')
+
+                    <button
+                        type="submit"
+                        class="btn btn-sm btn-danger"
+                    >
+                        Delete All Marked
+                    </button>
+                </form>
+
+            @endif
+
+
+            @if (Auth::user()->user_level === 'Admin')
+
+                <!-- Show Upload Excel button only for admins -->
                 <button
-                    type="submit"
-                    class="btn btn-sm btn-danger"
+                    type="button"
+                    class="btn btn-sm btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#uploadInventoryExcelModal"
                 >
-                    Delete All Marked
+                    Upload Excel
                 </button>
-            </form>
 
-            <!-- Show Upload Excel button -->
-            <button
-                type="button"
-                class="btn btn-sm btn-success"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadInventoryExcelModal"
-            >
-                Upload Excel
-            </button>
-        @endif     
+            @endif    
         @endif
 
         <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-danger">
@@ -924,11 +932,12 @@
                                     <div class="inventory-row-actions">
 
                                         <!-- Delete -->
-                                        @if (Auth::user()->user_level === 'Admin')
+                                        @if ($canDeleteInventory)
                                             <form
                                                 action="{{ route('inventory.destroy', $item->id) }}"
                                                 method="POST"
-                                                class="d-inline-flex"
+                                                class="d-inline-flex inventory-delete-form"
+                                                data-asset-id="{{ $item->id }}"
                                                 onsubmit="return confirm(
                                                     'Are you sure you want to permanently delete this asset? This action cannot be undone.'
                                                 );"
@@ -2966,6 +2975,98 @@
     });
 </script>
 <!-- End inventory persistent asset selection -->
+
+<!-- Inventory selection update after delete to avoid phantom selections -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const selectionStorageKey =
+        'inventory_selected_assets_{{ Auth::id() }}';
+
+    const deleteForms = document.querySelectorAll(
+        '.inventory-delete-form'
+    );
+
+    deleteForms.forEach(function (form) {
+
+        form.addEventListener('submit', function () {
+
+            const assetId = String(
+                form.dataset.assetId
+            );
+
+            try {
+
+                const storedSelection =
+                    sessionStorage.getItem(
+                        selectionStorageKey
+                    );
+
+                if (!storedSelection) {
+                    return;
+                }
+
+                const selectedAssets =
+                    JSON.parse(storedSelection);
+
+                if (!Array.isArray(selectedAssets)) {
+                    return;
+                }
+
+                const updatedSelection =
+                    selectedAssets
+                        .map(String)
+                        .filter(function (selectedId) {
+                            return selectedId !== assetId;
+                        });
+
+                sessionStorage.setItem(
+                    selectionStorageKey,
+                    JSON.stringify(updatedSelection)
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'Could not update inventory selection after delete:',
+                    error
+                );
+            }
+        });
+
+    });
+
+});
+</script>
+<!-- end of inventory selection update after delete to avoid phantom selections -->
+
+<!-- Clear inventory selection after deleting all marked assets -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const deleteAllMarkedForm =
+        document.getElementById('deleteAllMarkedForm');
+
+    if (!deleteAllMarkedForm) {
+        return;
+    }
+
+    const selectionStorageKey =
+        'inventory_selected_assets_{{ Auth::id() }}';
+
+    deleteAllMarkedForm.addEventListener(
+        'submit',
+        function () {
+
+            sessionStorage.removeItem(
+                selectionStorageKey
+            );
+        }
+    );
+
+});
+</script>
+<!-- End of Clear inventory selection after deleting all marked assets -->
 
 <!-- Attach selected assets to inventory edit forms -->
 <script>

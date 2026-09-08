@@ -36,7 +36,27 @@ class UserController extends Controller
 
         $badges = Badge::orderBy('name')->get();
 
-        return view('users', compact('users', 'badges'));
+        $occupiedItRoomPlants = DB::table('user_badges')
+            ->join('badges', 'badges.id', '=', 'user_badges.badge_id')
+            ->join('users', 'users.id', '=', 'user_badges.user_id')
+            ->where('badges.slug', 'it_room_responsible')
+            ->where('user_badges.is_active', true)
+            ->select(
+                'user_badges.plant',
+                'user_badges.user_id',
+                'users.name'
+            )
+            ->get()
+            ->keyBy('plant');
+
+        return view(
+            'users',
+            compact(
+                'users',
+                'badges',
+                'occupiedItRoomPlants'
+            )
+        );
     }
 
     /**
@@ -211,11 +231,11 @@ class UserController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Update badges
+        | Update badges : Ignores Read level Users
         |--------------------------------------------------------------------------
         */
 
-        if ($user->user_level !== 'User') {
+        if (!in_array($user->user_level, ['Admin', 'User'], true)) {
 
             DB::table('user_badges')
                 ->where('user_id', $user->id)

@@ -278,6 +278,7 @@ class InventoryController extends Controller
             'maintenanceResponsibleOptions' => $maintenanceResponsibleOptions,
             'itRoomResponsibleOptions' => $itRoomResponsibleOptions,
             'canManageMaintenance' => $this->canManageMaintenance(),
+            'canDeleteInventory' => $this->canDeleteInventory(),
         ]);
     }
 private function applyItRoomResponsible(array $data): array
@@ -463,6 +464,35 @@ private function inventoryLogFields(): array
 
         return $user->user_level === 'User'
             && $user->hasBadge('maintenance_management');
+    }
+
+    /**
+     * Determine whether the current user can permanently
+     * delete inventory assets.
+     */
+    private function canDeleteInventory(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        /*
+        | Guest / Read accounts can never delete inventory.
+        */
+        if ($user->user_level === 'Read') {
+            return false;
+        }
+
+        /*
+        | Admin and User accounts require the active
+        | Inventory Deletion badge explicitly.
+        */
+        return $user->badges()
+            ->where('badges.slug', 'inventory_deletion')
+            ->wherePivot('is_active', true)
+            ->exists();
     }
 
     public function store(Request $request)
@@ -1657,10 +1687,13 @@ private function inventoryLogFields(): array
     public function destroy(Inventory $inventory)
     {
         /*
-        * Only Admin users can permanently delete inventory records.
+        * Only users with the appropriate permission can permanently delete inventory records.
         */
-        if (auth()->user()->user_level !== 'Admin') {
-            abort(403, 'You do not have permission to delete inventory records.');
+        if (!$this->canDeleteInventory()) {
+            abort(
+                403,
+                'You do not have permission to delete inventory records.'
+            );
         }
 
         /*
@@ -1704,10 +1737,13 @@ private function inventoryLogFields(): array
     public function destroyMarked()
     {
         /*
-        * Only Admin users can permanently delete inventory records.
+        * Only users with the appropiate permissions can delete from the inventory.
         */
-        if (auth()->user()->user_level !== 'Admin') {
-            abort(403, 'You do not have permission to delete inventory records.');
+        if (!$this->canDeleteInventory()) {
+            abort(
+                403,
+                'You do not have permission to delete inventory records.'
+            );
         }
 
         /*
