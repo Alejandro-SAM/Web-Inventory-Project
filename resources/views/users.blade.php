@@ -159,8 +159,8 @@
                                                         </div>
                                                     </div>
 
-                                                <!-- BADGES SECTION -->
-                                                @if ($user->user_level === 'User')
+                                                <!-- BADGES SECTION EXCLUDES READ LEVEL USERS -->
+                                                @if (in_array($user->user_level, ['Admin', 'User'], true))
 
                                                     <div class="col-12 user-badges-section">
 
@@ -232,11 +232,25 @@
 
                                                                                 @foreach (['B', 'D', 'G', 'H', 'MP'] as $plant)
 
+                                                                                    @php
+                                                                                        $occupiedAssignment =
+                                                                                            $occupiedItRoomPlants[$plant] ?? null;
+
+                                                                                        $occupiedByAnotherUser =
+                                                                                            $occupiedAssignment
+                                                                                            && (int) $occupiedAssignment->user_id !== (int) $user->id;
+                                                                                    @endphp
+
                                                                                     <option
                                                                                         value="{{ $plant }}"
                                                                                         {{ $currentPlant === $plant ? 'selected' : '' }}
+                                                                                        {{ $occupiedByAnotherUser ? 'disabled' : '' }}
                                                                                     >
                                                                                         Plant {{ $plant }}
+
+                                                                                        @if ($occupiedByAnotherUser)
+                                                                                            — Assigned to {{ $occupiedAssignment->name }}
+                                                                                        @endif
                                                                                     </option>
 
                                                                                 @endforeach
