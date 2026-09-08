@@ -127,6 +127,16 @@ class DashboardController extends Controller
             ->where('state', 'active')
             ->count();
 
+        /*
+            Count assets located specifically in IT Room.
+
+            Using $inventoryQuery() keeps this KPI synchronized with the
+            dashboard's global plant filter.
+        */
+        $itRoomAssetsCount = $inventoryQuery()
+            ->where('location', 'IT Room')
+            ->count();
+
         $maintenanceAssets = $inventoryQuery()
             ->where('state', 'maintenance')
             ->count();
@@ -326,6 +336,189 @@ class DashboardController extends Controller
             ->get();
 
         /*
+        |--------------------------------------------------------------------------
+        | Maintenance dashboard charts
+        |--------------------------------------------------------------------------
+        |
+        | These queries use $inventoryQuery(), so they automatically respect the
+        | selected plant filter from the dashboard.
+        */
+
+        /*
+            Doughnut chart data:
+            Count maintenance records that already have a responsible account,
+            grouped by plant.
+        */
+        $assignedMaintenancesByPlant = $inventoryQuery()
+            ->select('plant', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('next_maintenance')
+            ->whereNotNull('maintenance_responsible_id')
+            ->whereNotNull('plant')
+            ->where('plant', '<>', '')
+            ->groupBy('plant')
+            ->orderByDesc('total')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Maintenance status chart
+        |--------------------------------------------------------------------------
+        |
+        | Pending, overdue and in-review maintenance records come from the active
+        | inventory data. Completed maintenance records come from maintenance_records,
+        | because approved records are kept as historical records there.
+        */
+
+        /*
+            Count approved maintenance history records.
+
+            The join with inventory allows the global plant filter to remain consistent
+            with every other dashboard metric.
+        */
+        $completedMaintenancesQuery = DB::table('maintenance_records as maintenance_record')
+            ->join(
+                'inventory as inventory_asset',
+                'inventory_asset.id',
+                '=',
+                'maintenance_record.inventory_id'
+            )
+            ->where('maintenance_record.status', 'completed');
+
+        if (!$isAllPlantsSelected && $selectedPlants->isNotEmpty()) {
+            $completedMaintenancesQuery->whereIn(
+                'inventory_asset.plant',
+                $selectedPlants->toArray()
+            );
+        }
+
+        $completedMaintenancesCount = $completedMaintenancesQuery->count();
+
+        /*
+            Active maintenance records still remain in inventory.
+
+            Completed is intentionally excluded here because it is counted from
+            maintenance_records above, preventing an approved maintenance from being
+            counted twice.
+        */
+        $maintenanceStatusSummary = $inventoryQuery()
+            ->selectRaw(
+                "CASE
+                    WHEN maintenance_status = 'awaiting' THEN 'In Review'
+                    WHEN next_maintenance < ? THEN 'Overdue'
+                    ELSE 'Pending'
+                END as status, COUNT(*) as total",
+                [$maintenanceToday->toDateString()]
+            )
+            ->whereNotNull('next_maintenance')
+            ->where('maintenance_status', '<>', 'completed')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        /*
+            Fixed display order for the maintenance status chart.
+        */
+        $maintenanceStatusLabels = [
+            'Overdue',
+            'Pending',
+            'In Review',
+            'Completed',
+        ];
+
+        $maintenanceStatusData = collect($maintenanceStatusLabels)
+            ->map(function ($status) use (
+                $maintenanceStatusSummary,
+                $completedMaintenancesCount
+            ) {
+                if ($status === 'Completed') {
+                    return (int) $completedMaintenancesCount;
+                }
+
+                return (int) ($maintenanceStatusSummary->get($status)?->total ?? 0);
+            })
+            ->toArray();
+
+        /*
+            Convert the plant chart collection into plain arrays for @json() in Blade.
+        */
+        $assignedMaintenancesByPlantLabels = $assignedMaintenancesByPlant
+            ->pluck('plant')
+            ->toArray();
+
+        $assignedMaintenancesByPlantData = $assignedMaintenancesByPlant
+            ->pluck('total')
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Warranty dashboard charts
+        |--------------------------------------------------------------------------
+        |
+        | These queries use $inventoryQuery(), so they automatically respect the
+        | selected plant filter from the dashboard.
+        */
+
+        /*
+            Doughnut chart data:
+            Count assets that have a warranty expiry date, grouped by category.
+        */
+        $warrantiesByCategory = $inventoryQuery()
+            ->select('category', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('warranty_expiry_date')
+            ->whereNotNull('category')
+            ->where('category', '<>', '')
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->get();
+
+        /*
+            Bar chart data:
+            - Expired: warranty date is before today.
+            - Expiring Soon: warranty expires from today through the next 14 days.
+            - Active: warranty expires after the next 14 days.
+        */
+        $warrantyStatusSummary = $inventoryQuery()
+            ->selectRaw(
+                "CASE
+                    WHEN warranty_expiry_date < ? THEN 'Expired'
+                    WHEN warranty_expiry_date <= ? THEN 'Expiring Soon'
+                    ELSE 'Active'
+                END as status, COUNT(*) as total",
+                [
+                    $warrantyToday->toDateString(),
+                    $warrantyFourteenDaysLimit->toDateString(),
+                ]
+            )
+            ->whereNotNull('warranty_expiry_date')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        /*
+            Fixed display order for the warranty status chart.
+        */
+        $warrantyStatusLabels = [
+            'Active',
+            'Expiring Soon',
+            'Expired',
+        ];
+
+        $warrantyStatusData = collect($warrantyStatusLabels)
+            ->map(fn ($status) => (int) ($warrantyStatusSummary->get($status)?->total ?? 0))
+            ->toArray();
+
+        /*
+            Convert the doughnut chart collection into plain arrays for @json() in Blade.
+        */
+        $warrantiesByCategoryLabels = $warrantiesByCategory
+            ->pluck('category')
+            ->toArray();
+
+        $warrantiesByCategoryData = $warrantiesByCategory
+            ->pluck('total')
+            ->toArray();
+
+        /*
             Prepare chart values as plain arrays.
 
             This avoids Blade parsing issues when using collection methods
@@ -467,12 +660,21 @@ class DashboardController extends Controller
             'assetsByStateData',
             'assetsByBusinessUnitLabels',
             'assetsByBusinessUnitData',
+            'assignedMaintenancesByPlantLabels',
+            'assignedMaintenancesByPlantData',
+            'maintenanceStatusLabels',
+            'maintenanceStatusData',
+            'warrantiesByCategoryLabels',
+            'warrantiesByCategoryData',
+            'warrantyStatusLabels',
+            'warrantyStatusData',
             'plants',
             'selectedPlants',
             'selectedPlantsArray',
             'isAllPlantsSelected',
             'selectedPlantLabel',
             'dashboardThemeStyle',
+            'itRoomAssetsCount',
         ));
     }
 }

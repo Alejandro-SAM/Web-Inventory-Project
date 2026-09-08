@@ -125,12 +125,54 @@
             </div>
 
             {{--
+                Dashboard view selector.
+
+                This selector will later switch dashboard sections without reloading
+                the page or changing the current plant filter.
+            --}}
+            <div class="dashboard-view-selector" role="tablist" aria-label="Dashboard views">
+                <button
+                    type="button"
+                    class="dashboard-view-selector-button is-active"
+                    data-dashboard-view="general"
+                >
+                    General
+                </button>
+
+                <button
+                    type="button"
+                    class="dashboard-view-selector-button"
+                    data-dashboard-view="maintenances"
+                >
+                    Maintenances
+                </button>
+
+                <button
+                    type="button"
+                    class="dashboard-view-selector-button"
+                    data-dashboard-view="warranties"
+                >
+                    Warranties
+                </button>
+            </div>
+
+            {{--
+                General dashboard view.
+
+                It contains the current KPI cards and the four existing asset charts.
+            --}}
+            <div
+                id="dashboard-view-general"
+                class="dashboard-view is-active"
+            >
+            
+            {{--
                 Summary cards.
 
                 These cards show the main inventory indicators for the selected dashboard scope.
             --}}
             <div class="dashboard-section">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="dashboard-kpi-card">
                         <p class="dashboard-kpi-label">Total Assets</p>
                         <h2 class="dashboard-kpi-value">{{ $totalAssets }}</h2>
@@ -147,31 +189,22 @@
                         </p>
                     </div>
 
-                    <a href="#upcoming-maintenance-section"
-                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link warning block">
-                        <div class="dashboard-kpi-link-arrow">
-                            ↓
-                        </div>
+                    {{--
+                        IT Room assets KPI.
 
-                        <p class="dashboard-kpi-label">In Maintenance</p>
-                        <h2 class="dashboard-kpi-value">{{ $maintenanceAssets }}</h2>
+                        This count respects the selected global plant filter.
+                    --}}
+                    <div class="dashboard-kpi-card it-room">
+                        <p class="dashboard-kpi-label">IT Room Assets</p>
+
+                        <h2 class="dashboard-kpi-value">
+                            {{ $itRoomAssetsCount }}
+                        </h2>
+
                         <p class="dashboard-kpi-helper">
-                            Click to view related assets
+                            Assets currently located in IT Room
                         </p>
-                    </a>
-
-                    <a href="#warranties-expiring-section"
-                        class="dashboard-kpi-card dashboard-action-card dashboard-kpi-link danger block">
-                        <div class="dashboard-kpi-link-arrow">
-                            ↓
-                        </div>
-
-                        <p class="dashboard-kpi-label">Warranties Expiring Soon</p>
-                        <h2 class="dashboard-kpi-value">{{ $warrantiesExpiringSoonCount }}</h2>
-                        <p class="dashboard-kpi-helper">
-                            Click to view related assets
-                        </p>
-                    </a>
+                    </div>
                 </div>
             </div>
 
@@ -300,12 +333,63 @@
                 </div>
             </div>
 
+            </div>
+
             {{--
                 Operational tables.
 
                 These tables show assets that may require action soon.
             --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {{--
+                Warranties dashboard view.
+
+                It will contain the warranty charts and the existing expiring-soon table.
+            --}}
+            <div
+                id="dashboard-view-warranties"
+                class="dashboard-view"
+                hidden
+            >
+                {{--
+                    Warranty charts.
+
+                    Both charts use the same selected plant scope as the rest of the dashboard.
+                --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="dashboard-chart-card">
+                        <h2 class="dashboard-chart-title">
+                            Assets With Warranty by Category
+                        </h2>
+
+                        <p class="dashboard-chart-subtitle">
+                            Equipment categories with a registered warranty expiry date.
+                        </p>
+
+                        <div class="dashboard-chart-wrapper">
+                            <canvas id="warrantiesByCategoryChart"></canvas>
+                        </div>
+
+                        <div
+                            id="warrantiesByCategoryLegend"
+                            class="dashboard-doughnut-legend"
+                        ></div>
+                    </div>
+
+                    <div class="dashboard-chart-card">
+                        <h2 class="dashboard-chart-title">
+                            Warranty Status
+                        </h2>
+
+                        <p class="dashboard-chart-subtitle">
+                            Expired, expiring within 14 days and active warranties.
+                        </p>
+
+                        <div class="dashboard-chart-wrapper">
+                            <canvas id="warrantyStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 {{--
                     Warranties expiring soon section.
 
@@ -677,6 +761,59 @@
                     </div>
 
                 </div>
+            
+            </div>
+
+        {{--
+            Maintenances dashboard view.
+
+            It will contain the maintenance charts and the existing upcoming-maintenance table.
+        --}}
+        <div
+            id="dashboard-view-maintenances"
+            class="dashboard-view"
+            hidden
+        >
+
+        {{--
+            Maintenance charts.
+
+            Both charts use the same selected plant scope as the rest of the dashboard.
+        --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="dashboard-chart-card">
+                <h2 class="dashboard-chart-title">
+                    Assigned Maintenances by Plant
+                </h2>
+
+                <p class="dashboard-chart-subtitle">
+                    Maintenance records with a responsible account assigned.
+                </p>
+
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="assignedMaintenancesByPlantChart"></canvas>
+                </div>
+
+                <div
+                    id="assignedMaintenancesByPlantLegend"
+                    class="dashboard-doughnut-legend"
+                ></div>
+            </div>
+
+            <div class="dashboard-chart-card">
+                <h2 class="dashboard-chart-title">
+                    Maintenance Status
+                </h2>
+
+                <p class="dashboard-chart-subtitle">
+                    Overdue, pending, in review and completed maintenance records.
+                </p>
+
+                <div class="dashboard-chart-wrapper">
+                    <canvas id="maintenanceStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
 
         {{--
             Upcoming maintenance section.
@@ -1188,6 +1325,7 @@
             </div>
 
         </div>
+    </div>
     
 {{-- Warranty expirations within the next three months --}}
 <div
@@ -1804,6 +1942,27 @@
         const assetsByBusinessUnitData = @json($assetsByBusinessUnitData);
 
         /*
+            Warranty chart data prepared by DashboardController.php.
+        */
+        const warrantiesByCategoryLabels = @json($warrantiesByCategoryLabels);
+        const warrantiesByCategoryData = @json($warrantiesByCategoryData);
+
+        const warrantyStatusLabels = @json($warrantyStatusLabels);
+        const warrantyStatusData = @json($warrantyStatusData);
+
+        /*
+            Maintenance chart data prepared by DashboardController.php.
+        */
+        const assignedMaintenancesByPlantLabels =
+            @json($assignedMaintenancesByPlantLabels);
+
+        const assignedMaintenancesByPlantData =
+            @json($assignedMaintenancesByPlantData);
+
+        const maintenanceStatusLabels = @json($maintenanceStatusLabels);
+        const maintenanceStatusData = @json($maintenanceStatusData);
+
+        /*
             Automatic chart color palette.
 
             Colors are assigned by index.
@@ -1850,17 +2009,75 @@
         }
 
         /*
+        |--------------------------------------------------------------------------
+        | Bar value labels
+        |--------------------------------------------------------------------------
+        |
+        | Shows the exact value above bars when explicitly enabled for a chart.
+        | This is useful when a few small values share the same chart with a
+        | much larger value.
+        */
+        const barValueLabelsPlugin = {
+            id: 'barValueLabels',
+
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                if (!pluginOptions?.display) {
+                    return;
+                }
+
+                const dataset = chart.data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+                const { ctx, chartArea } = chart;
+
+                ctx.save();
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '700 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                meta.data.forEach((bar, index) => {
+                    const value = Number(dataset.data[index] ?? 0);
+                    const position = bar.tooltipPosition();
+
+                    /*
+                        Keep labels within the visible chart area, including zero values.
+                    */
+                    const labelY = Math.max(
+                        chartArea.top + 14,
+                        position.y - 8
+                    );
+
+                    ctx.fillText(
+                        value.toLocaleString(),
+                        position.x,
+                        labelY
+                    );
+                });
+
+                ctx.restore();
+            }
+        };
+
+        /*
             Create a reusable bar chart.
 
             Used by:
             - Assets by Category
             - Assets by Business Unit
         */
-        function createBarChart(canvasId, labels, data, label) {
+        function createBarChart(
+            canvasId,
+            labels,
+            data,
+            label,
+            showValueLabels = false,
+            yAxisType = 'linear'
+        ) {
             const colors = getChartColors(labels);
 
             const chart = new Chart(document.getElementById(canvasId), {
                 type: 'bar',
+                plugins: [barValueLabelsPlugin],
                 data: {
                     labels: labels,
                     datasets: [{
@@ -1883,18 +2100,49 @@
                             We hide the default legend because these bar charts
                             already show labels on the axis.
                         */
+                        dashboardValueLabels: {
+                            display: showValueLabels
+                        },
                         legend: {
                             display: false
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
+                            type: yAxisType,
+
+                            /*
+                                A logarithmic scale cannot start at zero. Using 0.5 as the
+                                minimum makes values of 1 and 3 visually distinguishable.
+                            */
+                            min: yAxisType === 'logarithmic' ? 0.5 : undefined,
+                            beginAtZero: yAxisType === 'linear',
+
                             ticks: {
-                                /*
-                                    Asset counts should be whole numbers.
-                                */
-                                precision: 0
+                                precision: 0,
+
+                                callback(value) {
+                                    /*
+                                        Keep the normal labels for every linear chart.
+                                        For the logarithmic maintenance chart, show only the
+                                        main scale levels to prevent overlapping tick labels.
+                                    */
+                                    if (yAxisType !== 'logarithmic') {
+                                        return Number(value).toLocaleString();
+                                    }
+
+                                    const mainLogarithmicTicks = [
+                                        0.5,
+                                        1,
+                                        10,
+                                        100,
+                                        1000,
+                                    ];
+
+                                    return mainLogarithmicTicks.includes(Number(value))
+                                        ? Number(value).toLocaleString()
+                                        : '';
+                                }
                             }
                         }
                     }
@@ -2260,6 +2508,44 @@
         );
 
         /*
+            Warranty dashboard charts.
+        */
+        createDoughnutChart(
+            'warrantiesByCategoryChart',
+            warrantiesByCategoryLabels,
+            warrantiesByCategoryData,
+            'Assets With Warranty',
+            'warrantiesByCategoryLegend'
+        );
+
+        createBarChart(
+            'warrantyStatusChart',
+            warrantyStatusLabels,
+            warrantyStatusData,
+            'Warranty Status'
+        );
+
+        /*
+            Maintenance dashboard charts.
+        */
+        createDoughnutChart(
+            'assignedMaintenancesByPlantChart',
+            assignedMaintenancesByPlantLabels,
+            assignedMaintenancesByPlantData,
+            'Assigned Maintenances',
+            'assignedMaintenancesByPlantLegend'
+        );
+
+        createBarChart(
+            'maintenanceStatusChart',
+            maintenanceStatusLabels,
+            maintenanceStatusData,
+            'Maintenance Status',
+            true,
+            'logarithmic'
+        );
+
+        /*
             Build dropdown filters for charts.
 
             Assets by Plant does not need a local chart filter because
@@ -2487,6 +2773,52 @@
                     .forEach(dropdown => dropdown.classList.add('hidden'));
             }
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard view selector
+        |--------------------------------------------------------------------------
+        |
+        | Switches dashboard content locally. The plant filter stays outside these
+        | views, so the current plant selection remains unchanged.
+        */
+        function showDashboardView(viewName) {
+            document.querySelectorAll('.dashboard-view').forEach((view) => {
+                const isTarget = view.id === `dashboard-view-${viewName}`;
+
+                view.hidden = !isTarget;
+                view.classList.toggle('is-active', isTarget);
+            });
+
+            document
+                .querySelectorAll('.dashboard-view-selector-button')
+                .forEach((button) => {
+                    const isTarget = button.dataset.dashboardView === viewName;
+
+                    button.classList.toggle('is-active', isTarget);
+                    button.setAttribute(
+                        'aria-selected',
+                        isTarget ? 'true' : 'false'
+                    );
+                });
+
+            /*
+                Chart.js must resize after a hidden view becomes visible.
+            */
+            window.setTimeout(() => {
+                Object.values(dashboardCharts).forEach((chart) => {
+                    chart.resize();
+                });
+            }, 180);
+        }
+
+        document
+            .querySelectorAll('.dashboard-view-selector-button')
+            .forEach((button) => {
+                button.addEventListener('click', () => {
+                    showDashboardView(button.dataset.dashboardView);
+                });
+            });
     </script>
 
     {{--
