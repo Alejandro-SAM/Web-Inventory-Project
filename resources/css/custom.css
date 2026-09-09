@@ -825,26 +825,73 @@ h6 {
     font-weight: 700;
 }
 
-/* Use a soft background to distinguish each form section */
+/* Stronger blue background behind form sections */
 .inventory-form-modal .inventory-modal-body {
     padding: 1.25rem;
-    background-color: #eef3f8;
+    background-color: #dfeaf5;
 }
 
-/* Group related fields into clear visual sections */
+/* Clearly separate each editing section */
 .inventory-form-modal .inventory-form-section {
     margin-bottom: 1.15rem;
     padding: 1.15rem;
+
     background-color: #ffffff;
-    border: 1px solid #dbe3ec;
-    border-radius: 0.7rem;
-    box-shadow: 0 0.15rem 0.4rem rgba(15, 23, 42, 0.04);
+
+    border: 2px solid #b8cbe0;
+    border-radius: 0.75rem;
+
+    box-shadow:
+        0 0.2rem 0.55rem rgba(30, 58, 95, 0.08);
 }
 
 .inventory-form-modal .inventory-form-section-header {
     margin-bottom: 1rem;
     padding-bottom: 0.7rem;
-    border-bottom: 1px solid #e7edf3;
+    border-bottom: 2px solid #d5e2ef;
+}
+
+/* Editable fields */
+.inventory-form-modal .form-control:not(:disabled),
+.inventory-form-modal .form-select:not(:disabled) {
+    background-color: #ffffff;
+    border: 1.5px solid #9fb5ca;
+}
+
+/* Stronger focus indicator */
+.inventory-form-modal .form-control:not(:disabled):focus,
+.inventory-form-modal .form-select:not(:disabled):focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+}
+
+/* Read-only / disabled fields look intentionally inactive */
+.inventory-form-modal .form-control:disabled,
+.inventory-form-modal .form-select:disabled,
+.inventory-form-modal .form-control[readonly] {
+    background-color: #e9eef4;
+    border-color: #cbd5df;
+    color: #64748b;
+}
+
+.inventory-responsive-option {
+    min-height: 38px;
+
+    padding: 0.55rem 0.75rem;
+
+    background-color: #f8fbff;
+    border: 1.5px solid #9fb5ca;
+    border-radius: 0.45rem;
+}
+
+.inventory-responsive-option .form-check {
+    margin-bottom: 0.1rem;
+}
+
+.inventory-responsive-option .text-muted {
+    display: block;
+    margin-left: 1.5rem;
+    font-size: 0.78rem;
 }
 
 .inventory-form-modal .inventory-form-section-header h6 {

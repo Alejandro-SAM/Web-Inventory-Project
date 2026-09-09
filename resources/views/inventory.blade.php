@@ -1158,6 +1158,103 @@
 
                                                 <div class="modal-body inventory-modal-body">
 
+                                                <!-- Asset status -->
+                                                <section class="inventory-form-section">
+                                                    <div class="inventory-form-section-header">
+                                                        <h6>Asset Status</h6>
+                                                        <span>Current asset status and responsive document.</span>
+                                                    </div>
+
+                                                    <div class="row g-3 align-items-end">
+
+                                                        <!-- State -->
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">State</label>
+
+                                                            <select name="state" class="form-select">
+                                                                <option
+                                                                    value="active"
+                                                                    {{ old('state', $item->state) === 'active' ? 'selected' : '' }}
+                                                                >
+                                                                    Active
+                                                                </option>
+
+                                                                <option
+                                                                    value="inactive"
+                                                                    {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}
+                                                                >
+                                                                    Inactive
+                                                                </option>
+
+                                                                <option
+                                                                    value="maintenance"
+                                                                    {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}
+                                                                >
+                                                                    Maintenance
+                                                                </option>
+
+                                                                <option
+                                                                    value="degraded"
+                                                                    {{ old('state', $item->state) === 'degraded' ? 'selected' : '' }}
+                                                                >
+                                                                    Degraded
+                                                                </option>
+
+                                                                <option
+                                                                    value="damaged"
+                                                                    {{ old('state', $item->state) === 'damaged' ? 'selected' : '' }}
+                                                                >
+                                                                    Damaged
+                                                                </option>
+
+                                                                <option
+                                                                    value="disposed"
+                                                                    {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}
+                                                                >
+                                                                    Disposed
+                                                                </option>
+
+                                                                <option
+                                                                    value="lost"
+                                                                    {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}
+                                                                >
+                                                                    Lost
+                                                                </option>
+
+                                                                <option
+                                                                    value="to_be_deleted"
+                                                                    {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}
+                                                                >
+                                                                    To Be Deleted
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Responsive -->
+                                                        <div class="col-md-6">
+                                                            <div class="inventory-responsive-option">
+                                                                <div class="form-check inventory-responsive-check">
+                                                                    <input
+                                                                        class="form-check-input"
+                                                                        type="checkbox"
+                                                                        name="responsive"
+                                                                        id="responsive{{ $item->id }}"
+                                                                        value="1"
+                                                                        {{ old('responsive', $item->responsive) ? 'checked' : '' }}
+                                                                    >
+
+                                                                    <label
+                                                                        class="form-check-label fw-semibold"
+                                                                        for="responsive{{ $item->id }}"
+                                                                    >
+                                                                        Has responsive document
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </section>
                                                     <!-- Asset identification -->
                                                     <section class="inventory-form-section">
                                                         <div class="inventory-form-section-header">
@@ -1569,12 +1666,12 @@
                                                     <!-- Status and classification -->
                                                     <section class="inventory-form-section">
                                                         <div class="inventory-form-section-header">
-                                                            <h6>Status and Classification</h6>
-                                                            <span>Asset status, classification and CIA security values.</span>
+                                                        <h6>Classification</h6>
+                                                        <span>Security classification and CIA values.</span>
                                                         </div>
 
                                                         <div class="row g-3">
-                                                            <div class="col-md-6">
+                                                            <div class="col-md-12">
                                                                 <label class="form-label">Classification</label>
 
                                                                 <input
@@ -1587,69 +1684,6 @@
                                                                 <small class="form-text text-muted">
                                                                     Classification is automatically assigned based on Confidentiality, Integrity and Availability.
                                                                 </small>
-                                                            </div>
-
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">State</label>
-
-                                                                <select name="state" class="form-select">
-                                                                    <option
-                                                                        value="active"
-                                                                        {{ old('state', $item->state) === 'active' ? 'selected' : '' }}
-                                                                    >
-                                                                        Active
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="inactive"
-                                                                        {{ old('state', $item->state) === 'inactive' ? 'selected' : '' }}
-                                                                    >
-                                                                        Inactive
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="maintenance"
-                                                                        {{ old('state', $item->state) === 'maintenance' ? 'selected' : '' }}
-                                                                    >
-                                                                        Maintenance
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="degraded"
-                                                                        {{ old('state', $item->state) === 'degraded' ? 'selected' : '' }}
-                                                                    >
-                                                                        Degraded
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="damaged"
-                                                                        {{ old('state', $item->state) === 'damaged' ? 'selected' : '' }}
-                                                                    >
-                                                                        Damaged
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="disposed"
-                                                                        {{ old('state', $item->state) === 'disposed' ? 'selected' : '' }}
-                                                                    >
-                                                                        Disposed
-                                                                    </option>
-
-                                                                    <option
-                                                                        value="lost"
-                                                                        {{ old('state', $item->state) === 'lost' ? 'selected' : '' }}
-                                                                    >
-                                                                        Lost
-                                                                    </option>
-
-                                                                    {{-- This state can only be assigned while editing --}}
-                                                                    <option
-                                                                        value="to_be_deleted"
-                                                                        {{ old('state', $item->state) === 'to_be_deleted' ? 'selected' : '' }}
-                                                                    >
-                                                                        To Be Deleted
-                                                                    </option>
-                                                                </select>
                                                             </div>
 
                                                             <div class="col-md-4">
@@ -1731,25 +1765,6 @@
                                                                     rows="3"
                                                                 >{{ old('comments', $item->comments) }}</textarea>
                                                             </div>
-
-                                                            <div class="col-12">
-                                                                <div class="form-check inventory-responsive-check">
-                                                                    <input
-                                                                        class="form-check-input"
-                                                                        type="checkbox"
-                                                                        name="responsive"
-                                                                        id="responsive{{ $item->id }}"
-                                                                        value="1"
-                                                                        {{ old('responsive', $item->responsive) ? 'checked' : '' }}
-                                                                    >
-
-                                                                    <label
-                                                                        class="form-check-label"
-                                                                        for="responsive{{ $item->id }}"
-                                                                    >
-                                                                        Has responsive document
-                                                                    </label>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </section>
@@ -1882,6 +1897,75 @@
                                 </div>
                             @endif
 
+                            <!-- Asset status -->
+                            <section class="inventory-form-section">
+                                <div class="inventory-form-section-header">
+                                    <h6>Asset Status</h6>
+                                    <span>Initial asset status and responsive document.</span>
+                                </div>
+
+                                <div class="row g-3 align-items-end">
+
+                                    <!-- State -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">State</label>
+
+                                        <select name="state" class="form-select">
+                                            <option value="active" {{ old('state', 'active') === 'active' ? 'selected' : '' }}>
+                                                Active
+                                            </option>
+
+                                            <option value="inactive" {{ old('state') === 'inactive' ? 'selected' : '' }}>
+                                                Inactive
+                                            </option>
+
+                                            <option value="maintenance" {{ old('state') === 'maintenance' ? 'selected' : '' }}>
+                                                Maintenance
+                                            </option>
+
+                                            <option value="degraded" {{ old('state') === 'degraded' ? 'selected' : '' }}>
+                                                Degraded
+                                            </option>
+
+                                            <option value="damaged" {{ old('state') === 'damaged' ? 'selected' : '' }}>
+                                                Damaged
+                                            </option>
+
+                                            <option value="disposed" {{ old('state') === 'disposed' ? 'selected' : '' }}>
+                                                Disposed
+                                            </option>
+
+                                            <option value="lost" {{ old('state') === 'lost' ? 'selected' : '' }}>
+                                                Lost
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Responsive -->
+                                    <div class="col-md-6">
+                                        <div class="inventory-responsive-option">
+                                            <div class="form-check inventory-responsive-check">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="responsive"
+                                                    id="addAssetResponsive"
+                                                    value="1"
+                                                    {{ old('responsive') ? 'checked' : '' }}
+                                                >
+
+                                                <label
+                                                    class="form-check-label fw-semibold"
+                                                    for="addAssetResponsive"
+                                                >
+                                                    Has responsive document
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </section>
                             <!-- Identification -->
                             <section class="inventory-form-section">
                                 <div class="inventory-form-section-header">
@@ -2237,15 +2321,15 @@
                                 @endif
                             </section>
 
-                            <!-- Status and classification -->
+                            <!-- Classification -->
                             <section class="inventory-form-section">
                                 <div class="inventory-form-section-header">
-                                    <h6>Status and Classification</h6>
-                                    <span>Asset status, classification and CIA security values.</span>
+                                <h6>Classification</h6>
+                                <span>Security classification and CIA values.</span>
                                 </div>
 
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label class="form-label">Classification</label>
 
                                         <input
@@ -2258,40 +2342,6 @@
                                         <small class="form-text text-muted">
                                             Classification is automatically assigned based on Confidentiality, Integrity and Availability.
                                         </small>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">State</label>
-
-                                        <select name="state" class="form-select">
-                                            <option value="active" {{ old('state', 'active') === 'active' ? 'selected' : '' }}>
-                                                Active
-                                            </option>
-
-                                            <option value="inactive" {{ old('state') === 'inactive' ? 'selected' : '' }}>
-                                                Inactive
-                                            </option>
-
-                                            <option value="maintenance" {{ old('state') === 'maintenance' ? 'selected' : '' }}>
-                                                Maintenance
-                                            </option>
-
-                                            <option value="degraded" {{ old('state') === 'degraded' ? 'selected' : '' }}>
-                                                Degraded
-                                            </option>
-
-                                            <option value="damaged" {{ old('state') === 'damaged' ? 'selected' : '' }}>
-                                                Damaged
-                                            </option>
-
-                                            <option value="disposed" {{ old('state') === 'disposed' ? 'selected' : '' }}>
-                                                Disposed
-                                            </option>
-
-                                            <option value="lost" {{ old('state') === 'lost' ? 'selected' : '' }}>
-                                                Lost
-                                            </option>
-                                        </select>
                                     </div>
 
                                     <div class="col-md-4">
@@ -2336,7 +2386,6 @@
                             <section class="inventory-form-section mb-0">
                                 <div class="inventory-form-section-header">
                                     <h6>Additional Information</h6>
-                                    <span>Comments and responsive document information.</span>
                                 </div>
 
                                 <div class="row g-3">
@@ -2347,26 +2396,6 @@
                                             class="form-control"
                                             rows="3"
                                         >{{ old('comments') }}</textarea>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <div class="form-check inventory-responsive-check">
-                                            <input
-                                                class="form-check-input"
-                                                type="checkbox"
-                                                name="responsive"
-                                                id="addAssetResponsive"
-                                                value="1"
-                                                {{ old('responsive') ? 'checked' : '' }}
-                                            >
-
-                                            <label
-                                                class="form-check-label"
-                                                for="addAssetResponsive"
-                                            >
-                                                Has responsive document
-                                            </label>
-                                        </div>
                                     </div>
                                 </div>
                             </section>
