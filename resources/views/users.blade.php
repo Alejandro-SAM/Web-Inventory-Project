@@ -34,6 +34,7 @@
                             <th>Name</th>
                             <th>Department/Area</th>
                             <th>Account Level</th>
+                            <th>Badges</th>
                             <th>Status</th>
                             <th>Created At</th>
                             <th class="text-center">Actions</th>
@@ -47,7 +48,75 @@
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->department ?? 'N/A' }}</td>
                                 <!-- Display 'Operator' instead of 'User' for user_level and 'Guest' instead of 'Read' for user_level -->
-                                <td>{{ $user->user_level === 'User'? 'Operator': ($user->user_level === 'Read' ? 'Guest' : $user->user_level) }}</td>
+                                <td>
+                                    {{ $user->user_level === 'User'
+                                        ? 'Operator'
+                                        : ($user->user_level === 'Read' ? 'Guest' : $user->user_level)
+                                    }}
+                                </td>
+
+                                <td>
+                                    @php
+                                        $activeBadges = $user->badges
+                                            ->filter(function ($badge) {
+                                                return $badge->pivot->is_active;
+                                            });
+                                    @endphp
+
+                                    @if ($activeBadges->isEmpty())
+                                        <span class="text-muted">—</span>
+                                    @else
+                                    <div class="d-flex flex-wrap gap-1 align-items-center">
+
+                                        @foreach ($activeBadges as $badge)
+
+                                            @php
+                                                $badgeLabel = match ($badge->slug) {
+                                                    'maintenance_management' => 'MM',
+                                                    'inventory_deletion' => 'ID',
+                                                    'it_room_responsible' => 'IT',
+                                                    default => strtoupper(
+                                                        collect(explode(' ', $badge->name))
+                                                            ->map(fn ($word) => substr($word, 0, 1))
+                                                            ->take(2)
+                                                            ->implode('')
+                                                    ),
+                                                };
+
+                                                $badgeTooltip = $badge->name;
+
+                                                if ($badge->description) {
+                                                    $badgeTooltip .= ' — ' . $badge->description;
+                                                }
+
+                                                if (
+                                                    $badge->slug === 'it_room_responsible'
+                                                    && $badge->pivot->plant
+                                                ) {
+                                                    $badgeTooltip .= ' — Plant ' . $badge->pivot->plant;
+                                                }
+
+                                                $badgeClass = match ($badge->slug) {
+                                                    'maintenance_management' => 'badge-maintenance',
+                                                    'inventory_deletion' => 'badge-deletion',
+                                                    'it_room_responsible' => 'badge-it-room',
+                                                    default => 'badge-default',
+                                                };
+                                            @endphp
+
+                                            <span
+                                                class="user-table-badge-icon {{ $badgeClass }}"
+                                                title="{{ $badgeTooltip }}"
+                                            >
+                                                {{ $badgeLabel }}
+                                            </span>
+
+                                        @endforeach
+
+                                    </div>
+                                    @endif
+                                </td>
+
                                 <td>
                                     @if ($user->is_active)
                                         <span class="badge bg-success">Active</span>
@@ -329,7 +398,7 @@
                             </div>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">
+                                <td colspan="8" class="text-center text-muted">
                                     No users registered.
                                 </td>
                             </tr>

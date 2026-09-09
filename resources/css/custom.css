@@ -1603,3 +1603,89 @@ h6 {
     margin-left: 1.5rem;
     max-width: 260px;
 }
+
+/* Compact badge icons in Accounts table */
+.user-table-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 30px;
+    height: 30px;
+    padding: 0 7px;
+
+    border-radius: 999px;
+
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+
+    color: #495057;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+
+    cursor: help;
+    user-select: none;
+}
+
+.user-table-badge-icon:hover {
+    background-color: #dee2e6;
+    border-color: #adb5bd;
+}
+
+/* Maintenance Management */
+.badge-maintenance {
+    background-color: #fff3cd;
+    border: 1px solid #ffda6a;
+    color: #664d03;
+}
+
+/* Inventory Deletion */
+.badge-deletion {
+    background-color: #f8d7da;
+    border: 1px solid #f1aeb5;
+    color: #842029;
+}
+
+/* IT Room Responsible */
+.badge-it-room {
+    background-color: #cff4fc;
+    border: 1px solid #9eeaf9;
+    color: #055160;
+}
+
+/* Fallback for future badges */
+.badge-default {
+    background-color: #e2e3e5;
+    border: 1px solid #c4c8cb;
+    color: #41464b;
+}
+
+.profile-badge-content {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.profile-badge-separator {
+    color: #94a3b8;
+}
+
+.profile-badge-description {
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+.profile-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+
+    padding: 0.75rem 0.9rem;
+
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.65rem;
+}

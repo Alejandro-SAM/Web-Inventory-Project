@@ -16,6 +16,11 @@
 
                 <hr class="my-8 border-gray-200">
 
+                <!-- Account badges -->
+                @include('profile.partials.account-badges')
+
+                <hr class="my-8 border-gray-200">
+
                 <!-- Password update -->
                 @include('profile.partials.update-password-form')
 
