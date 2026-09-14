@@ -115,6 +115,32 @@
 
             @endif
 
+            <!-- Export selected inventory assets -->
+            <form
+                id="exportSelectedAssetsForm"
+                method="POST"
+                action="{{ route('inventory.export-selected') }}"
+                class="d-inline"
+            >
+                @csrf
+
+                <input
+                    type="hidden"
+                    name="selected_asset_ids"
+                    id="exportSelectedAssetIds"
+                    value="[]"
+                >
+
+                <button
+                    type="submit"
+                    id="exportSelectedAssetsButton"
+                    class="btn btn-sm btn-outline-success"
+                    disabled
+                    title="Select one or more assets to export"
+                >
+                    Export Excel
+                </button>
+            </form>
 
             @if (Auth::user()->user_level === 'Admin')
 
@@ -2733,6 +2759,14 @@
             'clearSelectedAssets'
         );
 
+        const exportSelectedButton = document.getElementById(
+            'exportSelectedAssetsButton'
+        );
+
+        const exportSelectedInput = document.getElementById(
+            'exportSelectedAssetIds'
+        );
+
 
         /*
         |--------------------------------------------------------------------------
@@ -2794,17 +2828,51 @@
         */
         function updateSelectionCounter() {
 
-            if (!selectionCounter) {
-                return;
-            }
-
             const selectedAssets = getSelectedAssets();
             const totalSelected = selectedAssets.length;
 
-            selectionCounter.textContent =
-                totalSelected === 1
-                    ? '1 selected'
-                    : `${totalSelected} selected`;
+            /*
+            |--------------------------------------------------------------------------
+            | Update selection counter
+            |--------------------------------------------------------------------------
+            */
+
+            if (selectionCounter) {
+
+                selectionCounter.textContent =
+                    totalSelected === 1
+                        ? '1 selected'
+                        : `${totalSelected} selected`;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Excel export button
+            |--------------------------------------------------------------------------
+            */
+
+            if (exportSelectedButton) {
+
+                const hasSelection = totalSelected > 0;
+
+                exportSelectedButton.disabled = !hasSelection;
+
+                exportSelectedButton.title = hasSelection
+                    ? `Export ${totalSelected} selected asset(s) to Excel`
+                    : 'Select one or more assets to export';
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Keep selected asset IDs ready for export
+            |--------------------------------------------------------------------------
+            */
+
+            if (exportSelectedInput) {
+
+                exportSelectedInput.value =
+                    JSON.stringify(selectedAssets);
+            }
         }
 
 

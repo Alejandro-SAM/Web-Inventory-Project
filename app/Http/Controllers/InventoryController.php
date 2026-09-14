@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SelectedInventoryExport; //MODELO DE EXPORTACION DE INVENTARIO SELECCIONADO A PLANTILLA EXCEL
 
 class InventoryController extends Controller
 {
@@ -1632,6 +1633,76 @@ private function inventoryLogFields(): array
         return redirect()
             ->route('inventory')
             ->with('success', 'Import cancelled successfully.');
+    }
+
+    /**
+     * Export selected inventory assets to Excel.
+     */
+    public function exportSelected(Request $request)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Retrieve selected assets
+        |--------------------------------------------------------------------------
+        |
+        | The selected IDs come from the persistent inventory selection stored
+        | in the browser. The existing helper normalizes and removes duplicates.
+        |
+        */
+
+        $selectedIds = $this->selectedInventoryIds($request);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent empty exports
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($selectedIds)) {
+            return redirect()
+                ->route('inventory')
+                ->with(
+                    'warning',
+                    'Please select at least one asset before exporting.'
+                );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verify that selected assets still exist
+        |--------------------------------------------------------------------------
+        */
+
+        $existingIds = Inventory::query()
+            ->whereIn('id', $selectedIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($existingIds)) {
+            return redirect()
+                ->route('inventory')
+                ->with(
+                    'warning',
+                    'The selected assets could not be found.'
+                );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate Excel file
+        |--------------------------------------------------------------------------
+        */
+
+        $fileName =
+            'inventory_selected_assets_'
+            . now()->format('Y-m-d_H-i-s')
+            . '.xlsx';
+
+        return Excel::download(
+            new SelectedInventoryExport($existingIds),
+            $fileName
+        );
     }
 
     // Download print data for a specific inventory item
