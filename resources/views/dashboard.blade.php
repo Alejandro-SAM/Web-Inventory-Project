@@ -871,6 +871,10 @@
                             </th>
 
                             <th class="text-left py-2">
+                                Maintenance Responsible
+                            </th>
+
+                            <th class="text-left py-2">
                                 Details
                             </th>
                         </tr>
@@ -941,6 +945,10 @@
                                 </td>
 
                                 <td class="py-2">
+                                    {{ $asset->maintenanceResponsible?->name ?? '—' }}
+                                </td>
+
+                                <td class="py-2">
 
                                     <div class="d-flex flex-wrap gap-2">
 
@@ -953,14 +961,36 @@
                                             View Details
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-success"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#maintenance-assignment-{{ $asset->id }}"
-                                        >
-                                            Quick Assign
-                                        </button>
+                                        @if ($asset->maintenance_responsible_id)
+
+                                            <form
+                                                method="POST"
+                                                action="{{ route('maintenance.unassign', $asset) }}"
+                                                onsubmit="return confirm('Cancel the maintenance assignment for this asset?');"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+                                                    Cancel Assignment
+                                                </button>
+                                            </form>
+
+                                        @else
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-success"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#maintenance-assignment-{{ $asset->id }}"
+                                            >
+                                                Quick Assign
+                                            </button>
+
+                                        @endif
 
                                     </div>
 
@@ -1511,7 +1541,7 @@
 
                 <div class="modal-content">
 
-                    <div class="modal-header">
+                    <div class="modal-header px-4">
 
                         <div>
 
@@ -1541,9 +1571,9 @@
                     </div>
 
 
-                    <div class="modal-body">
+                    <div class="modal-body px-4 pt-3 pb-4">
 
-                        <div class="table-responsive">
+                        <div class="table-responsive px-2">
 
                             <table class="min-w-full text-sm">
 
@@ -1552,6 +1582,7 @@
                                         <th class="text-left py-2">IT Number</th>
                                         <th class="text-left py-2">Time Left</th>
                                         <th class="text-center py-2">Assignment Status</th>
+                                        <th class="text-left py-2">Maintenance Responsible</th>
                                         <th class="text-left py-2">Details</th>
                                     </tr>
                                 </thead>
@@ -1618,26 +1649,69 @@
                                             </td>
 
                                             <td class="py-2">
+                                                {{ $asset->maintenanceResponsible?->name ?? '—' }}
+                                            </td>
+
+                                            <td class="py-2">
 
                                                 <div class="d-flex flex-wrap gap-2">
 
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm btn-outline-primary"
+                                                        class="btn btn-sm btn-outline-primary js-maintenance-detail"
                                                         data-bs-toggle="modal"
-                                                        data-bs-target="#maintenance-details-{{ $asset->id }}"
+                                                        data-bs-target="#maintenance-details-modal"
+                                                        data-maintenance="{{ e(json_encode([
+                                                            'itNumber' => $asset->it_internal_number,
+                                                            'serialNumber' => $asset->serial_number ?? 'N/A',
+                                                            'assetNumber' => $asset->asset_number ?? 'N/A',
+                                                            'category' => $asset->category ?? 'N/A',
+                                                            'brand' => $asset->brand ?? 'N/A',
+                                                            'model' => $asset->model ?? 'N/A',
+                                                            'plant' => $asset->plant ?? 'N/A',
+                                                            'businessUnit' => $asset->business_unit ?? 'N/A',
+                                                            'endUser' => $asset->end_user ?? 'N/A',
+                                                            'responsible' => $asset->maintenanceResponsible?->name ?? 'Not assigned',
+                                                            'nextMaintenance' => $asset->next_maintenance ?? 'N/A',
+                                                            'status' => ucfirst($asset->effective_maintenance_status ?? 'N/A'),
+                                                            'description' => $asset->description ?? 'N/A',
+                                                        ])) }}"
                                                     >
                                                         View Details
                                                     </button>
 
-                                                    <button
-                                                        type="button"
-                                                        class="btn btn-sm btn-outline-success"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#maintenance-assignment-{{ $asset->id }}"
-                                                    >
-                                                        Quick Assign
-                                                    </button>
+                                                    @if ($asset->maintenance_responsible_id)
+
+                                                        <form
+                                                            method="POST"
+                                                            action="{{ route('maintenance.unassign', $asset) }}"
+                                                            onsubmit="return confirm('Cancel the maintenance assignment for this asset?');"
+                                                        >
+                                                            @csrf
+                                                            @method('DELETE')
+
+                                                            <button
+                                                                type="submit"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                            >
+                                                                Cancel Assignment
+                                                            </button>
+                                                        </form>
+
+                                                    @else
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-outline-success js-maintenance-assignment"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#maintenance-assignment-modal"
+                                                            data-assign-url="{{ route('maintenance.assign', $asset) }}"
+                                                            data-it-number="{{ $asset->it_internal_number }}"
+                                                        >
+                                                            Quick Assign
+                                                        </button>
+
+                                                    @endif
 
                                                 </div>
 
@@ -1649,7 +1723,7 @@
 
                                         <tr>
                                             <td
-                                                colspan="3"
+                                                colspan="5"
                                                 class="text-center text-muted py-4"
                                             >
                                                 No maintenance scheduled within the next 3 months.
@@ -1684,235 +1758,232 @@
             </div>
         </div>
 
-    {{--
-        Detail and assignment modals for assets exclusive to the
-        three-month list.
+    <div
+    class="modal fade app-detail-modal"
+    id="maintenance-details-modal"
+    tabindex="-1"
+    aria-labelledby="maintenanceDetailsModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
 
-        They must remain outside #all-maintenance-modal because
-        Bootstrap cannot reliably display nested modals.
-    --}}
-    @foreach ($maintenanceNextThreeMonths as $asset)
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="maintenanceDetailsModalLabel">
+                        Asset Maintenance Details
+                    </h5>
 
-        @if (! $upcomingMaintenance->contains('id', $asset->id))
+                    <p class="modal-subtitle">
+                        Asset identification and maintenance information.
+                    </p>
+                </div>
 
-            <div
-                class="modal fade app-detail-modal"
-                id="maintenance-details-{{ $asset->id }}"
-                tabindex="-1"
-                aria-labelledby="maintenanceDetailsLabel{{ $asset->id }}"
-                aria-hidden="true"
-            >
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
 
-                    <div class="modal-content">
+            <div class="modal-body">
+                <div class="row g-3 app-detail-grid">
 
-                        <div class="modal-header">
+                    @foreach ([
+                        'IT Number' => 'itNumber',
+                        'Serial Number' => 'serialNumber',
+                        'Asset Number' => 'assetNumber',
+                        'Category' => 'category',
+                        'Brand' => 'brand',
+                        'Model' => 'model',
+                        'Plant' => 'plant',
+                        'Business Unit' => 'businessUnit',
+                        'End User' => 'endUser',
+                        'Maintenance Responsible' => 'responsible',
+                        'Next Maintenance' => 'nextMaintenance',
+                        'Maintenance Status' => 'status',
+                    ] as $label => $field)
 
-                            <div>
-
-                                <h5
-                                    class="modal-title"
-                                    id="maintenanceDetailsLabel{{ $asset->id }}"
-                                >
-                                    Asset Maintenance Details
-                                </h5>
-
-                                <p class="modal-subtitle">
-                                    Asset identification and maintenance information.
-                                </p>
-
-                            </div>
-
-                            <button
-                                type="button"
-                                class="btn-close"
-                                data-bs-dismiss="modal"
-                                aria-label="Close"
-                            ></button>
-
-                        </div>
-
-                        <div class="modal-body">
-
-                            <div class="row g-3 app-detail-grid">
-
-                                @foreach ([
-                                    'IT Number' => $asset->it_internal_number,
-                                    'Serial Number' => $asset->serial_number,
-                                    'Asset Number' => $asset->asset_number,
-                                    'Category' => $asset->category,
-                                    'Brand' => $asset->brand,
-                                    'Model' => $asset->model,
-                                    'Plant' => $asset->plant,
-                                    'Business Unit' => $asset->business_unit,
-                                    'End User' => $asset->end_user,
-                                    'Maintenance Responsible' => $asset->maintenanceResponsible?->name ?? 'Not assigned',
-                                    'Next Maintenance' => $asset->next_maintenance,
-                                    'Maintenance Status' => ucfirst($asset->effective_maintenance_status ?? 'N/A'),
-                                ] as $label => $value)
-
-                                    <div class="col-md-6">
-
-                                        <div class="app-detail-item">
-
-                                            <span class="app-detail-label">
-                                                {{ $label }}
-                                            </span>
-
-                                            <p class="app-detail-value">
-                                                {{ $value ?? 'N/A' }}
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-                                @endforeach
-
-                            </div>
-
-                            <div class="app-detail-description">
-
+                        <div class="col-md-6">
+                            <div class="app-detail-item">
                                 <span class="app-detail-label">
-                                    Description
+                                    {{ $label }}
                                 </span>
 
-                                <p class="app-detail-value">
-                                    {{ $asset->description ?? 'N/A' }}
+                                <p
+                                    class="app-detail-value"
+                                    id="maintenance-detail-{{ $field }}"
+                                >
+                                    —
                                 </p>
-
                             </div>
-
                         </div>
 
-                        <div class="modal-footer">
+                    @endforeach
 
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal"
-                            >
-                                Close
-                            </button>
+                </div>
 
-                        </div>
+                <div class="app-detail-description">
+                    <span class="app-detail-label">
+                        Description
+                    </span>
 
-                    </div>
-
+                    <p
+                        class="app-detail-value"
+                        id="maintenance-detail-description"
+                    >
+                        —
+                    </p>
                 </div>
             </div>
 
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Close
+                </button>
+            </div>
 
-            <div
-                class="modal fade app-detail-modal"
-                id="maintenance-assignment-{{ $asset->id }}"
-                tabindex="-1"
-                aria-labelledby="maintenanceAssignmentLabel{{ $asset->id }}"
-                aria-hidden="true"
+        </div>
+    </div>
+</div>
+
+
+<div
+    class="modal fade app-detail-modal"
+    id="maintenance-assignment-modal"
+    tabindex="-1"
+    aria-labelledby="maintenanceAssignmentModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                id="maintenance-assignment-form"
             >
-                <div class="modal-dialog modal-dialog-centered">
+                @csrf
+                @method('PATCH')
 
-                    <div class="modal-content">
-
-                        <form
-                            method="POST"
-                            action="{{ route('maintenance.assign', $asset) }}"
+                <div class="modal-header">
+                    <div>
+                        <h5
+                            class="modal-title"
+                            id="maintenanceAssignmentModalLabel"
                         >
-                            @csrf
-                            @method('PATCH')
+                            Quick Maintenance Assignment
+                        </h5>
 
-                            <div class="modal-header">
-
-                                <div>
-
-                                    <h5
-                                        class="modal-title"
-                                        id="maintenanceAssignmentLabel{{ $asset->id }}"
-                                    >
-                                        Quick Maintenance Assignment
-                                    </h5>
-
-                                    <p class="modal-subtitle">
-                                        Assign {{ $asset->it_internal_number }} to an active IT user.
-                                    </p>
-
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="modal"
-                                    aria-label="Close"
-                                ></button>
-
-                            </div>
-
-                            <div class="modal-body">
-
-                                <label
-                                    for="maintenance-responsible-{{ $asset->id }}"
-                                    class="form-label"
-                                >
-                                    Maintenance Responsible
-                                </label>
-
-                                <select
-                                    id="maintenance-responsible-{{ $asset->id }}"
-                                    name="maintenance_responsible_id"
-                                    class="form-select"
-                                    required
-                                >
-                                    <option value="" disabled>
-                                        Select a user
-                                    </option>
-
-                                    @foreach ($maintenanceAssignees as $assignee)
-
-                                        <option
-                                            value="{{ $assignee->id }}"
-                                            {{ (int) $asset->maintenance_responsible_id === (int) $assignee->id ? 'selected' : '' }}
-                                        >
-                                            {{ $assignee->name }}
-                                            @if ($assignee->employee_number)
-                                                — {{ $assignee->employee_number }}
-                                            @endif
-                                        </option>
-
-                                    @endforeach
-
-                                </select>
-
-                            </div>
-
-                            <div class="modal-footer">
-
-                                <button
-                                    type="button"
-                                    class="btn btn-secondary"
-                                    data-bs-dismiss="modal"
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-success"
-                                >
-                                    Assign Maintenance
-                                </button>
-
-                            </div>
-
-                        </form>
-
+                        <p
+                            class="modal-subtitle"
+                            id="maintenance-assignment-subtitle"
+                        >
+                            Assign an asset to an active IT user.
+                        </p>
                     </div>
 
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
                 </div>
-            </div>
 
-        @endif
+                <div class="modal-body">
+                    <label
+                        for="maintenance-responsible"
+                        class="form-label"
+                    >
+                        Maintenance Responsible
+                    </label>
 
-    @endforeach
+                    <select
+                        id="maintenance-responsible"
+                        name="maintenance_responsible_id"
+                        class="form-select"
+                        required
+                    >
+                        <option value="" selected disabled>
+                            Select a user
+                        </option>
+
+                        @foreach ($maintenanceAssignees as $assignee)
+
+                            <option value="{{ $assignee->id }}">
+                                {{ $assignee->name }}
+                                @if ($assignee->employee_number)
+                                    — {{ $assignee->employee_number }}
+                                @endif
+                            </option>
+
+                        @endforeach
+
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-success"
+                    >
+                        Assign Maintenance
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.querySelectorAll('.js-maintenance-detail').forEach((button) => {
+        button.addEventListener('click', () => {
+            const maintenance = JSON.parse(button.dataset.maintenance);
+
+            Object.entries(maintenance).forEach(([field, value]) => {
+                const element = document.getElementById(
+                    'maintenance-detail-' + field
+                );
+
+                if (element) {
+                    element.textContent = value || 'N/A';
+                }
+            });
+        });
+    });
+
+    document
+        .querySelectorAll('.js-maintenance-assignment')
+        .forEach((button) => {
+            button.addEventListener('click', () => {
+                document
+                    .getElementById('maintenance-assignment-form')
+                    .action = button.dataset.assignUrl;
+
+                document
+                    .getElementById('maintenance-assignment-subtitle')
+                    .textContent =
+                        'Assign ' + button.dataset.itNumber
+                        + ' to an active IT user.';
+            });
+        });
+</script>
 
     {{--
         Chart.js library.

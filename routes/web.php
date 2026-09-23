@@ -188,6 +188,11 @@ Route::middleware(['auth'])->group(function () {
         [MaintenanceController::class, 'assign']
     )->name('maintenance.assign');
 
+    Route::delete(
+        '/maintenance/{inventory}/assignment',
+        [MaintenanceController::class, 'unassign']
+    )->name('maintenance.unassign');
+
 });
 
 require __DIR__.'/auth.php';
