@@ -1598,7 +1598,6 @@
 
                                                         <div class="row g-3">
 
-                                                            <!-- Next Maintenance -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Next Maintenance
@@ -1608,13 +1607,14 @@
                                                                     type="date"
                                                                     name="next_maintenance"
                                                                     class="form-control"
-                                                                    value="{{ old('next_maintenance') }}"
+                                                                    value="{{ old(
+                                                                        'next_maintenance',
+                                                                        optional($item->next_maintenance)->format('Y-m-d')
+                                                                    ) }}"
                                                                     {{ !$canManageMaintenance ? 'disabled' : '' }}
                                                                 >
                                                             </div>
 
-
-                                                            <!-- Maintenance Responsible -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Maintenance Responsible
@@ -1631,22 +1631,27 @@
                                                                         </option>
 
                                                                         @foreach ($maintenanceResponsibleOptions as $responsible)
+
                                                                             <option
                                                                                 value="{{ $responsible->id }}"
                                                                                 {{
-                                                                                    (string) old('maintenance_responsible_id')
-                                                                                    === (string) $responsible->id
+                                                                                    (string) old(
+                                                                                        'maintenance_responsible_id',
+                                                                                        $item->maintenance_responsible_id
+                                                                                    ) === (string) $responsible->id
                                                                                         ? 'selected'
                                                                                         : ''
                                                                                 }}
                                                                             >
                                                                                 {{ $responsible->name }}
 
-                                                                                @if (!empty($responsible->employee_number))
+                                                                                @if ($responsible->employee_number)
                                                                                     — {{ $responsible->employee_number }}
                                                                                 @endif
                                                                             </option>
+
                                                                         @endforeach
+
                                                                     </select>
 
                                                                 @else
@@ -1654,15 +1659,13 @@
                                                                     <input
                                                                         type="text"
                                                                         class="form-control"
-                                                                        value="Not assigned"
+                                                                        value="{{ $item->maintenanceResponsible?->name ?? 'Not assigned' }}"
                                                                         disabled
                                                                     >
 
                                                                 @endif
                                                             </div>
 
-
-                                                            <!-- Maintenance Status -->
                                                             <div class="col-md-4">
                                                                 <label class="form-label">
                                                                     Maintenance Status
@@ -1671,22 +1674,12 @@
                                                                 <input
                                                                     type="text"
                                                                     class="form-control"
-                                                                    value="Pending"
+                                                                    value="{{ ucfirst($item->effective_maintenance_status ?? 'pending') }}"
                                                                     disabled
                                                                 >
-
-                                                                <small class="form-text text-muted">
-                                                                    New assets start with pending maintenance status.
-                                                                </small>
                                                             </div>
 
                                                         </div>
-
-                                                        @if (!$canManageMaintenance)
-                                                            <small class="form-text text-muted d-block mt-3">
-                                                                The Maintenance Management badge is required to modify this section.
-                                                            </small>
-                                                        @endif
                                                     </section>
 
                                                     <!-- Status and classification -->
@@ -1790,7 +1783,6 @@
                                                                     class="form-control"
                                                                     rows="3"
                                                                 >{{ old('comments', $item->comments) }}</textarea>
-                                                            </div>
                                                             </div>
                                                         </div>
                                                     </section>

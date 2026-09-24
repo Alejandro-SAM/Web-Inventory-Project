@@ -1661,7 +1661,7 @@
                                                         class="btn btn-sm btn-outline-primary js-maintenance-detail"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#maintenance-details-modal"
-                                                        data-maintenance="{{ e(json_encode([
+                                                        data-maintenance="{{ json_encode([
                                                             'itNumber' => $asset->it_internal_number,
                                                             'serialNumber' => $asset->serial_number ?? 'N/A',
                                                             'assetNumber' => $asset->asset_number ?? 'N/A',
@@ -1675,7 +1675,7 @@
                                                             'nextMaintenance' => $asset->next_maintenance ?? 'N/A',
                                                             'status' => ucfirst($asset->effective_maintenance_status ?? 'N/A'),
                                                             'description' => $asset->description ?? 'N/A',
-                                                        ])) }}"
+                                                        ]) }}"
                                                     >
                                                         View Details
                                                     </button>
@@ -1952,26 +1952,54 @@
 
 
 <script>
-    document.querySelectorAll('.js-maintenance-detail').forEach((button) => {
-        button.addEventListener('click', () => {
-            const maintenance = JSON.parse(button.dataset.maintenance);
+    const maintenanceDetailsModal = document.getElementById(
+        'maintenance-details-modal'
+    );
 
-            Object.entries(maintenance).forEach(([field, value]) => {
-                const element = document.getElementById(
-                    'maintenance-detail-' + field
+    if (maintenanceDetailsModal) {
+        maintenanceDetailsModal.addEventListener(
+            'show.bs.modal',
+            (event) => {
+                const button = event.relatedTarget;
+
+                if (!button || !button.dataset.maintenance) {
+                    return;
+                }
+
+                const maintenance = JSON.parse(
+                    button.dataset.maintenance
                 );
 
-                if (element) {
-                    element.textContent = value || 'N/A';
-                }
-            });
-        });
-    });
+                Object.entries(maintenance).forEach(
+                    ([field, value]) => {
+                        const element = document.getElementById(
+                            'maintenance-detail-' + field
+                        );
 
-    document
-        .querySelectorAll('.js-maintenance-assignment')
-        .forEach((button) => {
-            button.addEventListener('click', () => {
+                        if (element) {
+                            element.textContent = value || 'N/A';
+                        }
+                    }
+                );
+            }
+        );
+    }
+
+
+    const maintenanceAssignmentModal = document.getElementById(
+        'maintenance-assignment-modal'
+    );
+
+    if (maintenanceAssignmentModal) {
+        maintenanceAssignmentModal.addEventListener(
+            'show.bs.modal',
+            (event) => {
+                const button = event.relatedTarget;
+
+                if (!button) {
+                    return;
+                }
+
                 document
                     .getElementById('maintenance-assignment-form')
                     .action = button.dataset.assignUrl;
@@ -1981,8 +2009,9 @@
                     .textContent =
                         'Assign ' + button.dataset.itNumber
                         + ' to an active IT user.';
-            });
-        });
+            }
+        );
+    }
 </script>
 
     {{--

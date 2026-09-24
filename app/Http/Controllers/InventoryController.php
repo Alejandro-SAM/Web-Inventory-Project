@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Imports\InventoryImport;
+use App\Models\MaintenanceRecord;
 use App\Models\Inventory;
 use App\Models\InventoryImportRow;
 use App\Models\User; //IMPORTAR MODELO USUARIO PARA USARSE EN LA RELACION DE INVENTARIO
@@ -989,6 +990,36 @@ private function inventoryLogFields(): array
             $inventory->fill($validated);
 
             $inventory->save();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Keep the active maintenance record synchronized
+            |--------------------------------------------------------------------------
+            */
+            if (
+                $inventory->wasChanged([
+                    'next_maintenance',
+                    'maintenance_responsible_id',
+                ])
+                && in_array(
+                    $inventory->maintenance_status,
+                    ['pending', 'awaiting'],
+                    true
+                )
+            ) {
+                $maintenanceRecord = MaintenanceRecord::query()
+                    ->where('inventory_id', $inventory->id)
+                    ->whereIn('status', ['pending', 'awaiting'])
+                    ->latest('id')
+                    ->first();
+
+                if ($maintenanceRecord) {
+                    $maintenanceRecord->update([
+                        'maintenance_date' => $inventory->next_maintenance,
+                        'responsible_id' => $inventory->maintenance_responsible_id,
+                    ]);
+                }
+            }
 
             $inventory->refresh();
 
