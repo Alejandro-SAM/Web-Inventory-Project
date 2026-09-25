@@ -168,6 +168,15 @@ class InventoryController extends Controller
             $inventoryQuery->where('maintenance_responsible_id', $request->maintenance_responsible_id);
         }
 
+        /*
+         * Temporary v1.8 helper:
+         * hide assets that already have a maintenance responsible assigned.
+         * This is applied before pagination so every page stays consistent.
+         */
+        if ($request->boolean('hide_maintenance_assigned')) {
+            $inventoryQuery->whereNull('maintenance_responsible_id');
+        }
+
         if ($request->filled('maintenance_status')) {
             $maintenanceStatus = $request->maintenance_status;
 

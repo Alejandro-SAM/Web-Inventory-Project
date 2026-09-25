@@ -1,9 +1,9 @@
 <x-app-layout>
 
-    <div class="app-page">
-        <div class="app-page-container">
+    <div class="app-page inventory-page w-100 m-0 p-0" style="max-width: none;">
+        <div class="app-page-container w-100 m-0 p-0" style="max-width: none;">
             
-    <div class="container mt-4">
+    <div class="container-fluid m-0 p-0">
 
 <!-- PAGE TITLE -->
         <div class="card app-card inventory-card">
@@ -64,6 +64,19 @@
                     'lost' => 'Lost',
                     'to_be_deleted' => 'To Be Deleted',
                 ];
+
+                // Toggle used to temporarily hide assets that already have a maintenance responsible.
+                $hideAssignedMaintenance = request()->boolean('hide_maintenance_assigned');
+                $maintenanceAssignmentToggleQuery = request()->query();
+
+                // Always return to page 1 because the result set changes when this filter is toggled.
+                unset($maintenanceAssignmentToggleQuery['page']);
+
+                if ($hideAssignedMaintenance) {
+                    unset($maintenanceAssignmentToggleQuery['hide_maintenance_assigned']);
+                } else {
+                    $maintenanceAssignmentToggleQuery['hide_maintenance_assigned'] = 1;
+                }
             @endphp
 
 <!-- BUTTONS ON TOP OF TABLE FOR ACTIONS -->
@@ -156,6 +169,19 @@
 
             @endif    
         @endif
+
+        <!-- Temporary maintenance assignment visibility filter for v1.8 -->
+        <a
+            href="{{ route('inventory', $maintenanceAssignmentToggleQuery) }}"
+            class="btn btn-sm {{ $hideAssignedMaintenance ? 'btn-warning' : 'btn-outline-warning' }}"
+            title="{{ $hideAssignedMaintenance
+                ? 'Show assets that already have a maintenance responsible'
+                : 'Hide assets that already have a maintenance responsible' }}"
+        >
+            {{ $hideAssignedMaintenance
+                ? 'Show already assigned to maintenance'
+                : 'Hide already assigned to maintenance' }}
+        </a>
 
         <a href="{{ route('inventory') }}" class="btn btn-sm btn-outline-danger">
             Reset filters
@@ -2514,6 +2540,54 @@
     </script>
     <!-- End of Auto-submit filter form on change -->
 
+
+    <!-- Inventory single-scroll viewport layout -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inventoryPage = document.querySelector('.inventory-page');
+            const inventoryCard = document.querySelector('.inventory-card');
+
+            if (!inventoryPage || !inventoryCard) {
+                return;
+            }
+
+            /*
+             * The inventory uses its own internal table scroll.
+             * Prevent the document itself from becoming a second scroll area.
+             */
+            document.body.classList.add('inventory-page-active');
+
+            function updateInventoryViewportHeight() {
+                /*
+                 * Measure the card's real position below the navbar and assign
+                 * exactly the remaining viewport height to the inventory card.
+                 * The card header and footer keep their natural height, while
+                 * the table body automatically receives the remaining space.
+                 */
+                const viewportHeight = window.visualViewport
+                    ? window.visualViewport.height
+                    : window.innerHeight;
+
+                const cardTop = inventoryCard.getBoundingClientRect().top;
+                const availableHeight = Math.max(360, viewportHeight - cardTop);
+
+                inventoryCard.style.height = availableHeight + 'px';
+            }
+
+            updateInventoryViewportHeight();
+
+            window.addEventListener('resize', updateInventoryViewportHeight);
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener(
+                    'resize',
+                    updateInventoryViewportHeight
+                );
+            }
+        });
+    </script>
+    <!-- End inventory single-scroll viewport layout -->
+
     <!-- Page jump handler -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -3399,6 +3473,55 @@ document.addEventListener('DOMContentLoaded', function () {
                                 currentCells[index].innerHTML =
                                     refreshedCells[index].innerHTML;
                             }
+                        }
+                    } else if (currentRow && !refreshedRow) {
+                        /*
+                         * If the updated asset no longer matches the active filters,
+                         * remove it immediately from the current table view.
+                         * This is especially useful for the temporary v1.8
+                         * "Hide already assigned to maintenance" filter.
+                         */
+                        currentRow.remove();
+
+                        /* Remove hidden asset from the persistent selection too. */
+                        const updatedSelection = getSelectedAssets().filter(
+                            function (selectedId) {
+                                return String(selectedId) !== assetId;
+                            }
+                        );
+
+                        sessionStorage.setItem(
+                            selectionStorageKey,
+                            JSON.stringify(updatedSelection)
+                        );
+
+                        const selectionCounter = document.getElementById(
+                            'inventorySelectionCounter'
+                        );
+
+                        if (selectionCounter) {
+                            selectionCounter.textContent =
+                                updatedSelection.length === 1
+                                    ? '1 selected'
+                                    : `${updatedSelection.length} selected`;
+                        }
+
+                        const exportSelectedInput = document.getElementById(
+                            'exportSelectedAssetIds'
+                        );
+
+                        if (exportSelectedInput) {
+                            exportSelectedInput.value =
+                                JSON.stringify(updatedSelection);
+                        }
+
+                        const exportSelectedButton = document.getElementById(
+                            'exportSelectedAssetsButton'
+                        );
+
+                        if (exportSelectedButton) {
+                            exportSelectedButton.disabled =
+                                updatedSelection.length === 0;
                         }
                     }
 
