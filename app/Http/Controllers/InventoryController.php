@@ -925,6 +925,20 @@ private function inventoryLogFields(): array
 
         /*
         |--------------------------------------------------------------------------
+        | Save original values for Activity Log
+        |--------------------------------------------------------------------------
+        |
+        | These values must be captured before fill() modifies the model in memory.
+        | Otherwise the later comparison could treat the new values as the old ones
+        | and skip the activity log even when the asset was actually edited.
+        |
+        */
+        $originalInventoryValues = $inventory->only(
+            $this->inventoryLogFields()
+        );
+
+        /*
+        |--------------------------------------------------------------------------
         | Determine exactly which fields were changed
         |--------------------------------------------------------------------------
         |
@@ -967,7 +981,8 @@ private function inventoryLogFields(): array
             $validated,
             $selectedIds,
             $isBulkEdit,
-            $bulkChangedFields
+            $bulkChangedFields,
+            $originalInventoryValues
         ) {
 
             $updatedCount = 0;
@@ -978,9 +993,7 @@ private function inventoryLogFields(): array
             | Update the asset whose modal was opened
             |--------------------------------------------------------------------------
             */
-            $oldValues = $inventory->only(
-                $this->inventoryLogFields()
-            );
+            $oldValues = $originalInventoryValues;
 
             /*
             * The model was already filled above while detecting dirty fields.
