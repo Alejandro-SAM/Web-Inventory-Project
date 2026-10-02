@@ -1,6 +1,8 @@
 <x-app-layout>
-    <div class="app-page">
-        <div class="app-page-container">
+    <div class="app-page maintenance-page">
+        <div class="app-page-container maintenance-page-container">
+
+            <div class="container-fluid px-0">
 
             @if (session('success'))
                 <div class="alert alert-success">
@@ -20,7 +22,7 @@
                 action="{{ route('maintenance.index') }}"
             ></form>
 
-            <div class="app-card">
+            <div class="card app-card inventory-card maintenance-card">
                 <div class="app-card-header">
                     <strong>Assigned Maintenance</strong>
 
@@ -38,9 +40,9 @@
                     </div>
                 </div>
 
-                <div class="app-card-body">
-                    <div class="app-table-wrapper">
-                        <table class="table app-table mb-0">
+                <div class="card-body app-card-body p-0 maintenance-table-body">
+                    <div class="table-responsive app-table-wrapper maintenance-table-wrapper">
+                        <table id="maintenanceTable" class="table table-hover align-middle app-table mb-0 w-100">
                             <thead>
                                 <tr>
                                     <th>IT Number</th>
@@ -694,6 +696,7 @@
                         {{ $maintenanceItems->links() }}
                     </div>
                 @endif
+            </div>
             </div>
         </div>
     </div>
