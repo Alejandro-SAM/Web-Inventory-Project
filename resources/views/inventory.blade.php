@@ -717,6 +717,9 @@
                                     <option value="pending" {{ request('maintenance_status') === 'pending' ? 'selected' : '' }}>
                                         Pending
                                     </option>
+                                    <option value="scheduled" {{ request('maintenance_status') === 'scheduled' ? 'selected' : '' }}>
+                                        Scheduled
+                                    </option>
                                     <option value="overdue" {{ request('maintenance_status') === 'overdue' ? 'selected' : '' }}>
                                         Overdue
                                     </option>
@@ -1089,8 +1092,10 @@
 
                                         $maintenanceBadgeClass = match ($maintenanceStatus) {
                                             'pending' => 'bg-warning text-dark',
+                                            'scheduled' => 'bg-secondary',
                                             'overdue' => 'bg-danger',
                                             'completed' => 'bg-success',
+                                            'awaiting' => 'bg-info text-dark',
                                             default => 'bg-secondary',
                                         };
                                     @endphp

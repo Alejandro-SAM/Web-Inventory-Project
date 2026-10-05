@@ -191,6 +191,10 @@ class InventoryController extends Controller
                     ->whereNotNull('next_maintenance')
                     ->whereDate('next_maintenance', '<', today());
             }
+
+            if ($maintenanceStatus === 'scheduled') {
+                $inventoryQuery->where('maintenance_status', 'scheduled');
+            }
         }
 
         if ($request->filled('warranty_start_from')) {
@@ -621,6 +625,7 @@ private function inventoryLogFields(): array
             'Bracket',
             'Camera',
             'CAMERA Mount',
+            'Cellphone',
             'Charger',
             'Clock',
             'Desktop',
@@ -1016,13 +1021,13 @@ private function inventoryLogFields(): array
                 ])
                 && in_array(
                     $inventory->maintenance_status,
-                    ['pending', 'awaiting'],
+                    ['pending', 'awaiting', 'scheduled'],
                     true
                 )
             ) {
                 $maintenanceRecord = MaintenanceRecord::query()
                     ->where('inventory_id', $inventory->id)
-                    ->whereIn('status', ['pending', 'awaiting'])
+                    ->whereIn('status', ['pending', 'awaiting', 'scheduled'])
                     ->latest('id')
                     ->first();
 
