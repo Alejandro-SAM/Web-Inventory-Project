@@ -85,6 +85,10 @@ class Inventory extends Model
                 return 'awaiting';
             }
 
+            if ($this->maintenance_status === 'scheduled') {
+                return 'scheduled';
+            }
+
             if (
                 $this->maintenance_status === 'pending'
                 && $this->next_maintenance !== null

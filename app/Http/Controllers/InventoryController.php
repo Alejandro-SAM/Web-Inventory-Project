@@ -200,6 +200,10 @@ class InventoryController extends Controller
                     ->whereNotNull('next_maintenance')
                     ->whereDate('next_maintenance', '<', today());
             }
+
+            if ($maintenanceStatus === 'scheduled') {
+                $inventoryQuery->where('maintenance_status', 'scheduled');
+            }
         }
 
         if ($request->filled('warranty_start_from')) {
@@ -630,6 +634,7 @@ private function inventoryLogFields(): array
             'Bracket',
             'Camera',
             'CAMERA Mount',
+            'Cellphone',
             'Charger',
             'Clock',
             'Desktop',
@@ -934,6 +939,20 @@ private function inventoryLogFields(): array
 
         /*
         |--------------------------------------------------------------------------
+        | Save original values for Activity Log
+        |--------------------------------------------------------------------------
+        |
+        | These values must be captured before fill() modifies the model in memory.
+        | Otherwise the later comparison could treat the new values as the old ones
+        | and skip the activity log even when the asset was actually edited.
+        |
+        */
+        $originalInventoryValues = $inventory->only(
+            $this->inventoryLogFields()
+        );
+
+        /*
+        |--------------------------------------------------------------------------
         | Determine exactly which fields were changed
         |--------------------------------------------------------------------------
         |
@@ -976,7 +995,8 @@ private function inventoryLogFields(): array
             $validated,
             $selectedIds,
             $isBulkEdit,
-            $bulkChangedFields
+            $bulkChangedFields,
+            $originalInventoryValues
         ) {
 
             $updatedCount = 0;
@@ -987,9 +1007,7 @@ private function inventoryLogFields(): array
             | Update the asset whose modal was opened
             |--------------------------------------------------------------------------
             */
-            $oldValues = $inventory->only(
-                $this->inventoryLogFields()
-            );
+            $oldValues = $originalInventoryValues;
 
             /*
             * The model was already filled above while detecting dirty fields.
@@ -1012,13 +1030,13 @@ private function inventoryLogFields(): array
                 ])
                 && in_array(
                     $inventory->maintenance_status,
-                    ['pending', 'awaiting'],
+                    ['pending', 'awaiting', 'scheduled'],
                     true
                 )
             ) {
                 $maintenanceRecord = MaintenanceRecord::query()
                     ->where('inventory_id', $inventory->id)
-                    ->whereIn('status', ['pending', 'awaiting'])
+                    ->whereIn('status', ['pending', 'awaiting', 'scheduled'])
                     ->latest('id')
                     ->first();
 

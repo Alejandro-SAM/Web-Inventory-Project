@@ -1,6 +1,8 @@
 <x-app-layout>
-    <div class="app-page">
-        <div class="app-page-container">
+    <div class="app-page maintenance-page">
+        <div class="app-page-container maintenance-page-container">
+
+            <div class="container-fluid px-0">
 
             @if (session('success'))
                 <div class="alert alert-success">
@@ -20,7 +22,7 @@
                 action="{{ route('maintenance.index') }}"
             ></form>
 
-            <div class="app-card">
+            <div class="card app-card inventory-card maintenance-card">
                 <div class="app-card-header">
                     <strong>Assigned Maintenance</strong>
 
@@ -38,9 +40,9 @@
                     </div>
                 </div>
 
-                <div class="app-card-body">
-                    <div class="app-table-wrapper">
-                        <table class="table app-table mb-0">
+                <div class="card-body app-card-body p-0 maintenance-table-body">
+                    <div class="table-responsive app-table-wrapper maintenance-table-wrapper">
+                        <table id="maintenanceTable" class="table table-hover align-middle app-table mb-0 w-100">
                             <thead>
                                 <tr>
                                     <th>IT Number</th>
@@ -168,6 +170,13 @@
                                             <option value="pending" {{ request('maintenance_status') === 'pending' ? 'selected' : '' }}>
                                                 Pending
                                             </option>
+
+                                            @if (auth()->user()->user_level === 'Admin')
+                                                <option value="scheduled" {{ request('maintenance_status') === 'scheduled' ? 'selected' : '' }}>
+                                                    Scheduled
+                                                </option>
+                                            @endif
+
                                             <option value="overdue" {{ request('maintenance_status') === 'overdue' ? 'selected' : '' }}>
                                                 Overdue
                                             </option>
@@ -221,6 +230,7 @@
                                             $maintenanceBadge = match ($maintenanceStatus) {
                                                 'completed' => 'bg-success',
                                                 'awaiting' => 'bg-info text-dark',
+                                                'scheduled' => 'bg-secondary',
                                                 'overdue' => 'bg-danger',
                                                 default => 'bg-warning text-dark',
                                             };
@@ -228,6 +238,7 @@
                                             $maintenanceLabel = match ($maintenanceStatus) {
                                                 'completed' => 'Completed',
                                                 'awaiting' => 'Awaiting Approval',
+                                                'scheduled' => 'Scheduled',
                                                 'overdue' => 'Overdue',
                                                 default => 'Pending',
                                             };
@@ -577,39 +588,107 @@
                                                 ></button>
                                             </div>
 
-                                            <div class="modal-body">
-                                                <p class="mb-0">
-                                                    Approve maintenance for serial
-                                                    <strong>
-                                                        {{ $item->serial_number ?: 'Not available' }}
-                                                    </strong>?
-                                                </p>
-                                            </div>
+                                            <form
+                                                method="POST"
+                                                action="{{ route('maintenance.approve', $item) }}"
+                                            >
+                                                @csrf
+                                                @method('PATCH')
 
-                                            <div class="modal-footer">
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-secondary"
-                                                    data-bs-dismiss="modal"
-                                                >
-                                                    No
-                                                </button>
+                                                <div class="modal-body">
+                                                    <p>
+                                                        Approve maintenance for serial
+                                                        <strong>
+                                                            {{ $item->serial_number ?: 'Not available' }}
+                                                        </strong>.
+                                                    </p>
 
-                                                <form
-                                                    method="POST"
-                                                    action="{{ route('maintenance.approve', $item) }}"
-                                                >
-                                                    @csrf
-                                                    @method('PATCH')
+                                                    <div class="alert alert-info small">
+                                                        The next maintenance will be saved with Scheduled
+                                                        status. It will automatically change to
+                                                        Pending and appear in the Maintenance table
+                                                        when it is 7 days away or less.
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label
+                                                            for="nextMaintenance{{ $item->id }}"
+                                                            class="form-label"
+                                                        >
+                                                            Next Maintenance Date
+                                                        </label>
+
+                                                        <input
+                                                            type="date"
+                                                            id="nextMaintenance{{ $item->id }}"
+                                                            name="next_maintenance"
+                                                            class="form-control"
+                                                            min="{{ today()->addDay()->format('Y-m-d') }}"
+                                                            value="{{ today()->addMonthsNoOverflow(6)->startOfWeek()->addDays(4)->format('Y-m-d') }}"
+                                                            required
+                                                        >
+
+                                                        <small class="text-muted">
+                                                            Suggested date: Friday of the week approximately 6 months from today.
+                                                        </small>
+                                                    </div>
+
+                                                    <div class="mb-0">
+                                                        <label
+                                                            for="nextMaintenanceResponsible{{ $item->id }}"
+                                                            class="form-label"
+                                                        >
+                                                            Next Maintenance Operator
+                                                        </label>
+
+                                                        <select
+                                                            id="nextMaintenanceResponsible{{ $item->id }}"
+                                                            name="maintenance_responsible_id"
+                                                            class="form-select"
+                                                            required
+                                                        >
+                                                            <option value="">
+                                                                Select operator
+                                                            </option>
+
+                                                            @foreach ($maintenanceResponsibleOptions as $responsible)
+                                                                <option
+                                                                    value="{{ $responsible->id }}"
+                                                                    {{
+                                                                        (int) $item->maintenance_responsible_id
+                                                                        === (int) $responsible->id
+                                                                            ? 'selected'
+                                                                            : ''
+                                                                    }}
+                                                                >
+                                                                    {{ $responsible->name }}
+
+                                                                    @if ($responsible->employee_number)
+                                                                        — {{ $responsible->employee_number }}
+                                                                    @endif
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        Cancel
+                                                    </button>
 
                                                     <button
                                                         type="submit"
                                                         class="btn btn-success"
                                                     >
-                                                        Yes
+                                                        Approve & Schedule Next
                                                     </button>
-                                                </form>
-                                            </div>
+                                                </div>
+                                            </form>
 
                                         </div>
                                     </div>
@@ -694,6 +773,7 @@
                         {{ $maintenanceItems->links() }}
                     </div>
                 @endif
+            </div>
             </div>
         </div>
     </div>
