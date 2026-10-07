@@ -1183,6 +1183,7 @@
                                         <div class="modal-content">
 
                                             <form
+                                                id="editAssetForm{{ $item->id }}"
                                                 method="POST"
                                                 action="{{ route('inventory.update', ['inventory' => $item->id] + request()->query()) }}"
                                                 class="inventory-edit-form"
@@ -1827,6 +1828,14 @@
                                                         data-bs-dismiss="modal"
                                                     >
                                                         Cancel
+                                                    </button>
+
+                                                    <button
+                                                        type="reset"
+                                                        form="editAssetForm{{ $item->id }}"
+                                                        class="btn btn-outline-danger inventory-reset-original-values"
+                                                    >
+                                                        Reset to previous values
                                                     </button>
 
                                                     <button type="submit" class="btn btn-primary">
@@ -3427,6 +3436,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     /*
+                    |--------------------------------------------------------------------------
+                    | Update reset baseline after successful save
+                    |--------------------------------------------------------------------------
+                    |
+                    | The values that were successfully saved now become the new
+                    | original values for this modal.
+                    |
+                    */
+                    commitInventoryEditFormDefaults(form);
+
+                    /*
                     * Request the current filtered page and copy only the updated
                     * row cells. The browser never leaves the current page, scroll
                     * position, filters or pagination.
@@ -3783,5 +3803,106 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
     </script>
+
+
+    <!-- Inventory edit modal native reset -->
+    <script>
+    /*
+    |--------------------------------------------------------------------------
+    | Re-apply dependent UI after a native form reset
+    |--------------------------------------------------------------------------
+    |
+    | The Reset button is a real HTML type="reset" button. Therefore the
+    | browser itself restores every field to its saved/default value and this
+    | script is only responsible for recalculating IT Room visual state.
+    |
+    */
+    document.addEventListener('reset', function (event) {
+
+        const form = event.target;
+
+        if (!form.classList.contains('inventory-edit-form')) {
+            return;
+        }
+
+        /*
+         * The native reset happens after the reset event fires, so wait one
+         * event loop before re-running dependent UI logic.
+         */
+        window.setTimeout(function () {
+
+            const itRoomToggle = form.querySelector(
+                '.inventory-it-room-toggle'
+            );
+
+            if (itRoomToggle) {
+                itRoomToggle.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
+            }
+
+            const plantSelect = form.querySelector(
+                '.inventory-it-room-plant'
+            );
+
+            if (
+                plantSelect &&
+                itRoomToggle &&
+                itRoomToggle.checked
+            ) {
+                plantSelect.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
+            }
+
+        }, 0);
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Promote successfully saved values to the new reset baseline
+    |--------------------------------------------------------------------------
+    */
+    function commitInventoryEditFormDefaults(form) {
+
+        if (!form) {
+            return;
+        }
+
+        form.querySelectorAll('input, select, textarea').forEach(
+            function (field) {
+
+                if (
+                    field.name === '_token' ||
+                    field.name === '_method' ||
+                    field.name === 'selected_asset_ids'
+                ) {
+                    return;
+                }
+
+                if (
+                    field.type === 'checkbox' ||
+                    field.type === 'radio'
+                ) {
+                    field.defaultChecked = field.checked;
+                    return;
+                }
+
+                if (field.tagName === 'SELECT') {
+                    Array.from(field.options).forEach(
+                        function (option) {
+                            option.defaultSelected = option.selected;
+                        }
+                    );
+                    return;
+                }
+
+                field.defaultValue = field.value;
+            }
+        );
+    }
+    </script>
+    <!-- End inventory edit modal native reset -->
 
 </x-app-layout>
