@@ -1326,12 +1326,31 @@
                                                                     IT Internal Number
                                                                 </label>
 
-                                                                <input
-                                                                    type="text"
-                                                                    name="it_internal_number"
-                                                                    class="form-control"
-                                                                    value="{{ old('it_internal_number', $item->it_internal_number) }}"
-                                                                >
+                                                                <div class="input-group">
+                                                                    <input
+                                                                        type="text"
+                                                                        name="it_internal_number"
+                                                                        id="editAssetItInternalNumber{{ $item->id }}"
+                                                                        class="form-control"
+                                                                        value="{{ old('it_internal_number', $item->it_internal_number) }}"
+                                                                        autocomplete="off"
+                                                                    >
+
+                                                                    <button
+                                                                        type="button"
+                                                                        id="editAssetRegenerateInternalNumber{{ $item->id }}"
+                                                                        form="editAssetForm{{ $item->id }}"
+                                                                        class="btn btn-outline-primary inventory-regenerate-internal-number"
+                                                                        data-asset-id="{{ $item->id }}"
+                                                                    >
+                                                                        Re-generate
+                                                                    </button>
+                                                                </div>
+
+                                                                <div
+                                                                    id="editAssetItInternalNumberFeedback{{ $item->id }}"
+                                                                    class="invalid-feedback d-block"
+                                                                ></div>
                                                             </div>
 
                                                             <div class="col-md-4">
@@ -1385,7 +1404,7 @@
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Category</label>
 
-                                                                <select name="category" class="form-select">
+                                                                <select name="category" id="editAssetCategory{{ $item->id }}" class="form-select">
                                                                     <option value="">Select category</option>
 
                                                                     @foreach ($categoryOptions as $category)
@@ -1435,7 +1454,7 @@
                                                         </div>
 
                                                         @php
-                                                            $validPlantOptions = ['B', 'D', 'G', 'H', 'MP'];
+                                                            $validPlantOptions = ['B', 'D', 'G', 'H', 'MP', 'MPI', 'MPII'];
                                                             $currentPlant = old('plant', $item->plant);
                                                             $isCurrentItRoom = strtoupper(trim(old('location', $item->location) ?? '')) === 'IT ROOM';
                                                         @endphp
@@ -1491,13 +1510,34 @@
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Department</label>
 
-                                                                <input
-                                                                    type="text"
+                                                                @php
+                                                                    $currentDepartment = old('department', $item->department);
+                                                                @endphp
+
+                                                                <select
                                                                     name="department"
-                                                                    class="form-control"
-                                                                    value="{{ old('department', $item->department) }}"
+                                                                    id="editAssetDepartment{{ $item->id }}"
+                                                                    class="form-select"
                                                                     data-it-room-field="department"
                                                                 >
+                                                                    <option value="">Select department</option>
+
+                                                                    {{-- Preserve historical departments that are not yet in the temporary mapping --}}
+                                                                    @if ($currentDepartment && !in_array($currentDepartment, $departmentOptions, true))
+                                                                        <option value="{{ $currentDepartment }}" selected>
+                                                                            Legacy value: {{ $currentDepartment }}
+                                                                        </option>
+                                                                    @endif
+
+                                                                    @foreach ($departmentOptions as $department)
+                                                                        <option
+                                                                            value="{{ $department }}"
+                                                                            {{ $currentDepartment === $department ? 'selected' : '' }}
+                                                                        >
+                                                                            {{ $department }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
 
                                                             <div class="col-md-4">
@@ -1529,6 +1569,7 @@
 
                                                                 <select
                                                                     name="plant"
+                                                                    id="editAssetPlant{{ $item->id }}"
                                                                     class="form-select inventory-it-room-plant"
                                                                 >
                                                                     <option value="">Select plant</option>
@@ -2034,12 +2075,37 @@
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label">IT Internal Number</label>
+
+                                        <div class="input-group">
+                                            <input
+                                                type="text"
+                                                name="it_internal_number"
+                                                id="addAssetItInternalNumber"
+                                                class="form-control bg-light"
+                                                value="{{ old('it_internal_number') }}"
+                                                placeholder="Generated based on asset data"
+                                                readonly
+                                            >
+
+                                            <button
+                                                type="button"
+                                                id="addAssetManualInternalNumberButton"
+                                                class="btn btn-outline-secondary"
+                                            >
+                                                Manual insertion
+                                            </button>
+                                        </div>
+
                                         <input
-                                            type="text"
-                                            name="it_internal_number"
-                                            class="form-control"
-                                            value="{{ old('it_internal_number') }}"
+                                            type="hidden"
+                                            name="it_internal_number_mode"
+                                            id="addAssetInternalNumberMode"
+                                            value="{{ old('it_internal_number_mode', 'auto') }}"
                                         >
+
+                                        <small id="addAssetInternalNumberHelp" class="form-text text-muted">
+                                            Generated automatically from Category, Plant and Department.
+                                        </small>
                                     </div>
 
                                     <div class="col-md-4">
@@ -2083,8 +2149,13 @@
                                     </div>
 
                                     <div class="col-md-4">
-                                        <label class="form-label">Category</label>
-                                        <select name="category" class="form-select">
+                                        <label class="form-label">Category <span class="text-danger">*</span></label>
+                                        <select
+                                            name="category"
+                                            id="addAssetCategory"
+                                            class="form-select"
+                                            required
+                                        >
                                             <option value="">Select category</option>
 
                                             @foreach ($categoryOptions as $category)
@@ -2175,14 +2246,25 @@
                                     </div>
 
                                     <div class="col-md-4">
-                                        <label class="form-label">Department</label>
-                                        <input
-                                            type="text"
+                                        <label class="form-label">Department <span class="text-danger">*</span></label>
+                                        <select
                                             name="department"
-                                            class="form-control"
-                                            value="{{ old('department') }}"
+                                            id="addAssetDepartment"
+                                            class="form-select"
+                                            required
                                             data-it-room-field="department"
                                         >
+                                            <option value="">Select department</option>
+
+                                            @foreach ($departmentOptions as $department)
+                                                <option
+                                                    value="{{ $department }}"
+                                                    {{ old('department') === $department ? 'selected' : '' }}
+                                                >
+                                                    {{ $department }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
                                     <div class="col-md-4">
@@ -2208,15 +2290,16 @@
                                     </div>
 
                                     <div class="col-md-4">
-                                        <label class="form-label">Plant</label>
+                                        <label class="form-label">Plant <span class="text-danger">*</span></label>
                                         <select
                                             name="plant"
                                             class="form-select inventory-it-room-plant"
                                             id="addAssetPlant"
+                                            required
                                         >
                                             <option value="">Select plant</option>
 
-                                            @foreach (['B', 'D', 'G', 'H', 'MP'] as $plant)
+                                            @foreach (['B', 'D', 'G', 'H', 'MP', 'MPI', 'MPII'] as $plant)
                                                 <option
                                                     value="{{ $plant }}"
                                                     {{ old('plant') === $plant ? 'selected' : '' }}
@@ -2628,6 +2711,450 @@
         });
     </script>
     <!-- End of page jump handler -->
+
+    <!-- v1.8.2 Create Asset automatic IT Internal Number preview -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const form = document.getElementById('addAssetForm');
+        const internalNumberInput = document.getElementById('addAssetItInternalNumber');
+        const manualButton = document.getElementById('addAssetManualInternalNumberButton');
+        const modeInput = document.getElementById('addAssetInternalNumberMode');
+        const helpText = document.getElementById('addAssetInternalNumberHelp');
+        const categorySelect = document.getElementById('addAssetCategory');
+        const plantSelect = document.getElementById('addAssetPlant');
+        const departmentSelect = document.getElementById('addAssetDepartment');
+
+        if (
+            !form || !internalNumberInput || !manualButton || !modeInput ||
+            !categorySelect || !plantSelect || !departmentSelect
+        ) {
+            return;
+        }
+
+        const categoryAcronyms = @json($categoryAcronymMap ?? []);
+        const plantCodes = @json($plantCodeMap ?? []);
+        const departmentAcronyms = @json($departmentAcronymMap ?? []);
+        const nextSequentialByCategory = @json($nextSequentialByCategory ?? []);
+        const currentYear = @json($autoInternalNumberYear ?? now()->year);
+
+        function formatSequence(value) {
+            return String(value).padStart(3, '0');
+        }
+
+        function updatePreview() {
+            if (modeInput.value !== 'auto') {
+                return;
+            }
+
+            const category = categorySelect.value;
+            const plant = plantSelect.value;
+            const department = departmentSelect.value;
+
+            const categoryCode = categoryAcronyms[category] || '';
+            const plantCode = plantCodes[plant] || '';
+            const departmentCode = departmentAcronyms[department] || '';
+            const nextSequential = nextSequentialByCategory[category] || null;
+
+            if (!categoryCode || !plantCode || !departmentCode || !nextSequential) {
+                internalNumberInput.value = '';
+                internalNumberInput.placeholder = 'Generated based on asset data';
+
+                helpText.textContent = category && !categoryCode
+                    ? 'This category does not have a temporary automatic acronym yet. Use Manual insertion or select a mapped category.'
+                    : 'Select Category, Plant and Department to generate the preview.';
+
+                return;
+            }
+
+            internalNumberInput.value = [
+                categoryCode,
+                plantCode,
+                departmentCode,
+                formatSequence(nextSequential),
+                currentYear
+            ].join('-');
+
+            helpText.textContent =
+                'Preview only. The sequential number is verified again when the asset is saved.';
+        }
+
+        function setAutomaticMode(enabled) {
+            modeInput.value = enabled ? 'auto' : 'manual';
+            internalNumberInput.readOnly = enabled;
+            internalNumberInput.classList.toggle('bg-light', enabled);
+
+            if (enabled) {
+                manualButton.textContent = 'Manual insertion';
+                manualButton.classList.remove('btn-outline-primary');
+                manualButton.classList.add('btn-outline-secondary');
+                updatePreview();
+            } else {
+                manualButton.textContent = 'Use automatic generation';
+                manualButton.classList.remove('btn-outline-secondary');
+                manualButton.classList.add('btn-outline-primary');
+                helpText.textContent =
+                    'Manual mode enabled. The entered IT Internal Number will be preserved.';
+                internalNumberInput.focus();
+            }
+        }
+
+        manualButton.addEventListener('click', function () {
+            setAutomaticMode(modeInput.value === 'manual');
+        });
+
+        categorySelect.addEventListener('change', updatePreview);
+        plantSelect.addEventListener('change', updatePreview);
+        departmentSelect.addEventListener('change', updatePreview);
+
+        const itRoomToggle = form.querySelector('.inventory-it-room-toggle');
+
+        if (itRoomToggle) {
+            itRoomToggle.addEventListener('change', function () {
+                window.setTimeout(updatePreview, 0);
+            });
+        }
+
+        setAutomaticMode(modeInput.value !== 'manual');
+    });
+    </script>
+    <!-- End v1.8.2 Create Asset automatic IT Internal Number preview -->
+
+    <!-- v1.8.2 Edit Asset IT Internal Number assistance -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const categoryAcronyms = @json($categoryAcronymMap ?? []);
+        const plantCodes = @json($plantCodeMap ?? []);
+        const departmentAcronyms = @json($departmentAcronymMap ?? []);
+        const nextSequentialByCategory = @json($nextSequentialByCategory ?? []);
+        const existingInternalNumberRecords = @json($existingInternalNumberRecords ?? []);
+
+        function formatSequence(value) {
+            return String(value).padStart(3, '0');
+        }
+
+        function parseInternalNumber(value) {
+            const match = String(value || '').trim().match(
+                /^(.+?)-([^-]+)-([^-]+)-(\d+)-(\d{4})$/
+            );
+
+            if (!match) {
+                return null;
+            }
+
+            return {
+                categoryCode: match[1],
+                plantCode: match[2],
+                departmentCode: match[3],
+                sequential: match[4],
+                year: match[5]
+            };
+        }
+
+        function setInternalNumberMessage(input, feedback, message) {
+            if (!input || !feedback) {
+                return;
+            }
+
+            if (message) {
+                input.classList.add('is-invalid');
+                feedback.textContent = message;
+            } else {
+                input.classList.remove('is-invalid');
+                feedback.textContent = '';
+            }
+        }
+
+        function findDuplicate(number, currentAssetId) {
+            const normalizedNumber = String(number || '').trim();
+
+            if (!normalizedNumber) {
+                return null;
+            }
+
+            return existingInternalNumberRecords.find(function (record) {
+                return String(record.number).trim() === normalizedNumber &&
+                    String(record.id) !== String(currentAssetId);
+            }) || null;
+        }
+
+        function validateInternalNumber(input, feedback, assetId) {
+            const value = input.value.trim();
+
+            if (!value) {
+                setInternalNumberMessage(input, feedback, '');
+                return true;
+            }
+
+            const duplicate = findDuplicate(value, assetId);
+
+            if (duplicate) {
+                setInternalNumberMessage(
+                    input,
+                    feedback,
+                    'This IT Internal Number already exists in the inventory. Review the asset data or manually change the sequential number before saving.'
+                );
+                return false;
+            }
+
+            setInternalNumberMessage(input, feedback, '');
+            return true;
+        }
+
+        function replaceSafeCode(input, feedback, assetId, type, newCode) {
+            if (!newCode) {
+                return;
+            }
+
+            const parsed = parseInternalNumber(input.value);
+
+            if (!parsed) {
+                setInternalNumberMessage(
+                    input,
+                    feedback,
+                    'The current IT Internal Number does not match the expected structure, so it could not be updated automatically. You can correct it manually or use Re-generate internal number.'
+                );
+                return;
+            }
+
+            if (type === 'plant') {
+                parsed.plantCode = newCode;
+            }
+
+            if (type === 'department') {
+                parsed.departmentCode = newCode;
+            }
+
+            input.value = [
+                parsed.categoryCode,
+                parsed.plantCode,
+                parsed.departmentCode,
+                parsed.sequential,
+                parsed.year
+            ].join('-');
+
+            validateInternalNumber(input, feedback, assetId);
+        }
+
+        document.querySelectorAll('.inventory-edit-form').forEach(function (form) {
+
+            const assetId = form.dataset.assetId;
+            const internalNumberInput = document.getElementById(
+                `editAssetItInternalNumber${assetId}`
+            );
+            const feedback = document.getElementById(
+                `editAssetItInternalNumberFeedback${assetId}`
+            );
+            const categorySelect = document.getElementById(
+                `editAssetCategory${assetId}`
+            );
+            const plantSelect = document.getElementById(
+                `editAssetPlant${assetId}`
+            );
+            const departmentInput = document.getElementById(
+                `editAssetDepartment${assetId}`
+            );
+            const regenerateButton = document.getElementById(
+                `editAssetRegenerateInternalNumber${assetId}`
+            );
+
+            if (
+                !internalNumberInput ||
+                !feedback ||
+                !categorySelect ||
+                !plantSelect ||
+                !departmentInput ||
+                !regenerateButton
+            ) {
+                return;
+            }
+
+            /*
+            |------------------------------------------------------------------
+            | Manual IT Internal Number control
+            |------------------------------------------------------------------
+            |
+            | The field is always editable. Manual typing never enables a
+            | persistent automatic mode; it only triggers duplicate review.
+            |
+            */
+            internalNumberInput.addEventListener('input', function () {
+                validateInternalNumber(
+                    internalNumberInput,
+                    feedback,
+                    assetId
+                );
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | Plant changes are safe structural changes
+            |------------------------------------------------------------------
+            */
+            plantSelect.addEventListener('change', function () {
+                const plantCode = plantCodes[plantSelect.value] || '';
+
+                replaceSafeCode(
+                    internalNumberInput,
+                    feedback,
+                    assetId,
+                    'plant',
+                    plantCode
+                );
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | Department changes are safe structural changes
+            |------------------------------------------------------------------
+            |
+            | Department is selected from the temporary controlled list.
+            | Selecting a mapped department updates only the Department segment
+            | of the current IT Internal Number.
+            |
+            */
+            departmentInput.addEventListener('change', function () {
+                const departmentCode =
+                    departmentAcronyms[departmentInput.value.trim()] || '';
+
+                if (!departmentCode) {
+                    return;
+                }
+
+                replaceSafeCode(
+                    internalNumberInput,
+                    feedback,
+                    assetId,
+                    'department',
+                    departmentCode
+                );
+            });
+
+            /*
+            |------------------------------------------------------------------
+            | Category requires explicit re-generation
+            |------------------------------------------------------------------
+            |
+            | A Category change affects both acronym and sequential number.
+            | Re-generation writes one new value and immediately returns full
+            | manual control to the user.
+            |
+            */
+            regenerateButton.addEventListener('click', function () {
+
+                const category = categorySelect.value;
+                const plant = plantSelect.value;
+                const department = departmentInput.value.trim();
+
+                const categoryCode = categoryAcronyms[category] || '';
+                const plantCode = plantCodes[plant] || '';
+                const departmentCode = departmentAcronyms[department] || '';
+                const nextSequential = nextSequentialByCategory[category] || null;
+
+                if (!categoryCode) {
+                    window.alert(
+                        'The selected Category does not have an automatic acronym configured yet.'
+                    );
+                    return;
+                }
+
+                if (!plantCode) {
+                    window.alert(
+                        'The selected Plant does not have an automatic MX code configured yet.'
+                    );
+                    return;
+                }
+
+                if (!departmentCode) {
+                    window.alert(
+                        'The current Department does not have an automatic acronym configured yet.'
+                    );
+                    return;
+                }
+
+                if (!nextSequential) {
+                    window.alert(
+                        'A sequential number could not be calculated for the selected Category.'
+                    );
+                    return;
+                }
+
+                const parsedCurrentNumber = parseInternalNumber(
+                    internalNumberInput.value
+                );
+
+                if (!parsedCurrentNumber) {
+                    window.alert(
+                        'The current IT Internal Number does not contain a valid year. Correct it manually before using re-generation.'
+                    );
+                    return;
+                }
+
+                internalNumberInput.value = [
+                    categoryCode,
+                    plantCode,
+                    departmentCode,
+                    formatSequence(nextSequential),
+                    parsedCurrentNumber.year
+                ].join('-');
+
+                validateInternalNumber(
+                    internalNumberInput,
+                    feedback,
+                    assetId
+                );
+
+                internalNumberInput.focus();
+            });
+
+            /*
+            | IT Room may update Department after its own checkbox handler.
+            | Wait until that handler finishes, then synchronize the safe codes.
+            */
+            const itRoomToggle = document.getElementById(
+                `editAssetItRoom${assetId}`
+            );
+
+            if (itRoomToggle) {
+                itRoomToggle.addEventListener('change', function () {
+                    window.setTimeout(function () {
+                        const plantCode = plantCodes[plantSelect.value] || '';
+                        const departmentCode =
+                            departmentAcronyms[departmentInput.value.trim()] || '';
+
+                        if (plantCode) {
+                            replaceSafeCode(
+                                internalNumberInput,
+                                feedback,
+                                assetId,
+                                'plant',
+                                plantCode
+                            );
+                        }
+
+                        if (departmentCode) {
+                            replaceSafeCode(
+                                internalNumberInput,
+                                feedback,
+                                assetId,
+                                'department',
+                                departmentCode
+                            );
+                        }
+                    }, 0);
+                });
+            }
+
+            validateInternalNumber(
+                internalNumberInput,
+                feedback,
+                assetId
+            );
+        });
+    });
+    </script>
+    <!-- End v1.8.2 Edit Asset IT Internal Number assistance -->
 
     <!-- Error Handling for Add Asset Modal -->
      @if ($errors->any())
@@ -3423,6 +3950,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (!response.ok) {
                         if (response.status === 422 && result.errors) {
+
+                            if (result.errors.it_internal_number) {
+                                const internalNumberInput = document.getElementById(
+                                    `editAssetItInternalNumber${assetId}`
+                                );
+                                const internalNumberFeedback = document.getElementById(
+                                    `editAssetItInternalNumberFeedback${assetId}`
+                                );
+
+                                if (internalNumberInput && internalNumberFeedback) {
+                                    internalNumberInput.classList.add('is-invalid');
+                                    internalNumberFeedback.textContent =
+                                        result.errors.it_internal_number[0] +
+                                        ' Review the asset data or manually change the sequential number before saving.';
+                                    internalNumberInput.focus();
+                                }
+
+                                return;
+                            }
+
                             const validationMessages = Object.values(
                                 result.errors
                             ).flat();
@@ -3760,7 +4307,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         function (field) {
 
                             if (field) {
-                                field.readOnly = true;
+                                if (field.tagName === 'SELECT') {
+                                    field.disabled = true;
+                                } else {
+                                    field.readOnly = true;
+                                }
+
                                 field.classList.add('bg-light');
                             }
                         }
@@ -3774,7 +4326,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         function (field) {
 
                             if (field) {
-                                field.readOnly = false;
+                                if (field.tagName === 'SELECT') {
+                                    field.disabled = false;
+                                } else {
+                                    field.readOnly = false;
+                                }
+
                                 field.classList.remove('bg-light');
                             }
                         }
@@ -3853,6 +4410,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 plantSelect.dispatchEvent(
                     new Event('change', { bubbles: true })
                 );
+            }
+
+            const internalNumberInput = form.querySelector(
+                'input[name="it_internal_number"]'
+            );
+
+            const internalNumberFeedback = form.querySelector(
+                '.invalid-feedback'
+            );
+
+            if (internalNumberInput) {
+                internalNumberInput.classList.remove('is-invalid');
+            }
+
+            if (internalNumberFeedback) {
+                internalNumberFeedback.textContent = '';
             }
 
         }, 0);
